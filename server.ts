@@ -57,8 +57,8 @@ async function startServer() {
         });
       }
 
-      const prompt = `You are DeskHub's intelligent co-working concierge. 
-A coworker is looking for their ideal workspace and desk.
+      const prompt = `You are OFIS's intelligent Nigerian workspace concierge. 
+A coworker or team is looking for their ideal physical workspace, desk, or creator studio in Nigeria.
 User prompt: "${userQuery || 'A quiet, well-lit desk for software development with fast WiFi and dual monitors'}"
 
 Available Spaces Data:
@@ -67,11 +67,13 @@ ${JSON.stringify((spaces || []).map((s: any) => ({
   name: s.name,
   city: s.city,
   neighborhood: s.neighborhood,
+  hourlyRateNGN: s.hourlyRateNGN,
+  dailyRateNGN: s.dailyRateNGN,
   dailyRate: s.dailyRate,
   amenities: s.amenities,
   rating: s.rating,
-  deskTypes: s.deskTypes,
-  quietLevel: s.quietLevel || 'High',
+  primaryCategory: s.primaryCategory,
+  subcategory: s.subcategory,
   desks: (s.desks || []).slice(0, 8).map((d: any) => ({ id: d.id, name: d.name, zone: d.zone, features: d.features, status: d.status }))
 })), null, 2)}
 
@@ -86,7 +88,7 @@ Provide a thoughtful, realistic JSON response matching the following structure e
 }`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
           responseMimeType: 'application/json',
@@ -121,8 +123,8 @@ Provide a thoughtful, realistic JSON response matching the following structure e
         });
       }
 
-      const prompt = `You are a commercial real estate and co-working workspace revenue optimization expert.
-Help a space owner optimize their co-working space listing for maximum occupancy and revenue on DeskHub.
+      const prompt = `You are a Nigerian commercial real estate and physical workspace revenue optimization expert.
+Help a space owner optimize their workspace listing for maximum occupancy and revenue on OFIS (Nigeria's physical workspace network).
 
 Space Data:
 ${JSON.stringify(spaceInfo, null, 2)}
@@ -132,13 +134,13 @@ Provide a JSON response with the following format:
   "suggestedTitle": "High-converting listing title",
   "tagline": "Compelling 1-sentence value proposition",
   "suggestedDailyRate": 40,
-  "pricingTip": "Actionable tip on hourly, daily, and monthly dedicated desk pricing tiers",
+  "pricingTip": "Actionable tip on hourly and daily workspace pricing tiers in Nigerian Naira",
   "suggestedAmenitiesToAdd": ["Amenity 1", "Amenity 2", "Amenity 3"],
   "targetAudience": "Summary of ideal coworker demographic"
 }`;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3.7-flash',
+        model: 'gemini-2.5-flash',
         contents: prompt,
         config: {
           responseMimeType: 'application/json',
@@ -171,7 +173,7 @@ Provide a JSON response with the following format:
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`DeskHub Server running on http://localhost:${PORT}`);
+    console.log(`OFIS Server running on http://localhost:${PORT}`);
   });
 }
 
