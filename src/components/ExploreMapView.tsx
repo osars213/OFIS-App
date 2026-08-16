@@ -66,7 +66,7 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
   height = '620px',
   isFullWidth = false,
 }) => {
-  const { formatPrice, currentCurrency, setSelectedSpace } = useApp();
+  const { formatPriceNaira, formatPrice, currentCurrency, setSelectedSpace } = useApp();
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -577,7 +577,7 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
                       openDesks > 0 ? 'bg-[#00C878] animate-pulse' : 'bg-rose-500'
                     }`}
                   />
-                  <span className="text-xs font-black tracking-tight">{formatPrice(space.dailyRate)}</span>
+                  <span className="text-xs font-black tracking-tight">{formatPriceNaira(space.dailyRateNGN || Math.round(space.dailyRate * 1550))}</span>
                 </div>
 
                 <div className="flex items-center gap-0.5 text-[10px] opacity-90 pl-1 border-l border-current/20">
@@ -682,7 +682,7 @@ export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
                 <span className="text-[10px] text-[#9A9A9A]">Daily Rate</span>
                 <div className="flex items-baseline gap-1">
                   <span className="text-lg font-black text-[#00C878]">
-                    {formatPrice(activeSpace.dailyRate)}
+                    {formatPriceNaira(activeSpace.dailyRateNGN || Math.round(activeSpace.dailyRate * 1550))}
                   </span>
                   <span className="text-[10px] text-[#9A9A9A]">/day</span>
                 </div>

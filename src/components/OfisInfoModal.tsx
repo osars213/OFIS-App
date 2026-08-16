@@ -6,7 +6,8 @@ import {
   ShieldCheck,
   Zap,
   Wifi,
-  DollarSign,
+  CreditCard,
+  Wallet,
   Clock,
   CheckCircle2,
   HelpCircle,
@@ -234,7 +235,7 @@ export const OfisInfoModal: React.FC<OfisInfoModalProps> = ({
                     num: '03',
                     title: 'Book and pay',
                     desc: 'Instant secure checkout via Card, Bank Transfer, Paystack, or Apple Pay with instant confirmation.',
-                    icon: DollarSign,
+                    icon: CreditCard,
                   },
                   {
                     num: '04',
@@ -289,7 +290,7 @@ export const OfisInfoModal: React.FC<OfisInfoModalProps> = ({
                 </div>
 
                 <div className="p-4 rounded-2xl bg-[#181818] border border-[#282828]">
-                  <DollarSign className="w-6 h-6 text-[#00C878] mb-2" />
+                  <Wallet className="w-6 h-6 text-[#00C878] mb-2" />
                   <h3 className="font-bold text-white text-sm">Transparent Naira Pricing</h3>
                   <p className="text-xs text-[#9A9A9A] mt-1">
                     No hidden generator surcharges or surprise booking fees. What you see is what you pay.

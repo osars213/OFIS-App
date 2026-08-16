@@ -190,7 +190,7 @@ const LOCAL_STORAGE_KEY_FAVORITES = 'ofis_favorites_ng_v4';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Current user & role (null = logged out)
-  const [currentUser, setCurrentUser] = useState<User | null>(DEMO_USERS[0]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentRole, setCurrentRole] = useState<UserRole>('coworker');
 
   const isAuthenticated = !!currentUser;

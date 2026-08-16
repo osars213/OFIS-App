@@ -8,7 +8,7 @@ dotenv.config();
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json());
 
@@ -113,12 +113,13 @@ Provide a thoughtful, realistic JSON response matching the following structure e
       if (!ai || !process.env.GEMINI_API_KEY) {
         return res.json({
           optimizedListing: {
-            suggestedTitle: `${spaceInfo.name || 'Premium Workspace'} - Ultra-Modern Coworking & Dedicated Desks`,
-            tagline: 'High-speed fiber, ergonomic Herman Miller desks & sunlit creative environment in prime location.',
-            suggestedDailyRate: Math.max(25, spaceInfo.dailyRate || 35),
-            pricingTip: 'Your pricing is competitive. Adding a 15% discount on 1-month dedicated desk passes can boost occupancy by 28%.',
-            suggestedAmenitiesToAdd: ['Podcast & Content Studio', 'Barista Oat Milk Station', 'Bicycle Lockup & Showers'],
-            targetAudience: 'Software engineers, remote founders, and design professionals needing dedicated focus zones.'
+            suggestedTitle: `${spaceInfo.name || 'Premium Space'} - Prime Coworking & Creator Hub`,
+            tagline: '24/7 dual generator redundancy, Starlink internet & acoustic soundproofing in prime location.',
+            suggestedHourlyRate: spaceInfo.hourlyRateNGN || 6500,
+            suggestedDailyRate: spaceInfo.dailyRateNGN || 28000,
+            pricingTip: 'Your pricing is competitive for the local area. Adding a 15% discount on full-week passes can boost occupancy by 28%.',
+            suggestedAmenitiesToAdd: ['Podcast & Creator Booth', 'Cold Brew & Espresso Bar', 'Dedicated Parking & Security'],
+            targetAudience: 'Founders, software engineers, content creators, and remote teams needing reliable power and fiber connectivity.'
           }
         });
       }

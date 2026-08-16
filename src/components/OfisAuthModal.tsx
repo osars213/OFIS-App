@@ -19,7 +19,6 @@ import {
   Upload,
   X,
   Compass,
-  DollarSign,
   Layers,
   ArrowLeft
 } from 'lucide-react';
@@ -378,7 +377,7 @@ export const OfisAuthModal: React.FC<OfisAuthModalProps> = ({
                   onClick={() => setAuthView('host_signup')}
                   className="w-full py-3 px-4 rounded-xl bg-[#1F1F1F] hover:bg-[#282828] text-white border border-[#3A3A3A] hover:border-[#D6A83A] font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-2 group-hover:scale-[1.02]"
                 >
-                  <DollarSign className="w-4 h-4 text-[#D6A83A]" />
+                  <Building2 className="w-4 h-4 text-[#D6A83A]" />
                   <span>List My Space</span>
                 </button>
               </div>
