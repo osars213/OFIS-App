@@ -1,0 +1,8 @@
+{
+  "name": "OFIS",
+  "description": "Nigerian marketplace for discovering and booking physical spaces by the hour or day — Coworking desks, podcast & creator studios, meeting rooms, and event venues across Nigeria.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

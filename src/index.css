@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --ofis-emerald: #00C878;
+    --ofis-forest: #063B2A;
+    --ofis-black: #0D0D0D;
+    --ofis-charcoal: #171717;
+    --ofis-card: #1C1C1C;
+    --ofis-card-hover: #242424;
+    --ofis-border: #2B2B2B;
+    --ofis-gold: #D6A83A;
+    --ofis-muted: #9A9A9A;
+    --ofis-soft-white: #F2F2F2;
+  }
+
+  body {
+    background-color: #0D0D0D;
+    color: #F2F2F2;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom OFIS brand utilities */
+.bg-ofis-black {
+  background-color: #0D0D0D;
+}
+.bg-ofis-charcoal {
+  background-color: #171717;
+}
+.bg-ofis-card {
+  background-color: #1A1A1A;
+}
+.bg-ofis-forest {
+  background-color: #063B2A;
+}
+.bg-ofis-emerald {
+  background-color: #00C878;
+}
+.text-ofis-emerald {
+  color: #00C878;
+}
+.text-ofis-gold {
+  color: #D6A83A;
+}
+.text-ofis-muted {
+  color: #9A9A9A;
+}
+.text-ofis-soft {
+  color: #F2F2F2;
+}
+.border-ofis-border {
+  border-color: #2A2A2A;
+}
+.border-ofis-emerald {
+  border-color: #00C878;
+}
+.border-ofis-forest {
+  border-color: #063B2A;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0D0D0D;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2A2A2A;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00C878;
+}
