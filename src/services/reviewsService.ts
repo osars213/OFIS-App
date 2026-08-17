@@ -126,7 +126,28 @@ export const reviewsService = {
     }
 
     try {
-      // Fetch current helpful list
+      // 1. Try secure review_helpful_votes table first
+      const { data: existingVote } = await supabase
+        .from('review_helpful_votes')
+        .select('id')
+        .eq('review_id', reviewId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (existingVote) {
+        const { error: delError } = await supabase
+          .from('review_helpful_votes')
+          .delete()
+          .eq('id', existingVote.id);
+        if (!delError) return { success: true, error: null };
+      } else {
+        const { error: insError } = await supabase
+          .from('review_helpful_votes')
+          .insert({ review_id: reviewId, user_id: userId });
+        if (!insError) return { success: true, error: null };
+      }
+
+      // 2. Direct review array fallback if review_helpful_votes is not yet migrated
       const { data: rev } = await supabase
         .from('reviews')
         .select('helpful_user_ids, helpful_count')

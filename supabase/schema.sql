@@ -1043,6 +1043,16 @@ create trigger trg_enforce_host_verification_security
 -- 21. SECURE SPACE CREDENTIALS RPC
 -- Delivers WiFi Passwords & Door PINs strictly to authorized Hosts and Active Bookers
 -- ==============================================================================
+create table if not exists public.space_access_credentials (
+    space_id uuid primary key references public.spaces(id) on delete cascade,
+    wifi_ssid text default 'OFIS_Guest_HighSpeed',
+    wifi_pass text not null default 'WorkFocus2026',
+    door_pin text not null default '4829',
+    access_instructions text default 'Check in at reception with valid ID and quote your booking reference.',
+    created_at timestamptz not null default timezone('utc'::text, now()),
+    updated_at timestamptz not null default timezone('utc'::text, now())
+);
+
 create or replace function public.get_space_access_credentials(
     p_space_id uuid,
     p_booking_id uuid default null
