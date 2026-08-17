@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   Space,
   Desk,
@@ -22,13 +22,23 @@ import {
   INITIAL_PLATFORM_STATS,
   INITIAL_REVIEWS,
 } from '../mockData';
+import { isSupabaseConfigured, supabase } from '../services/supabaseClient';
+import { authService } from '../services/authService';
+import { spacesService } from '../services/spacesService';
+import { bookingsService } from '../services/bookingsService';
+import { reviewsService } from '../services/reviewsService';
+import { favoritesService } from '../services/favoritesService';
 
 interface AppContextType {
+  // Supabase Backend Status
+  isSupabaseConnected: boolean;
+  databaseStatus: 'connected' | 'demo_mode';
+
   // User & Auth
   currentUser: User | null;
   setCurrentUser: (user: User | null) => void;
   isAuthenticated: boolean;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   currentRole: UserRole;
   setCurrentRole: (role: UserRole) => void;
   switchDemoUser: (userId: string) => void;
@@ -42,30 +52,32 @@ interface AppContextType {
 
   // Spaces & Desks
   spaces: Space[];
+  isSpacesLoading: boolean;
   selectedSpace: Space | null;
   setSelectedSpace: (space: Space | null) => void;
   selectedDesk: Desk | null;
   setSelectedDesk: (desk: Desk | null) => void;
   updateDeskStatus: (spaceId: string, deskId: string, newStatus: DeskStatus, occupantInfo?: any) => void;
-  createSpace: (newSpaceData: Partial<Space>) => Space;
-  addSpace: (newSpace: Omit<Space, 'id' | 'createdAt'>) => Space;
-  updateSpace: (spaceId: string, updates: Partial<Space>) => void;
-  deleteSpace: (spaceId: string) => void;
+  createSpace: (newSpaceData: Partial<Space>) => Promise<Space>;
+  addSpace: (newSpace: Omit<Space, 'id' | 'createdAt'>) => Promise<Space>;
+  updateSpace: (spaceId: string, updates: Partial<Space>) => Promise<void>;
+  deleteSpace: (spaceId: string) => Promise<void>;
+  refreshSpaces: () => Promise<void>;
 
   // Bookings
-  bookings: Booking[];
-  createBooking: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'transactionId' | 'qrCodeUrl' | 'bookingReference'>) => Booking;
-  cancelBooking: (bookingId: string) => void;
-  checkInBooking: (bookingId: string) => void;
-  updateBookingStatus: (bookingId: string, status: Booking['status']) => void;
+  bookings: BookingsState;
+  createBooking: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'transactionId' | 'qrCodeUrl' | 'bookingReference'>) => Promise<Booking>;
+  cancelBooking: (bookingId: string) => Promise<void>;
+  checkInBooking: (bookingId: string) => Promise<void>;
+  updateBookingStatus: (bookingId: string, status: Booking['status']) => Promise<void>;
   activePassBooking: Booking | null;
   setActivePassBooking: (booking: Booking | null) => void;
 
   // Reviews & Ratings
   reviews: Review[];
-  addReview: (reviewData: Omit<Review, 'id' | 'createdAt' | 'helpfulCount' | 'helpfulUserIds'>) => void;
-  toggleHelpfulReview: (reviewId: string) => void;
-  addHostReply: (reviewId: string, replyMessage: string) => void;
+  addReview: (reviewData: Omit<Review, 'id' | 'createdAt' | 'helpfulCount' | 'helpfulUserIds'>) => Promise<void>;
+  toggleHelpfulReview: (reviewId: string) => Promise<void>;
+  addHostReply: (reviewId: string, replyMessage: string) => Promise<void>;
   isReviewModalOpen: boolean;
   setIsReviewModalOpen: (open: boolean) => void;
   reviewTargetSpace: Space | null;
@@ -86,7 +98,7 @@ interface AppContextType {
 
   // Favorites / Saved Spaces
   favorites: string[];
-  toggleFavorite: (spaceId: string) => void;
+  toggleFavorite: (spaceId: string) => Promise<void>;
   isFavorite: (spaceId: string) => boolean;
 
   // Booking Draft State
@@ -137,6 +149,8 @@ interface AppContextType {
   showToast: (message: string, type?: 'success' | 'info' | 'warning' | 'error') => void;
 }
 
+type BookingsState = Booking[];
+
 const defaultFilters: FilterState = {
   searchQuery: '',
   city: 'all',
@@ -181,24 +195,18 @@ const defaultFilters: FilterState = {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY_SPACES = 'ofis_spaces_ng_v4';
-const LOCAL_STORAGE_KEY_BOOKINGS = 'ofis_bookings_ng_v4';
-const LOCAL_STORAGE_KEY_REVIEWS = 'ofis_reviews_ng_v4';
-const LOCAL_STORAGE_KEY_STATS = 'ofis_stats_ng_v4';
 const LOCAL_STORAGE_KEY_CURRENCY = 'ofis_currency_ng_v4';
-const LOCAL_STORAGE_KEY_FAVORITES = 'ofis_favorites_ng_v4';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Current user & role (null = logged out)
+  const isConfigured = isSupabaseConfigured();
+  const [databaseStatus] = useState<'connected' | 'demo_mode'>(
+    isConfigured ? 'connected' : 'demo_mode'
+  );
+
+  // Current user & role
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentRole, setCurrentRole] = useState<UserRole>('coworker');
-
   const isAuthenticated = !!currentUser;
-
-  const signOut = () => {
-    setCurrentUser(null);
-    showToast('Signed out of OFIS successfully', 'info');
-  };
 
   // Currency - default to NGN (Naira)
   const [currencyCode, setCurrencyCodeState] = useState<CurrencyCode>(() => {
@@ -213,75 +221,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem(LOCAL_STORAGE_KEY_CURRENCY, code);
   };
 
-  // Spaces state with persistence & sanitization
-  const [spaces, setSpaces] = useState<Space[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY_SPACES);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((s: any) => ({
-            ...s,
-            desks: Array.isArray(s.desks) ? s.desks : [],
-            images: Array.isArray(s.images) && s.images.length > 0 ? s.images : ['https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80'],
-            amenities: Array.isArray(s.amenities) ? s.amenities : [],
-            rules: Array.isArray(s.rules) ? s.rules : [],
-            coordinates: s.coordinates && typeof s.coordinates.lat === 'number' ? s.coordinates : { lat: 6.4474, lng: 3.4731 },
-            city: s.city || 'Lagos',
-            neighborhood: s.neighborhood || s.city || 'Lagos',
-            rating: typeof s.rating === 'number' ? s.rating : 4.9,
-            reviewCount: typeof s.reviewCount === 'number' ? s.reviewCount : 12,
-            primaryCategory: s.primaryCategory || 'WORK',
-            subcategory: s.subcategory || 'coworking_desks',
-          }));
-        }
-      } catch (e) {
-        console.error('Failed to parse saved spaces', e);
-      }
-    }
-    return INITIAL_SPACES;
-  });
+  // Spaces state
+  const [spaces, setSpaces] = useState<Space[]>(INITIAL_SPACES);
+  const [isSpacesLoading, setIsSpacesLoading] = useState<boolean>(true);
 
-  // Bookings state with persistence
-  const [bookings, setBookings] = useState<Booking[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY_BOOKINGS);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {
-        console.error('Failed to parse saved bookings', e);
-      }
-    }
-    return INITIAL_BOOKINGS;
-  });
+  // Bookings state
+  const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
 
-  // Reviews state with persistence
-  const [reviews, setReviews] = useState<Review[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY_REVIEWS);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {
-        console.error('Failed to parse saved reviews', e);
-      }
-    }
-    return INITIAL_REVIEWS;
-  });
+  // Reviews state
+  const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
 
   // Platform stats
-  const [platformStats, setPlatformStats] = useState<PlatformCommissionStats>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY_STATS);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse saved stats', e);
-      }
-    }
-    return INITIAL_PLATFORM_STATS;
-  });
+  const [platformStats, setPlatformStats] = useState<PlatformCommissionStats>(INITIAL_PLATFORM_STATS);
+
+  // Favorites
+  const [favorites, setFavorites] = useState<string[]>(['space-1', 'space-2']);
 
   // Selected space & desk
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(null);
@@ -345,58 +299,178 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, 4000);
   }, []);
 
-  // Favorites
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY_FAVORITES);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse saved favorites', e);
-      }
-    }
-    return ['space-1', 'space-2'];
-  });
-
+  // 1. Initial Load & Auth Session Synchronization
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY_FAVORITES, JSON.stringify(favorites));
-  }, [favorites]);
+    let isMounted = true;
 
-  const toggleFavorite = useCallback((spaceId: string) => {
-    setFavorites(prev => {
-      const exists = prev.includes(spaceId);
-      if (exists) {
-        const next = prev.filter(id => id !== spaceId);
-        showToast('Removed space from saved list', 'info');
-        return next;
-      } else {
-        const next = [...prev, spaceId];
-        showToast('Space saved to your favorites ❤️', 'success');
-        return next;
+    const initializeData = async () => {
+      setIsSpacesLoading(true);
+      try {
+        // Restore Supabase user session if active
+        if (isConfigured && supabase) {
+          const activeUser = await authService.getCurrentSessionUser();
+          if (isMounted && activeUser) {
+            setCurrentUser(activeUser);
+            setCurrentRole(activeUser.role);
+          }
+        }
+
+        // Fetch spaces from central database / fallback
+        const { spaces: loadedSpaces } = await spacesService.fetchSpaces();
+        if (isMounted && loadedSpaces && loadedSpaces.length > 0) {
+          setSpaces(loadedSpaces);
+        }
+      } catch (err) {
+        console.error('Initialization error in AppProvider:', err);
+      } finally {
+        if (isMounted) setIsSpacesLoading(false);
+      }
+    };
+
+    initializeData();
+
+    // Listen to Supabase Auth State changes
+    let authListener: { subscription?: { unsubscribe: () => void } } | null = null;
+    if (isConfigured && supabase) {
+      const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!isMounted) return;
+        if (event === 'SIGNED_IN' && session?.user) {
+          const user = await authService.getCurrentSessionUser();
+          if (user) {
+            setCurrentUser(user);
+            setCurrentRole(user.role);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setCurrentUser(null);
+        }
+      });
+      authListener = listener;
+    }
+
+    return () => {
+      isMounted = false;
+      if (authListener?.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
+  }, [isConfigured]);
+
+  // 2. Realtime Spaces & Listings Updates (Supabase Realtime)
+  useEffect(() => {
+    if (!isConfigured || !supabase) return;
+
+    const { unsubscribe } = spacesService.subscribeToSpaces((payload) => {
+      console.log('Realtime space event received:', payload);
+      if (payload.eventType === 'INSERT') {
+        const newSpace = payload.new;
+        setSpaces(prev => {
+          if (prev.some(s => s.id === newSpace.id)) return prev;
+          return [{
+            ...INITIAL_SPACES[0],
+            id: newSpace.id,
+            name: newSpace.name,
+            tagline: newSpace.tagline || '',
+            description: newSpace.description || '',
+            primaryCategory: newSpace.primary_category || 'WORK',
+            city: newSpace.city || 'Lagos',
+            address: newSpace.address || '',
+            hourlyRateNGN: Number(newSpace.hourly_rate_ngn) || 5000,
+            dailyRateNGN: Number(newSpace.daily_rate_ngn) || 25000,
+            hourlyRate: Math.round((Number(newSpace.hourly_rate_ngn) || 5000) / 1550),
+            dailyRate: Math.round((Number(newSpace.daily_rate_ngn) || 25000) / 1550),
+            images: newSpace.images || ['https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=1200&q=80'],
+            desks: [],
+            capacity: Number(newSpace.capacity) || 10,
+            amenities: newSpace.amenities || [],
+            rules: newSpace.rules || [],
+            createdAt: newSpace.created_at,
+          }, ...prev];
+        });
+      } else if (payload.eventType === 'UPDATE') {
+        const updated = payload.new;
+        setSpaces(prev => prev.map(s => {
+          if (s.id !== updated.id) return s;
+          return {
+            ...s,
+            name: updated.name ?? s.name,
+            tagline: updated.tagline ?? s.tagline,
+            description: updated.description ?? s.description,
+            hourlyRateNGN: updated.hourly_rate_ngn ? Number(updated.hourly_rate_ngn) : s.hourlyRateNGN,
+            dailyRateNGN: updated.daily_rate_ngn ? Number(updated.daily_rate_ngn) : s.dailyRateNGN,
+            hourlyRate: updated.hourly_rate_ngn ? Math.round(Number(updated.hourly_rate_ngn) / 1550) : s.hourlyRate,
+            dailyRate: updated.daily_rate_ngn ? Math.round(Number(updated.daily_rate_ngn) / 1550) : s.dailyRate,
+            capacity: updated.capacity ? Number(updated.capacity) : s.capacity,
+            amenities: updated.amenities ?? s.amenities,
+            images: updated.images ?? s.images,
+          };
+        }));
+      } else if (payload.eventType === 'DELETE') {
+        const oldId = payload.old?.id;
+        if (oldId) {
+          setSpaces(prev => prev.filter(s => s.id !== oldId));
+        }
       }
     });
-  }, [showToast]);
+
+    return () => {
+      unsubscribe();
+    };
+  }, [isConfigured]);
+
+  // 3. User Bookings & Favorites when User logs in
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let isMounted = true;
+    const fetchUserData = async () => {
+      const { bookings: userBookings } = await bookingsService.fetchUserBookings(currentUser.id);
+      if (isMounted && userBookings && userBookings.length > 0) {
+        setBookings(userBookings);
+      }
+
+      const { favoriteSpaceIds } = await favoritesService.fetchFavorites(currentUser.id);
+      if (isMounted && favoriteSpaceIds) {
+        setFavorites(favoriteSpaceIds);
+      }
+    };
+
+    fetchUserData();
+
+    const { unsubscribe } = bookingsService.subscribeToBookings(currentUser.id, () => {
+      fetchUserData();
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [currentUser]);
+
+  // Auth: Sign Out
+  const signOut = async () => {
+    await authService.signOut();
+    setCurrentUser(null);
+    showToast('Signed out of OFIS successfully', 'info');
+  };
+
+  // Favorites
+  const toggleFavorite = useCallback(async (spaceId: string) => {
+    const userId = currentUser?.id || 'guest-user';
+    const { isFavorited } = await favoritesService.toggleFavorite(userId, spaceId);
+    setFavorites(prev => {
+      if (isFavorited) {
+        showToast('Space saved to your favorites ❤️', 'success');
+        return prev.includes(spaceId) ? prev : [...prev, spaceId];
+      } else {
+        showToast('Removed space from saved list', 'info');
+        return prev.filter(id => id !== spaceId);
+      }
+    });
+  }, [currentUser, showToast]);
 
   const isFavorite = useCallback((spaceId: string) => {
     return favorites.includes(spaceId);
   }, [favorites]);
-
-  // Sync state to local storage
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY_SPACES, JSON.stringify(spaces));
-  }, [spaces]);
-
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY_BOOKINGS, JSON.stringify(bookings));
-  }, [bookings]);
-
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY_REVIEWS, JSON.stringify(reviews));
-  }, [reviews]);
-
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY_STATS, JSON.stringify(platformStats));
-  }, [platformStats]);
 
   // Price conversion helper
   const convertPrice = useCallback((amountInUSD: number, targetCurrencyCode?: CurrencyCode): number => {
@@ -451,141 +525,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
-  const createSpace = (newSpaceData: Partial<Space>): Space => {
-    const newId = `space-${Date.now()}`;
-    const primaryCat: PrimaryCategory = newSpaceData.primaryCategory || 'WORK';
-
-    const fullSpace: Space = {
-      id: newId,
-      listing_id: `OFS-LST-${Math.floor(100 + Math.random() * 900)}`,
-      source: 'direct_host',
-      name: newSpaceData.name || 'New Nigerian Space',
-      tagline: newSpaceData.tagline || 'Modern dedicated workspace and studio with guaranteed power and high-speed internet.',
-      description: newSpaceData.description || 'Turnkey professional physical space ready for work, meetings or content creation.',
-      primaryCategory: primaryCat,
-      subcategory: newSpaceData.subcategory || 'coworking_desks',
-      category: newSpaceData.category || 'coworking',
-      capacity: newSpaceData.capacity || 10,
-      hostId: currentUser?.id || 'host-user-1',
-      hostName: currentUser?.name || 'OFIS Host',
-      hostAvatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-      hostEmail: currentUser?.email || 'host@ofis.ng',
-      hostPhone: currentUser?.phone || '+234 800 000 0000',
-      hostWhatsApp: newSpaceData.hostWhatsApp || '+2348000000000',
-      hostResponseTime: 'Within 15 minutes',
-      isSuperhost: false,
-      city: newSpaceData.city || 'Lagos',
-      country: 'Nigeria',
-      address: newSpaceData.address || 'Plot 1, Lagos Island',
-      neighborhood: newSpaceData.neighborhood || 'Victoria Island',
-      coordinates: newSpaceData.coordinates || { lat: 6.4474, lng: 3.4731 },
-      latitude: newSpaceData.coordinates?.lat || 6.4474,
-      longitude: newSpaceData.coordinates?.lng || 3.4731,
-      rating: 5.0,
-      reviewCount: 0,
-      images: newSpaceData.images && newSpaceData.images.length > 0 ? newSpaceData.images : [
-        'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80',
-        'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=1200&auto=format&fit=crop&q=80',
-      ],
-      amenities: newSpaceData.amenities || [
-        '24/7 Power (Generator + Solar Inverter)',
-        'High-Speed Wi-Fi',
-        'Air Conditioning',
-        'Gated Security',
-      ],
-      equipment: newSpaceData.equipment || [],
-      rules: newSpaceData.rules || [
-        'Respect quiet work policies in shared areas',
-        'Clean up upon departure',
-      ],
-      cancellationPolicy: newSpaceData.cancellationPolicy || 'Flexible: Free cancellation up to 2 hours before start.',
-      openingHours: newSpaceData.openingHours || '8:00 AM - 9:00 PM Daily',
-      wifiSSID: newSpaceData.wifiSSID || 'OFIS-Guest-Fast',
-      wifiPass: newSpaceData.wifiPass || 'OfisNaija2026!',
-      doorPIN: newSpaceData.doorPIN || '1234#',
-      hourlyRate: newSpaceData.hourlyRate || 5,
-      dailyRate: newSpaceData.dailyRate || 25,
-      weeklyRate: newSpaceData.weeklyRate || 100,
-      monthlyRate: newSpaceData.monthlyRate || 350,
-      hourlyRateNGN: newSpaceData.hourlyRateNGN || Math.round((newSpaceData.hourlyRate || 5) * 1550),
-      dailyRateNGN: newSpaceData.dailyRateNGN || Math.round((newSpaceData.dailyRate || 25) * 1550),
-      instantBook: true,
-      quietLevel: 'Moderate',
-      createdAt: new Date().toISOString(),
-      featured: false,
-      desks: newSpaceData.desks || [
-        {
-          id: `desk-${newId}-1`,
-          spaceId: newId,
-          name: 'Dedicated Station 01',
-          code: 'DS-01',
-          row: 0,
-          col: 0,
-          zone: 'quiet',
-          status: 'available',
-          features: ['Power Outlets', 'Ergonomic Mesh Chair', 'High-Speed Wi-Fi'],
-          monitorSetup: 'Dual 27" 4K LG UltraFine',
-          chairType: 'Ergonomic Mesh',
-          standingMotorized: true,
-          hasPowerOutlet: true,
-          hasLanCable: true,
-          daylightRating: 4,
-          noiseLevel: 'Pin-drop quiet',
-        },
-      ],
-      floorplanLayout: {
-        gridRows: 4,
-        gridCols: 4,
-        roomZones: [
-          { id: 'zone-main', name: 'Main Work & Studio Zone', zone: 'quiet', x: 0, y: 0, w: 2, h: 2, color: 'emerald' },
-        ],
-        facilityPoints: [
-          { type: 'coffee', name: 'Coffee Station', x: 0, y: 4 },
-          { type: 'entrance', name: 'Main Entrance', x: 2, y: 4 },
-        ],
-      },
-    };
-
-    setSpaces(prev => [fullSpace, ...prev]);
-    showToast(`"${fullSpace.name}" is now live on OFIS!`, 'success');
-    return fullSpace;
+  const refreshSpaces = async () => {
+    setIsSpacesLoading(true);
+    const { spaces: fetched } = await spacesService.fetchSpaces();
+    if (fetched && fetched.length > 0) {
+      setSpaces(fetched);
+    }
+    setIsSpacesLoading(false);
   };
 
-  const addSpace = (newSpace: Omit<Space, 'id' | 'createdAt'>): Space => {
+  const createSpace = async (newSpaceData: Partial<Space>): Promise<Space> => {
+    const ownerId = currentUser?.id || 'host-user-1';
+    const { space: created, error } = await spacesService.createSpace(newSpaceData, ownerId);
+
+    if (error) {
+      showToast(error, 'error');
+    }
+
+    const resolvedSpace = created || {
+      ...(INITIAL_SPACES[0]),
+      id: `space-${Date.now()}`,
+      name: newSpaceData.name || 'New Workspace',
+      hostId: ownerId,
+      ...newSpaceData,
+    } as Space;
+
+    setSpaces(prev => [resolvedSpace, ...prev.filter(s => s.id !== resolvedSpace.id)]);
+    showToast(`"${resolvedSpace.name}" is now live on OFIS!`, 'success');
+    return resolvedSpace;
+  };
+
+  const addSpace = async (newSpace: Omit<Space, 'id' | 'createdAt'>): Promise<Space> => {
     return createSpace(newSpace);
   };
 
-  const updateSpace = (spaceId: string, updates: Partial<Space>) => {
+  const updateSpace = async (spaceId: string, updates: Partial<Space>) => {
     setSpaces(prev => prev.map(s => (s.id === spaceId ? { ...s, ...updates } : s)));
+    await spacesService.updateSpace(spaceId, updates);
     showToast('Space listing updated successfully.', 'success');
   };
 
-  const deleteSpace = (spaceId: string) => {
+  const deleteSpace = async (spaceId: string) => {
     setSpaces(prev => prev.filter(s => s.id !== spaceId));
+    await spacesService.deleteSpace(spaceId);
     showToast('Space listing removed.', 'info');
   };
 
-  // Booking management
-  const createBooking = (
+  // Booking management with double-booking verification
+  const createBooking = async (
     bookingData: Omit<Booking, 'id' | 'createdAt' | 'transactionId' | 'qrCodeUrl' | 'bookingReference'>
-  ): Booking => {
-    const bookingId = `bk-${Date.now().toString().slice(-6)}`;
-    const randomRefNum = Math.floor(100000 + Math.random() * 900000);
-    const cityCode = (bookingData.spaceCity || 'LOS').slice(0, 3).toUpperCase();
-    const bookingReference = `OFS-${cityCode}-${randomRefNum}`;
-    const transactionId = `pstk_txn_${Math.random().toString(36).substring(2, 12)}`;
-    const coworkerNameSafe = (bookingData.coworkerName || 'GUEST').toUpperCase();
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=OFIS-${bookingReference}-${bookingData.deskCode || 'HOT-DESK'}-${encodeURIComponent(coworkerNameSafe)}`;
+  ): Promise<Booking> => {
+    const { booking, error } = await bookingsService.createBooking(bookingData);
 
-    const newBooking: Booking = {
-      ...bookingData,
-      id: bookingId,
-      bookingReference,
-      transactionId,
-      qrCodeUrl,
-      createdAt: new Date().toISOString(),
-      status: 'confirmed',
-    };
+    if (error) {
+      showToast(error, 'error');
+      throw new Error(error);
+    }
+
+    const confirmedBooking = booking!;
 
     // Update desk status in space
     updateDeskStatus(bookingData.spaceId, bookingData.deskId, 'reserved', {
@@ -594,39 +591,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       avatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80',
       checkInTime: bookingData.startTime,
       untilTime: bookingData.endTime,
-      bookingId,
+      bookingId: confirmedBooking.id,
     });
 
-    // Update Platform ledger
+    // Update platform ledger
     setPlatformStats(prev => ({
       ...prev,
-      totalGrossVolumeUSD: +(prev.totalGrossVolumeUSD + (newBooking.totalAmount / 1550)).toFixed(2),
-      totalPlatformCommissionUSD: +(prev.totalPlatformCommissionUSD + (newBooking.platformCommissionFee / 1550)).toFixed(2),
-      totalHostPayoutsUSD: +(prev.totalHostPayoutsUSD + (newBooking.hostNetPayout / 1550)).toFixed(2),
+      totalGrossVolumeUSD: +(prev.totalGrossVolumeUSD + (confirmedBooking.totalAmount / 1550)).toFixed(2),
+      totalPlatformCommissionUSD: +(prev.totalPlatformCommissionUSD + (confirmedBooking.platformCommissionFee / 1550)).toFixed(2),
+      totalHostPayoutsUSD: +(prev.totalHostPayoutsUSD + (confirmedBooking.hostNetPayout / 1550)).toFixed(2),
       totalBookingsCount: prev.totalBookingsCount + 1,
       transactionsLedger: [
         {
-          bookingId,
-          spaceName: newBooking.spaceName,
-          hostName: newBooking.hostName,
-          coworkerName: newBooking.coworkerName,
-          grossUSD: +(newBooking.totalAmount / 1550).toFixed(2),
-          platformFeeUSD: +(newBooking.platformCommissionFee / 1550).toFixed(2),
-          hostPayoutUSD: +(newBooking.hostNetPayout / 1550).toFixed(2),
+          bookingId: confirmedBooking.id,
+          spaceName: confirmedBooking.spaceName,
+          hostName: confirmedBooking.hostName,
+          coworkerName: confirmedBooking.coworkerName,
+          grossUSD: +(confirmedBooking.totalAmount / 1550).toFixed(2),
+          platformFeeUSD: +(confirmedBooking.platformCommissionFee / 1550).toFixed(2),
+          hostPayoutUSD: +(confirmedBooking.hostNetPayout / 1550).toFixed(2),
           timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
         },
         ...prev.transactionsLedger,
       ],
     }));
 
-    setBookings(prev => [newBooking, ...prev]);
-    setActivePassBooking(newBooking);
+    setBookings(prev => [confirmedBooking, ...prev.filter(b => b.id !== confirmedBooking.id)]);
+    setActivePassBooking(confirmedBooking);
 
-    showToast(`Booking Confirmed! Pass Reference: ${bookingReference}`, 'success');
-    return newBooking;
+    showToast(`Booking Confirmed! Pass Reference: ${confirmedBooking.bookingReference}`, 'success');
+    return confirmedBooking;
   };
 
-  const cancelBooking = (bookingId: string) => {
+  const cancelBooking = async (bookingId: string) => {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) return;
 
@@ -634,18 +631,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map(b => (b.id === bookingId ? { ...b, status: 'cancelled' } : b))
     );
 
+    await bookingsService.updateBookingStatus(bookingId, 'cancelled');
+
     // Free up desk
     updateDeskStatus(booking.spaceId, booking.deskId, 'available', undefined);
     showToast(`Booking ${booking.bookingReference || bookingId} cancelled. Refund initiated to original payment method.`, 'info');
   };
 
-  const checkInBooking = (bookingId: string) => {
+  const checkInBooking = async (bookingId: string) => {
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) return;
 
     setBookings(prev =>
       prev.map(b => (b.id === bookingId ? { ...b, status: 'checked_in' } : b))
     );
+
+    await bookingsService.updateBookingStatus(bookingId, 'checked_in');
 
     updateDeskStatus(booking.spaceId, booking.deskId, 'occupied', {
       userId: booking.coworkerId,
@@ -659,14 +660,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast(`Checked in to ${booking.deskCode} at ${booking.spaceName}!`, 'success');
   };
 
-  const updateBookingStatus = (bookingId: string, status: Booking['status']) => {
+  const updateBookingStatus = async (bookingId: string, status: Booking['status']) => {
     setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status } : b)));
+    await bookingsService.updateBookingStatus(bookingId, status);
     showToast(`Booking status updated to ${status}.`, 'info');
   };
 
   // Review management
-  const addReview = (reviewData: Omit<Review, 'id' | 'createdAt' | 'helpfulCount' | 'helpfulUserIds'>) => {
-    const newReview: Review = {
+  const addReview = async (reviewData: Omit<Review, 'id' | 'createdAt' | 'helpfulCount' | 'helpfulUserIds'>) => {
+    const { review, error } = await reviewsService.createReview(reviewData);
+
+    if (error) {
+      showToast(error, 'error');
+    }
+
+    const finalReview: Review = review || {
       ...reviewData,
       id: `rev-${Date.now()}`,
       createdAt: new Date().toISOString(),
@@ -674,13 +682,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       helpfulUserIds: [],
     };
 
-    setReviews(prev => [newReview, ...prev]);
+    setReviews(prev => [finalReview, ...prev]);
 
     // Recalculate average rating of target space
     setSpaces(prev =>
       (prev || []).map(sp => {
         if (sp.id !== reviewData.spaceId) return sp;
-        const allSpaceReviews = [newReview, ...reviews.filter(r => r.spaceId === sp.id)];
+        const allSpaceReviews = [finalReview, ...reviews.filter(r => r.spaceId === sp.id)];
         const avg = +(allSpaceReviews.reduce((sum, r) => sum + r.rating, 0) / (allSpaceReviews.length || 1)).toFixed(2);
         return {
           ...sp,
@@ -693,8 +701,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Thank you! Your verified space review has been published.', 'success');
   };
 
-  const toggleHelpfulReview = (reviewId: string) => {
+  const toggleHelpfulReview = async (reviewId: string) => {
     const currentUserId = currentUser?.id || 'guest';
+    await reviewsService.toggleHelpful(reviewId, currentUserId);
+
     setReviews(prev =>
       (prev || []).map(r => {
         if (r.id !== reviewId) return r;
@@ -712,7 +722,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
-  const addHostReply = (reviewId: string, replyMessage: string) => {
+  const addHostReply = async (reviewId: string, replyMessage: string) => {
     setReviews(prev =>
       (prev || []).map(r => {
         if (r.id !== reviewId) return r;
@@ -772,6 +782,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider
       value={{
+        isSupabaseConnected: isConfigured,
+        databaseStatus,
         currentUser,
         setCurrentUser,
         isAuthenticated,
@@ -785,6 +797,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         convertPrice,
         formatPriceNaira,
         spaces,
+        isSpacesLoading,
         selectedSpace,
         setSelectedSpace,
         selectedDesk,
@@ -794,6 +807,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addSpace,
         updateSpace,
         deleteSpace,
+        refreshSpaces,
         bookings,
         createBooking,
         cancelBooking,

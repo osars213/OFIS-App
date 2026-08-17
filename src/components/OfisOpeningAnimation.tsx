@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { OfisLogo } from './OfisLogo';
 
 interface OfisOpeningAnimationProps {
   onComplete: () => void;
@@ -129,21 +130,9 @@ export const OfisOpeningAnimation: React.FC<OfisOpeningAnimationProps> = ({
                 scale: stage === 3 ? 1.04 : 1,
               }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
-              className="relative flex items-center justify-center overflow-hidden"
-              style={{
-                width: '78px',
-                height: '90px',
-              }}
+              className="relative flex items-center justify-center"
             >
-              {/* Official Logo aligned to show strictly the Doorway O */}
-              <img
-                src="/ofis-logo.png"
-                alt="OFIS Doorway"
-                className="h-20 sm:h-24 w-auto max-w-none object-left object-cover pointer-events-none drop-shadow-[0_0_25px_rgba(0,200,120,0.5)]"
-                style={{
-                  transform: 'translateX(0px)',
-                }}
-              />
+              <OfisLogo size="xl" iconOnly={true} />
 
               {/* Light spill layer when door opens in Stage 3 */}
               {stage === 3 && (
@@ -151,7 +140,7 @@ export const OfisOpeningAnimation: React.FC<OfisOpeningAnimationProps> = ({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 0.8 }}
                   transition={{ duration: 0.3 }}
-                  className="absolute inset-0 bg-[#00C878]/20 mix-blend-screen pointer-events-none"
+                  className="absolute inset-0 bg-[#00C878]/20 mix-blend-screen pointer-events-none rounded-full blur-md"
                 />
               )}
             </motion.div>
@@ -170,11 +159,7 @@ export const OfisOpeningAnimation: React.FC<OfisOpeningAnimationProps> = ({
                 transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
                 className="flex items-center justify-center drop-shadow-[0_0_35px_rgba(0,200,120,0.45)]"
               >
-                <img
-                  src="/ofis-logo.png"
-                  alt="OFIS"
-                  className="h-20 sm:h-24 w-auto object-contain pointer-events-none"
-                />
+                <OfisLogo size="xl" showTagline={false} />
               </motion.div>
 
               {/* Glowing sweep effect across letters */}

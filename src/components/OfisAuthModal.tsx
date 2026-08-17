@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { OfisLogo } from './OfisLogo';
 import { useApp } from '../context/AppContext';
+import { authService } from '../services/authService';
 
 interface OfisAuthModalProps {
   isOpen: boolean;
@@ -82,28 +83,28 @@ export const OfisAuthModal: React.FC<OfisAuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSocialAuth = (provider: 'Google' | 'Apple', intendedRole: 'coworker' | 'host') => {
+  const handleSocialAuth = async (provider: 'Google' | 'Apple', intendedRole: 'coworker' | 'host') => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      const isGoogle = provider === 'Google';
-      const user = {
-        id: `usr_${Date.now()}`,
-        name: isGoogle ? 'Alex Adebayo' : 'Chidi Okafor',
-        email: isGoogle ? 'alex.adebayo@gmail.com' : 'chidi.okafor@icloud.com',
-        role: intendedRole,
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-        phone: '+234 803 123 4567',
-        isVerified: true,
-      };
+    const isGoogle = provider === 'Google';
+    const fakeEmail = isGoogle ? 'alex.adebayo@gmail.com' : 'chidi.okafor@icloud.com';
+    const fakeName = isGoogle ? 'Alex Adebayo' : 'Chidi Okafor';
 
+    const { user, error } = await authService.signUp(fakeEmail, 'Password123!', fakeName, intendedRole);
+    setIsSubmitting(false);
+
+    if (error) {
+      showToast(error, 'error');
+      return;
+    }
+
+    if (user) {
       setCurrentUser(user);
-      setCreatedUser(user);
+      setCreatedUser(user as any);
       setAuthView('avatar_prompt');
-    }, 700);
+    }
   };
 
-  const handleSignInSubmit = (e: React.FormEvent) => {
+  const handleSignInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       showToast('Please provide both email and password', 'warning');
@@ -111,26 +112,22 @@ export const OfisAuthModal: React.FC<OfisAuthModalProps> = ({
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      const displayName = email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
-      const user = {
-        id: `usr_${Date.now()}`,
-        name: displayName,
-        email,
-        role: 'coworker' as const,
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-        phone: phone || '+234 802 000 1122',
-        isVerified: true,
-      };
+    const { user, error } = await authService.signIn(email, password);
+    setIsSubmitting(false);
 
+    if (error) {
+      showToast(error, 'error');
+      return;
+    }
+
+    if (user) {
       setCurrentUser(user);
-      showToast('Welcome back to OFIS!', 'success');
+      showToast(`Welcome back to OFIS, ${user.name}!`, 'success');
       onClose();
-    }, 700);
+    }
   };
 
-  const handleClientSignUpSubmit = (e: React.FormEvent) => {
+  const handleClientSignUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email || !password) {
       showToast('Please fill in all required fields', 'warning');
@@ -138,25 +135,22 @@ export const OfisAuthModal: React.FC<OfisAuthModalProps> = ({
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      const user = {
-        id: `usr_${Date.now()}`,
-        name: name.trim(),
-        email,
-        role: 'coworker' as const,
-        phone: phone || '+234 800 000 0000',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-        isVerified: true,
-      };
+    const { user, error } = await authService.signUp(email, password, name.trim(), 'coworker', phone);
+    setIsSubmitting(false);
 
+    if (error) {
+      showToast(error, 'error');
+      return;
+    }
+
+    if (user) {
       setCurrentUser(user);
-      setCreatedUser(user);
+      setCreatedUser(user as any);
       setAuthView('avatar_prompt');
-    }, 700);
+    }
   };
 
-  const handleHostSignUpSubmit = (e: React.FormEvent) => {
+  const handleHostSignUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email || !password) {
       showToast('Please fill in all required fields', 'warning');
@@ -164,23 +158,22 @@ export const OfisAuthModal: React.FC<OfisAuthModalProps> = ({
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      const user = {
-        id: `usr_${Date.now()}`,
-        name: name.trim(),
-        email,
-        role: 'host' as const,
+    const { user, error } = await authService.signUp(email, password, name.trim(), 'host', phone);
+    setIsSubmitting(false);
+
+    if (error) {
+      showToast(error, 'error');
+      return;
+    }
+
+    if (user) {
+      setCurrentUser(user);
+      setCreatedUser({
+        ...user,
         company: businessName.trim() || undefined,
-        phone: phone || '+234 800 000 0000',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-        isVerified: true,
-      };
-
-      setCurrentUser(user);
-      setCreatedUser(user);
+      } as any);
       setAuthView('avatar_prompt');
-    }, 700);
+    }
   };
 
   const handleFinishAvatarPrompt = (customizeNow: boolean) => {
