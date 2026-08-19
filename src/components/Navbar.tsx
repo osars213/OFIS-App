@@ -18,7 +18,7 @@ import {
   LogIn,
   UserPlus,
   MapPin,
-  Compass
+  Compass,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { DEMO_USERS } from '../mockData';
@@ -48,10 +48,16 @@ export const Navbar: React.FC<NavbarProps> = ({
     showToast,
     bookings,
     favorites,
+    themeMode,
+    effectiveTheme,
+    setThemeMode,
+    openSettingsModal,
   } = useApp();
 
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  const isLight = effectiveTheme === 'light';
 
   // Active bookings count
   const activeBookingsCount = currentUser
@@ -66,13 +72,15 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0D0D0D]/95 backdrop-blur-md text-white border-b border-[#222222] shadow-xl">
+    <header className={`sticky top-0 z-40 ${
+      isLight ? 'bg-white/95 text-neutral-900 border-b border-neutral-200 shadow-sm' : 'bg-[#0D0D0D]/95 text-white border-b border-[#222222] shadow-xl'
+    } backdrop-blur-md transition-colors duration-150`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Main Header Bar: TOP LEFT (☰) | HEADER CENTRE (OFIS LOGO) | TOP RIGHT (Currency, Notifications, Avatar) */}
         <div className="flex items-center justify-between h-16 sm:h-20">
           
-          {/* TOP LEFT: Hamburger Menu ☰ (Opens Navigation & Information Drawer) */}
-          <div className="flex items-center gap-3">
+          {/* TOP LEFT: Compact Hamburger Menu ☰ (Opens Navigation & Information Drawer) */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <button
               id="header-hamburger-drawer-btn"
               type="button"
@@ -80,14 +88,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                 closeAllDropdowns();
                 onOpenNavDrawer();
               }}
-              className="p-2 sm:p-2.5 rounded-xl text-stone-300 hover:text-white hover:bg-[#1E1E1E] transition-colors cursor-pointer flex items-center justify-center"
+              className={`p-1.5 sm:p-2 rounded-xl border ${
+                isLight
+                  ? 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-neutral-700 hover:text-neutral-950'
+                  : 'border-[#262626] bg-[#141414] hover:bg-[#1E1E1E] text-stone-300 hover:text-white'
+              } transition-all cursor-pointer flex items-center justify-center shadow-xs active:scale-95`}
               aria-label="Open navigation menu drawer"
             >
-              <Menu className="w-6 h-6 text-stone-200 hover:text-[#00C878] transition-colors" />
+              <Menu className="w-4 h-4 sm:w-4.5 sm:h-4.5 hover:text-[#00C878] transition-colors" />
             </button>
 
             {/* Desktop Quick Nav (Hotels.ng simplicity) */}
-            <nav className="hidden md:flex items-center gap-1 bg-[#171717] p-1 rounded-2xl border border-[#262626]">
+            <nav className={`hidden md:flex items-center gap-1 ${
+              isLight ? 'bg-[#F3F4F6] border-neutral-200' : 'bg-[#171717] border-[#262626]'
+            } p-1 rounded-2xl border`}>
               <button
                 type="button"
                 id="nav-explore-btn"
@@ -97,8 +111,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   currentView === 'explore'
-                    ? 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
-                    : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
+                    ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border border-[#00C878]/30 font-black' : 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
+                    : isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60' : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
                 }`}
               >
                 <Compass className="w-3.5 h-3.5" />
@@ -114,8 +128,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   currentView === 'results'
-                    ? 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
-                    : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
+                    ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border border-[#00C878]/30 font-black' : 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
+                    : isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60' : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
                 }`}
               >
                 <MapPin className="w-3.5 h-3.5" />
@@ -131,8 +145,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   currentView === 'passes'
-                    ? 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
-                    : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
+                    ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border border-[#00C878]/30 font-black' : 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
+                    : isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60' : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
                 }`}
               >
                 <Ticket className="w-3.5 h-3.5" />
@@ -153,8 +167,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   currentView === 'host'
-                    ? 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
-                    : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
+                    ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border border-[#00C878]/30 font-black' : 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
+                    : isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60' : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
                 }`}
               >
                 <LayoutDashboard className="w-3.5 h-3.5" />
@@ -199,7 +213,9 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               id="ai-advisor-nav-btn"
               onClick={() => openAiModal('match')}
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#171717] hover:bg-[#222222] text-[#F2F2F2] border border-[#2A2A2A] hover:border-[#D6A83A]/60 text-xs font-bold transition-all cursor-pointer group"
+              className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl ${
+                isLight ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border-neutral-300' : 'bg-[#171717] hover:bg-[#222222] text-[#F2F2F2] border-[#2A2A2A]'
+              } border hover:border-[#D6A83A]/60 text-xs font-bold transition-all cursor-pointer group`}
             >
               <Sparkles className="w-3.5 h-3.5 text-[#D6A83A] group-hover:scale-110 transition-transform" />
               <span className="text-[11px]">AI Match</span>
@@ -214,7 +230,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   setIsNotificationOpen(!isNotificationOpen);
                   setIsProfileDropdownOpen(false);
                 }}
-                className="p-2 rounded-xl border border-[#282828] bg-[#171717] hover:bg-[#222222] text-[#9A9A9A] hover:text-white transition-colors relative cursor-pointer"
+                className={`p-2 rounded-xl border ${
+                  isLight ? 'border-neutral-200 bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'border-[#282828] bg-[#171717] hover:bg-[#222222] text-[#9A9A9A] hover:text-white'
+                } transition-colors relative cursor-pointer`}
                 aria-label="Notifications"
               >
                 <Bell className="w-4 h-4" />
@@ -226,24 +244,28 @@ export const Navbar: React.FC<NavbarProps> = ({
               {isNotificationOpen && (
                 <div
                   id="notifications-panel"
-                  className="absolute right-0 mt-2 w-80 bg-[#171717] rounded-2xl shadow-2xl border border-[#2A2A2A] p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-white"
+                  className={`absolute right-0 mt-2 w-80 ${
+                    isLight ? 'bg-white text-neutral-900 border-neutral-200 shadow-2xl' : 'bg-[#171717] text-white border-[#2A2A2A] shadow-2xl'
+                  } rounded-2xl border p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150`}
                 >
-                  <div className="flex items-center justify-between pb-2 border-b border-[#282828]">
-                    <span className="text-xs font-bold text-[#F2F2F2]">Notifications</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#063B2A] text-[#00C878] font-bold">
+                  <div className={`flex items-center justify-between pb-2 border-b ${isLight ? 'border-neutral-200' : 'border-[#282828]'}`}>
+                    <span className="text-xs font-bold">Notifications</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      isLight ? 'bg-[#E8F8F0] text-[#00A865]' : 'bg-[#063B2A] text-[#00C878]'
+                    } font-bold`}>
                       2 Active
                     </span>
                   </div>
                   <div className="space-y-2 mt-2">
-                    <div className="p-2.5 rounded-xl bg-[#222222] border border-[#2D2D2D] text-xs">
+                    <div className={`p-2.5 rounded-xl ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-[#222222] border-[#2D2D2D]'} border text-xs`}>
                       <div className="font-bold text-[#00C878]">Booking Confirmed!</div>
-                      <div className="text-[11px] text-[#9A9A9A] mt-0.5">
+                      <div className={`text-[11px] ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-0.5`}>
                         Your desk pass at Greenhouse Studio (Lekki Phase 1) is active.
                       </div>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-[#1C1C1C] border border-[#282828] text-xs">
+                    <div className={`p-2.5 rounded-xl ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-[#1C1C1C] border-[#282828]'} border text-xs`}>
                       <div className="font-bold text-[#00C878]">⚡ 24/7 Power Guaranteed</div>
-                      <div className="text-[11px] text-[#9A9A9A] mt-0.5">
+                      <div className={`text-[11px] ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-0.5`}>
                         Dual generators & solar inverters active across all verified spaces.
                       </div>
                     </div>
@@ -274,22 +296,26 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#00C878] rounded-full ring-1 ring-[#0D0D0D]" />
                   </div>
                 ) : (
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#1C1C1C] border border-[#333333] flex items-center justify-center text-stone-300 hover:text-white hover:bg-[#252525] transition-colors">
+                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full ${
+                    isLight ? 'bg-neutral-100 border-neutral-300 text-neutral-600 hover:bg-neutral-200' : 'bg-[#1C1C1C] border-[#333333] text-stone-300 hover:text-white hover:bg-[#252525]'
+                  } border flex items-center justify-center transition-colors`}>
                     <User className="w-4 h-4 text-stone-400 group-hover:text-[#00C878] transition-colors" />
                   </div>
                 )}
               </button>
 
-              {/* Avatar Menu Dropdown matching User Request */}
+              {/* Avatar Menu Dropdown */}
               {isProfileDropdownOpen && (
                 <div
                   id="profile-menu-dropdown"
-                  className="absolute right-0 mt-2 w-72 sm:w-80 bg-[#161616] rounded-2xl shadow-2xl border border-[#2A2A2A] p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-white"
+                  className={`absolute right-0 mt-2 w-72 sm:w-80 ${
+                    isLight ? 'bg-white text-neutral-900 border-neutral-200 shadow-2xl' : 'bg-[#161616] text-white border-[#2A2A2A] shadow-2xl'
+                  } rounded-2xl border p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150`}
                 >
                   {isAuthenticated && currentUser ? (
                     <>
                       {/* Logged-In User Profile Header */}
-                      <div className="p-3 bg-[#1D1D1D] rounded-xl border border-[#2A2A2A] mb-2">
+                      <div className={`p-3 ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-[#1D1D1D] border-[#2A2A2A]'} rounded-xl border mb-2`}>
                         <div className="flex items-center gap-3">
                           <div className="w-11 h-11 rounded-full overflow-hidden bg-[#242424] ring-2 ring-[#00C878]/60 shrink-0">
                             <img
@@ -299,8 +325,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                             />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-bold text-white truncate">{currentUser.name}</div>
-                            <div className="text-xs text-[#9A9A9A] truncate">{currentUser.email}</div>
+                            <div className={`text-sm font-bold ${isLight ? 'text-neutral-900' : 'text-white'} truncate`}>{currentUser.name}</div>
+                            <div className={`text-xs ${isLight ? 'text-neutral-500' : 'text-[#D4D4D4]'} truncate`}>{currentUser.email}</div>
                             <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#063B2A] text-[#00C878] border border-[#00C878]/40">
                               <span className="w-1.5 h-1.5 rounded-full bg-[#00C878]" />
                               {(currentUser?.role || 'coworker').toUpperCase()}
@@ -319,7 +345,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                             setIsProfileDropdownOpen(false);
                             openAvatarModal();
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-stone-200 hover:bg-[#222222] hover:text-[#00C878] transition-colors cursor-pointer"
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold ${
+                            isLight ? 'text-neutral-700 hover:bg-neutral-100 hover:text-[#00A865]' : 'text-stone-200 hover:bg-[#222222] hover:text-[#00C878]'
+                          } transition-colors cursor-pointer`}
                         >
                           <Camera className="w-4 h-4 text-[#00C878]" />
                           <span>My Profile</span>
@@ -333,7 +361,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                             setCurrentView('passes');
                             setIsProfileDropdownOpen(false);
                           }}
-                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-stone-200 hover:bg-[#222222] hover:text-white transition-colors cursor-pointer"
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                            isLight ? 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900' : 'text-stone-200 hover:bg-[#222222] hover:text-white'
+                          } transition-colors cursor-pointer`}
                         >
                           <div className="flex items-center gap-2.5">
                             <Ticket className="w-4 h-4 text-stone-400" />
@@ -355,13 +385,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                             setCurrentView('results');
                             setIsProfileDropdownOpen(false);
                           }}
-                          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-stone-200 hover:bg-[#222222] hover:text-white transition-colors cursor-pointer"
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                            isLight ? 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900' : 'text-stone-200 hover:bg-[#222222] hover:text-white'
+                          } transition-colors cursor-pointer`}
                         >
                           <div className="flex items-center gap-2.5">
                             <Bookmark className="w-4 h-4 text-stone-400" />
                             <span>Saved Spaces</span>
                           </div>
-                          <span className="text-[11px] text-[#9A9A9A]">{favorites.length}</span>
+                          <span className={`text-[11px] ${isLight ? 'text-neutral-500' : 'text-[#D4D4D4]'}`}>{favorites.length}</span>
                         </button>
 
                         {/* 4. Messages */}
@@ -372,7 +404,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                             showToast('Host messaging channel is active.', 'info');
                             setIsProfileDropdownOpen(false);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-stone-200 hover:bg-[#222222] hover:text-white transition-colors cursor-pointer"
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold ${
+                            isLight ? 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900' : 'text-stone-200 hover:bg-[#222222] hover:text-white'
+                          } transition-colors cursor-pointer`}
                         >
                           <MessageSquare className="w-4 h-4 text-stone-400" />
                           <span>Messages</span>
@@ -386,7 +420,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                             setIsListSpaceModalOpen(true);
                             setIsProfileDropdownOpen(false);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-[#00C878] hover:bg-[#063B2A]/40 transition-colors cursor-pointer"
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-[#00C878] ${
+                            isLight ? 'hover:bg-[#E8F8F0]' : 'hover:bg-[#063B2A]/40'
+                          } transition-colors cursor-pointer`}
                         >
                           <PlusCircle className="w-4 h-4 text-[#00C878]" />
                           <span>List a Space</span>
@@ -400,7 +436,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                             setCurrentView('host');
                             setIsProfileDropdownOpen(false);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-stone-200 hover:bg-[#222222] transition-colors cursor-pointer"
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold ${
+                            isLight ? 'text-neutral-700 hover:bg-neutral-100' : 'text-stone-200 hover:bg-[#222222]'
+                          } transition-colors cursor-pointer`}
                         >
                           <LayoutDashboard className="w-4 h-4 text-stone-400" />
                           <span>Host Hub</span>
@@ -408,8 +446,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
 
                       {/* Demo User Switcher */}
-                      <div className="p-2 border-t border-[#262626] mt-1">
-                        <div className="px-2 py-1 text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider">
+                      <div className={`p-2 border-t ${isLight ? 'border-neutral-200' : 'border-[#262626]'} mt-1`}>
+                        <div className={`px-2 py-1 text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-stone-400'} uppercase tracking-wider`}>
                           Switch Demo User
                         </div>
                         <div className="space-y-1 mt-1">
@@ -424,14 +462,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                               }}
                               className={`w-full flex items-center gap-2 p-1.5 rounded-xl text-left transition-colors cursor-pointer ${
                                 currentUser?.id === user.id
-                                  ? 'bg-[#063B2A] text-[#00C878] font-bold'
-                                  : 'hover:bg-[#222222] text-[#F2F2F2]'
+                                  ? isLight ? 'bg-[#E8F8F0] text-[#00A865] font-bold' : 'bg-[#063B2A] text-[#00C878] font-bold'
+                                  : isLight ? 'hover:bg-neutral-100 text-neutral-800' : 'hover:bg-[#222222] text-[#F2F2F2]'
                               }`}
                             >
                               <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
                               <div className="flex-1 min-w-0">
                                 <div className="text-xs font-bold truncate">{user.name}</div>
-                                <div className="text-[10px] text-[#9A9A9A] capitalize">
+                                <div className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-[#D4D4D4]'} capitalize`}>
                                   {user.role} ({user.company || 'Member'})
                                 </div>
                               </div>
@@ -442,18 +480,27 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
 
                       {/* 7. Account Settings & 8. Sign Out */}
-                      <div className="p-1 border-t border-[#262626] space-y-0.5 mt-1">
+                      <div className={`p-1 border-t ${isLight ? 'border-neutral-200' : 'border-[#262626]'} space-y-0.5 mt-1`}>
                         <button
                           type="button"
                           id="menu-item-account-settings"
                           onClick={() => {
-                            showToast('Account settings & notifications configured.', 'info');
                             setIsProfileDropdownOpen(false);
+                            openSettingsModal();
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-stone-400 hover:text-white hover:bg-[#222222] transition-colors cursor-pointer"
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                            isLight ? 'text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100' : 'text-stone-300 hover:text-white hover:bg-[#222222]'
+                          } transition-colors cursor-pointer`}
                         >
-                          <Settings className="w-3.5 h-3.5" />
-                          <span>Account Settings</span>
+                          <div className="flex items-center gap-2.5">
+                            <Settings className="w-3.5 h-3.5 text-[#00C878]" />
+                            <span>Settings & Preferences</span>
+                          </div>
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
+                            isLight ? 'bg-neutral-100 text-neutral-600' : 'bg-[#222222] text-[#A3A3A3]'
+                          }`}>
+                            {themeMode.toUpperCase()}
+                          </span>
                         </button>
 
                         <button
@@ -463,7 +510,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             signOut();
                             setIsProfileDropdownOpen(false);
                           }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-950/30 transition-colors cursor-pointer"
+                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
                         >
                           <LogOut className="w-3.5 h-3.5" />
                           <span>Sign Out</span>
@@ -471,14 +518,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                       </div>
                     </>
                   ) : (
-                    /* When user is NOT signed in: Sign In & Create Account */
+                    /* When user is NOT signed in: Sign In, Create Account & Settings */
                     <div className="p-2 space-y-2">
-                      <div className="p-3 bg-[#1D1D1D] rounded-xl border border-[#2A2A2A] text-center">
+                      <div className={`p-3 ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-[#1D1D1D] border-[#2A2A2A]'} rounded-xl border text-center`}>
                         <div className="w-10 h-10 rounded-full bg-[#063B2A] text-[#00C878] mx-auto flex items-center justify-center mb-2">
                           <User className="w-5 h-5" />
                         </div>
-                        <div className="text-xs font-bold text-white">Welcome to OFIS</div>
-                        <div className="text-[11px] text-[#9A9A9A] mt-0.5">
+                        <div className={`text-xs font-bold ${isLight ? 'text-neutral-900' : 'text-white'}`}>Welcome to OFIS</div>
+                        <div className={`text-[11px] ${isLight ? 'text-neutral-500' : 'text-[#D4D4D4]'} mt-0.5`}>
                           Book physical workspaces across Nigeria
                         </div>
                       </div>
@@ -504,10 +551,27 @@ export const Navbar: React.FC<NavbarProps> = ({
                             setIsProfileDropdownOpen(false);
                             openAuthModal('signup');
                           }}
-                          className="w-full py-2 px-3 bg-[#222222] hover:bg-[#2A2A2A] text-white font-semibold text-xs rounded-xl border border-[#333333] flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                          className={`w-full py-2 px-3 ${
+                            isLight ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300' : 'bg-[#222222] hover:bg-[#2A2A2A] text-white border-[#333333]'
+                          } font-semibold text-xs rounded-xl border flex items-center justify-center gap-2 transition-colors cursor-pointer`}
                         >
                           <UserPlus className="w-4 h-4 text-[#00C878]" />
                           <span>Create Account</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          id="menu-settings-unauth-btn"
+                          onClick={() => {
+                            setIsProfileDropdownOpen(false);
+                            openSettingsModal();
+                          }}
+                          className={`w-full py-2 px-3 ${
+                            isLight ? 'hover:bg-neutral-100 text-neutral-700' : 'hover:bg-[#222222] text-[#D4D4D4]'
+                          } font-semibold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer`}
+                        >
+                          <Settings className="w-3.5 h-3.5 text-[#00C878]" />
+                          <span>Settings & Preferences</span>
                         </button>
                       </div>
                     </div>

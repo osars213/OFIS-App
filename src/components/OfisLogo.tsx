@@ -1,4 +1,5 @@
 import React from 'react';
+import { useApp } from '../context/AppContext';
 
 interface OfisLogoProps {
   className?: string;
@@ -17,40 +18,71 @@ export const OfisLogo: React.FC<OfisLogoProps> = ({
   className = '',
   size = 'md',
   showTagline = true,
-  lightMode = false,
+  lightMode: explicitLightMode,
   iconOnly = false,
   useImage = true,
 }) => {
   const [imageError, setImageError] = React.useState(false);
 
-  // Height & scale mappings for different container sizes
+  let appTheme: 'dark' | 'light' = 'dark';
+  try {
+    const appContext = useApp();
+    if (appContext && appContext.effectiveTheme) {
+      appTheme = appContext.effectiveTheme;
+    }
+  } catch {
+    // Outside AppProvider fallback
+  }
+
+  const isLight = explicitLightMode !== undefined ? explicitLightMode : appTheme === 'light';
+
+  // Height mappings with precise optical scaling
   const scaleMap = {
-    xs: { h: 'h-6', imgH: 'h-6', iconW: 20, iconH: 24, fontSize: 'text-sm', subSize: 'text-[7px]', gap: 'gap-1.5' },
-    sm: { h: 'h-8', imgH: 'h-8', iconW: 24, iconH: 28, fontSize: 'text-lg', subSize: 'text-[8px]', gap: 'gap-2' },
-    md: { h: 'h-10', imgH: 'h-10', iconW: 30, iconH: 36, fontSize: 'text-2xl', subSize: 'text-[9px]', gap: 'gap-2.5' },
-    lg: { h: 'h-12', imgH: 'h-12', iconW: 38, iconH: 44, fontSize: 'text-3xl', subSize: 'text-[10px]', gap: 'gap-3' },
-    xl: { h: 'h-16', imgH: 'h-16', iconW: 50, iconH: 58, fontSize: 'text-4xl', subSize: 'text-xs', gap: 'gap-3.5' },
+    xs: { imgH: 'h-6', iconH: 'h-6', iconW: 20, iconH_svg: 24, fontSize: 'text-sm', subSize: 'text-[7px]', gap: 'gap-1.5' },
+    sm: { imgH: 'h-7 sm:h-8', iconH: 'h-7 sm:h-8', iconW: 24, iconH_svg: 28, fontSize: 'text-lg', subSize: 'text-[8px]', gap: 'gap-2' },
+    md: { imgH: 'h-9 sm:h-10', iconH: 'h-9 sm:h-10', iconW: 30, iconH_svg: 36, fontSize: 'text-2xl', subSize: 'text-[9px]', gap: 'gap-2.5' },
+    lg: { imgH: 'h-11 sm:h-12', iconH: 'h-11 sm:h-12', iconW: 38, iconH_svg: 44, fontSize: 'text-3xl', subSize: 'text-[10px]', gap: 'gap-3' },
+    xl: { imgH: 'h-14 sm:h-16', iconH: 'h-14 sm:h-16', iconW: 50, iconH_svg: 58, fontSize: 'text-4xl', subSize: 'text-xs', gap: 'gap-3.5' },
   };
 
   const currentScale = scaleMap[size] || scaleMap.md;
-  const textColor = lightMode ? 'text-neutral-900' : 'text-white';
+  const textColor = isLight ? 'text-neutral-900' : 'text-white';
   const tagColor = '#00C878';
 
-  // If using direct official image asset
-  if (useImage && !imageError && !iconOnly) {
+  // 1. Official Icon-Only Mark (Doorway Arch)
+  if (useImage && !imageError && iconOnly) {
     return (
-      <div className={`inline-flex items-center select-none shrink-0 ${className}`} aria-label="OFIS Physical Spaces">
+      <div className={`inline-flex items-center justify-center select-none shrink-0 ${className}`} aria-label="OFIS Brand Mark">
         <img
-          src="/ofis-logo.png"
-          alt="OFIS • Physical Spaces"
-          className={`${currentScale.imgH} w-auto object-contain drop-shadow-[0_2px_12px_rgba(0,200,120,0.25)] transition-transform hover:scale-[1.02]`}
+          src="/ofis-icon.png"
+          alt="OFIS"
+          className={`${currentScale.iconH} w-auto object-contain drop-shadow-[0_2px_12px_rgba(0,200,120,0.3)] transition-transform hover:scale-105`}
           onError={() => setImageError(true)}
           draggable={false}
+          referrerPolicy="no-referrer"
         />
       </div>
     );
   }
 
+  // 2. Official Full Brand Logo Lockup
+  if (useImage && !imageError) {
+    const logoSrc = isLight ? '/ofis-logo-light.png' : '/ofis-logo.png';
+    return (
+      <div className={`inline-flex items-center select-none shrink-0 ${className}`} aria-label="OFIS Physical Spaces">
+        <img
+          src={logoSrc}
+          alt="OFIS • Physical Spaces"
+          className={`${currentScale.imgH} w-auto object-contain drop-shadow-[0_2px_14px_rgba(0,200,120,0.2)] transition-transform hover:scale-[1.015]`}
+          onError={() => setImageError(true)}
+          draggable={false}
+          referrerPolicy="no-referrer"
+        />
+      </div>
+    );
+  }
+
+  // 3. Resilient Vector Fallback
   return (
     <div
       className={`inline-flex items-center select-none shrink-0 ${currentScale.gap} ${className}`}
@@ -60,7 +92,7 @@ export const OfisLogo: React.FC<OfisLogoProps> = ({
       <div className="relative shrink-0 flex items-center justify-center">
         <svg
           width={currentScale.iconW}
-          height={currentScale.iconH}
+          height={currentScale.iconH_svg}
           viewBox="0 0 36 44"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -83,7 +115,7 @@ export const OfisLogo: React.FC<OfisLogoProps> = ({
           {/* Main Arched Door Frame */}
           <path
             d="M3 40V16C3 7.71573 9.71573 1 18 1C26.2843 1 33 7.71573 33 16V40H3Z"
-            fill={lightMode ? '#FFFFFF' : '#0A0A0A'}
+            fill={isLight ? '#FFFFFF' : '#0A0A0A'}
             stroke={`url(#ofisGreenGrad-${size})`}
             strokeWidth="3.2"
             strokeLinejoin="round"
@@ -93,15 +125,6 @@ export const OfisLogo: React.FC<OfisLogoProps> = ({
           <path
             d="M6.5 39V16.5C6.5 10.1487 11.6487 5 18 5C24.3513 5 29.5 10.1487 29.5 16.5V39H6.5Z"
             fill={`url(#ofisInnerGlow-${size})`}
-          />
-
-          {/* Door panel ajar / open perspective slice */}
-          <path
-            d="M6 39V17C6 10.3726 11.3726 5 18 5C20.5 5 22.8 5.8 24.5 7.2L12 12.5V39H6Z"
-            fill={lightMode ? '#F0FDF4' : '#141414'}
-            stroke="#00C878"
-            strokeWidth="1.2"
-            strokeOpacity="0.75"
           />
 
           {/* Door handle / luminous keypoint */}

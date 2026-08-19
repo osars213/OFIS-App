@@ -368,6 +368,8 @@ create table if not exists public.desks (
 -- ==============================================================================
 -- 11. BOOKINGS TABLE (Authoritative Booking State & Ledger)
 -- Protected by Composite Foreign Keys, Exclusion Constraints & Security Triggers
+-- Note: Sensitive door_pin and wifi_pass are NEVER stored in this table or exposed in realtime;
+-- they are secured in space_access_credentials and delivered via get_space_access_credentials()
 -- ==============================================================================
 create table if not exists public.bookings (
     id uuid primary key default gen_random_uuid(),
@@ -411,10 +413,8 @@ create table if not exists public.bookings (
     total_amount numeric not null default 0 check (total_amount >= 0),
     host_net_payout numeric not null default 0 check (host_net_payout >= 0),
     
-    -- Access Snapshots & Notes
+    -- Public Access Snapshot & Notes (No plaintext secrets)
     wifi_ssid text default 'OFIS_Guest_HighSpeed',
-    wifi_pass text default 'WorkFocus2026',
-    door_pin text default '4829',
     qr_code_url text not null default '',
     notes text default '',
     
@@ -498,15 +498,15 @@ create trigger trg_enforce_no_booking_overlap
 -- 13. AUTHORITATIVE BOOKING SECURITY & PRICING ENGINE
 -- Enforces:
 --  - Authoritative amount calculation from database space rates
---  - Safe pending initialization on client insert
+--  - Safe pending initialization on client insert (no direct confirmed / successful states)
+--  - Strict transition guards (clients cannot jump from unpaid to confirmed)
 --  - Sync between duplicated fields (client_id/user_id, status/booking_status, start_datetime/start_time)
---  - Credential snapshotting from protected space_access_credentials
+--  - Prevents credential leakage into bookings table
 -- ==============================================================================
 create or replace function public.enforce_booking_security_and_pricing()
 returns trigger as $$
 declare
     v_space public.spaces%rowtype;
-    v_creds public.space_access_credentials%rowtype;
     v_is_admin boolean;
     v_unit_rate numeric;
     v_base numeric;
@@ -514,6 +514,8 @@ declare
     v_tax numeric;
     v_total numeric;
     v_payout numeric;
+    v_caller_is_client boolean;
+    v_caller_is_host boolean;
 begin
     -- 1. Verify space existence
     select * into v_space from public.spaces where id = new.space_id;
@@ -529,16 +531,63 @@ begin
 
     -- 4. Enforce client identity & initial status for normal user calls
     if coalesce(v_is_admin, false) is distinct from true and auth.role() != 'service_role' then
-        if auth.uid() is not null then
+        if auth.uid() is not null and tg_op = 'INSERT' then
             new.client_id := auth.uid();
             new.user_id := auth.uid();
         end if;
 
         if tg_op = 'INSERT' then
-            -- Clients must always start in a pending state until payment verification
+            -- Clients must ALWAYS start in a pending state until payment verification
             new.booking_status := 'pending';
             new.status := 'pending';
             new.payment_status := 'pending';
+            new.payment_reference := null;
+        elsif tg_op = 'UPDATE' then
+            v_caller_is_client := (auth.uid() = old.client_id or auth.uid() = old.user_id);
+            v_caller_is_host := (auth.uid() = old.host_id);
+
+            -- Prevent non-privileged tampering of financial totals or booking relations
+            new.base_amount := old.base_amount;
+            new.commission_rate := old.commission_rate;
+            new.platform_commission_fee := old.platform_commission_fee;
+            new.taxes := old.taxes;
+            new.total_amount := old.total_amount;
+            new.host_net_payout := old.host_net_payout;
+            new.currency := old.currency;
+            new.currency_symbol := old.currency_symbol;
+            new.space_id := old.space_id;
+            new.desk_id := old.desk_id;
+            new.client_id := old.client_id;
+            new.user_id := old.user_id;
+            new.host_id := old.host_id;
+            new.start_datetime := old.start_datetime;
+            new.end_datetime := old.end_datetime;
+
+            -- Status transition validation
+            if new.booking_status is distinct from old.booking_status or new.status is distinct from old.status then
+                -- Normal clients can only cancel/expire their pending or confirmed bookings
+                if v_caller_is_client then
+                    if new.booking_status not in ('cancelled', 'expired', 'payment_pending') then
+                        raise exception 'Unauthorized transition: Clients cannot escalate booking to % status without verified payment', new.booking_status;
+                    end if;
+                -- Hosts can only check in, complete, or cancel bookings
+                elsif v_caller_is_host then
+                    if old.booking_status = 'confirmed' and new.booking_status not in ('checked_in', 'completed', 'cancelled') then
+                        raise exception 'Invalid host transition from confirmed to %', new.booking_status;
+                    elsif old.booking_status = 'checked_in' and new.booking_status not in ('completed', 'cancelled') then
+                        raise exception 'Invalid host transition from checked_in to %', new.booking_status;
+                    elsif old.booking_status in ('pending', 'payment_pending') and new.booking_status not in ('cancelled') then
+                        raise exception 'Hosts cannot confirm pending bookings directly without verified payment';
+                    end if;
+                else
+                    raise exception 'Unauthorized: Only booking participants, administrators, or payment service can update booking status';
+                end if;
+            end if;
+
+            -- Prevent direct escalation of payment_status without service_role verification
+            if new.payment_status is distinct from old.payment_status and new.payment_status = 'successful' and old.payment_status != 'successful' then
+                raise exception 'Unauthorized: Direct payment escalation to successful is strictly prohibited';
+            end if;
         end if;
     end if;
 
@@ -562,41 +611,36 @@ begin
         new.booking_status := new.status::booking_status_type;
     end if;
 
-    -- 6. Authoritative Database-Driven Pricing Calculation
-    if new.duration_type = 'daily' then
-        v_unit_rate := coalesce(v_space.daily_price, v_space.daily_rate_ngn, 25000);
-    elsif new.duration_type = 'weekly' then
-        v_unit_rate := coalesce(v_space.weekly_price, v_space.weekly_rate_ngn, 110000);
-    elsif new.duration_type = 'monthly' then
-        v_unit_rate := coalesce(v_space.monthly_price, v_space.monthly_rate_ngn, 420000);
-    else -- hourly
-        v_unit_rate := coalesce(v_space.hourly_price, v_space.hourly_rate_ngn, 5000);
+    -- 6. Authoritative Database-Driven Pricing Calculation (Computed strictly from DB rates)
+    if tg_op = 'INSERT' then
+        if new.duration_type = 'daily' then
+            v_unit_rate := coalesce(v_space.daily_price, v_space.daily_rate_ngn, 25000);
+        elsif new.duration_type = 'weekly' then
+            v_unit_rate := coalesce(v_space.weekly_price, v_space.weekly_rate_ngn, 110000);
+        elsif new.duration_type = 'monthly' then
+            v_unit_rate := coalesce(v_space.monthly_price, v_space.monthly_rate_ngn, 420000);
+        else -- hourly
+            v_unit_rate := coalesce(v_space.hourly_price, v_space.hourly_rate_ngn, 5000);
+        end if;
+
+        v_base := greatest(new.duration_units, 1) * v_unit_rate;
+        v_commission := round(v_base * 0.05, 2);
+        v_tax := round(v_base * 0.075, 2); -- 7.5% Nigerian VAT
+        v_total := v_base + v_commission + v_tax;
+        v_payout := v_base - v_commission;
+
+        new.currency := 'NGN';
+        new.currency_symbol := '₦';
+        new.base_amount := v_base;
+        new.commission_rate := 0.05;
+        new.platform_commission_fee := v_commission;
+        new.taxes := v_tax;
+        new.total_amount := v_total;
+        new.host_net_payout := v_payout;
+        new.wifi_ssid := coalesce(v_space.wifi_ssid, 'OFIS_Guest_HighSpeed');
     end if;
 
-    v_base := greatest(new.duration_units, 1) * v_unit_rate;
-    v_commission := round(v_base * 0.05, 2);
-    v_tax := round(v_base * 0.075, 2); -- 7.5% Nigerian VAT
-    v_total := v_base + v_commission + v_tax;
-    v_payout := v_base - v_commission;
-
-    new.currency := 'NGN';
-    new.currency_symbol := '₦';
-    new.base_amount := v_base;
-    new.commission_rate := 0.05;
-    new.platform_commission_fee := v_commission;
-    new.taxes := v_tax;
-    new.total_amount := v_total;
-    new.host_net_payout := v_payout;
-
-    -- 7. Snapshot Credentials on Insert/Confirmation
-    select * into v_creds from public.space_access_credentials where space_id = new.space_id;
-    if found then
-        new.wifi_ssid := coalesce(v_creds.wifi_ssid, v_space.wifi_ssid, 'OFIS_Guest_HighSpeed');
-        new.wifi_pass := v_creds.wifi_pass;
-        new.door_pin := v_creds.door_pin;
-    end if;
-
-    -- 8. References Generation
+    -- 7. References Generation
     if new.booking_reference is null or new.booking_reference = '' then
         new.booking_reference := 'OFS-' || upper(substr(coalesce(v_space.city, 'LOS'), 1, 3)) || '-' || floor(100000 + random() * 900000)::text;
     end if;
@@ -730,7 +774,8 @@ create trigger trg_enforce_payment_integrity
     before insert or update on public.payments
     for each row execute function public.enforce_payment_integrity();
 
--- Trusted Payment Confirmation Function (Executed upon verified webhook callback or authenticated checkout)
+-- Trusted Payment Confirmation Function (Executed ONLY by service_role webhook handlers or admin operators)
+-- Authoritative server-side payment confirmation engine with idempotency & audit ledger
 create or replace function public.confirm_booking_payment(
     p_booking_id uuid,
     p_transaction_reference text,
@@ -742,18 +787,62 @@ returns jsonb as $$
 declare
     v_booking public.bookings%rowtype;
     v_payment_id uuid;
+    v_existing_booking_id uuid;
+    v_already_confirmed boolean := false;
+    v_is_admin boolean := false;
 begin
-    select * into v_booking from public.bookings where id = p_booking_id;
+    -- 1. Authorization check: strictly restricted to service_role or admin callers
+    select (role = 'admin') into v_is_admin from public.profiles where id = auth.uid();
+    if coalesce(v_is_admin, false) is distinct from true and auth.role() != 'service_role' then
+        raise exception 'Access Denied: Payment confirmation requires service_role or administrator authorization';
+    end if;
+
+    if p_transaction_reference is null or trim(p_transaction_reference) = '' then
+        raise exception 'Invalid transaction reference: payment reference cannot be empty';
+    end if;
+
+    -- 2. Anti-Collision: verify transaction reference is not already used for an unrelated booking
+    select booking_id into v_existing_booking_id
+    from public.payments
+    where transaction_reference = p_transaction_reference;
+
+    if v_existing_booking_id is not null and v_existing_booking_id <> p_booking_id then
+        raise exception 'Security Alert: Transaction reference % is already bound to another booking (%)', p_transaction_reference, v_existing_booking_id;
+    end if;
+
+    -- 3. Lock & verify booking record
+    select * into v_booking
+    from public.bookings
+    where id = p_booking_id
+    for update;
+
     if not found then
-        raise exception 'Booking not found';
+        raise exception 'Booking not found: referenced booking (%) does not exist', p_booking_id;
     end if;
 
-    -- Validate payment amount if supplied
+    -- 4. Idempotency Check: if already confirmed with matching reference, return cleanly
+    if v_booking.booking_status = 'confirmed' and v_booking.payment_reference = p_transaction_reference then
+        return jsonb_build_object(
+            'success', true,
+            'already_confirmed', true,
+            'booking_id', v_booking.id,
+            'booking_reference', v_booking.booking_reference,
+            'status', 'confirmed',
+            'message', 'Booking was already confirmed with this payment reference'
+        );
+    end if;
+
+    -- 5. Status Validation: Cancelled or expired bookings must never be confirmed
+    if v_booking.booking_status in ('cancelled', 'expired') then
+        raise exception 'Cannot confirm payment: Booking % is in % status', v_booking.booking_reference, v_booking.booking_status;
+    end if;
+
+    -- 6. Authoritative Amount Validation: Verify paid amount matches or exceeds total_amount
     if p_amount is not null and p_amount < v_booking.total_amount then
-        raise exception 'Supplied payment amount (%) is less than required total (%)', p_amount, v_booking.total_amount;
+        raise exception 'Payment amount mismatch: Supplied % is less than authoritative booking total (%)', p_amount, v_booking.total_amount;
     end if;
 
-    -- Upsert payment ledger entry
+    -- 7. Upsert immutable payment ledger entry
     insert into public.payments (
         booking_id,
         user_id,
@@ -767,7 +856,7 @@ begin
     )
     values (
         v_booking.id,
-        v_booking.client_id,
+        coalesce(v_booking.client_id, v_booking.user_id),
         p_transaction_reference,
         v_booking.total_amount,
         v_booking.currency,
@@ -781,7 +870,7 @@ begin
         updated_at = timezone('utc'::text, now())
     returning id into v_payment_id;
 
-    -- Update authoritative booking status to confirmed
+    -- 8. Atomically confirm booking
     update public.bookings
     set
         booking_status = 'confirmed'::booking_status_type,
@@ -791,10 +880,10 @@ begin
         updated_at = timezone('utc'::text, now())
     where id = v_booking.id;
 
-    -- Dispatch confirmation notification
+    -- 9. Dispatch notifications once
     insert into public.notifications (user_id, type, title, message)
     values
-        (v_booking.client_id, 'booking', 'Booking Confirmed!', 'Your booking (' || v_booking.booking_reference || ') is confirmed.'),
+        (coalesce(v_booking.client_id, v_booking.user_id), 'booking', 'Booking Confirmed!', 'Your booking (' || v_booking.booking_reference || ') is confirmed.'),
         (v_booking.host_id, 'booking', 'New Confirmed Booking', 'You have a new confirmed booking (' || v_booking.booking_reference || ').');
 
     return jsonb_build_object(
@@ -806,6 +895,10 @@ begin
     );
 end;
 $$ language plpgsql security definer set search_path = public, pg_temp;
+
+-- Restrict RPC execution permissions: only service_role and postgres can call confirm_booking_payment directly
+revoke all on function public.confirm_booking_payment(uuid, text, text, numeric, jsonb) from public, anon, authenticated;
+grant execute on function public.confirm_booking_payment(uuid, text, text, numeric, jsonb) to service_role, postgres;
 
 -- ==============================================================================
 -- 16. FAVOURITES TABLE
@@ -1130,6 +1223,26 @@ begin
         'door_pin', v_creds.door_pin,
         'access_instructions', v_creds.access_instructions
     );
+end;
+$$ language plpgsql security definer set search_path = public, pg_temp;
+
+create or replace function public.get_booking_access_credentials(
+    p_booking_id uuid
+)
+returns jsonb as $$
+declare
+    v_booking public.bookings%rowtype;
+begin
+    if auth.uid() is null then
+        raise exception 'Authentication required to retrieve access credentials';
+    end if;
+
+    select * into v_booking from public.bookings where id = p_booking_id;
+    if not found then
+        raise exception 'Booking not found';
+    end if;
+
+    return public.get_space_access_credentials(v_booking.space_id, v_booking.id);
 end;
 $$ language plpgsql security definer set search_path = public, pg_temp;
 

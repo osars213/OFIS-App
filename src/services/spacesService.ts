@@ -258,6 +258,20 @@ export const spacesService = {
         await supabase.from('desks').insert(deskPayloads);
       }
 
+      // Store credentials in secure vault table
+      try {
+        await supabase.from('space_access_credentials').upsert({
+          space_id: data.id,
+          wifi_ssid: spaceData.wifiSSID || 'OFIS_Guest_HighSpeed',
+          wifi_pass: spaceData.wifiPass || 'WorkFocus2026',
+          door_pin: spaceData.doorPIN || '4829',
+          access_instructions: 'Show your OFIS digital QR pass at reception or dial keypad PIN.',
+          updated_at: new Date().toISOString(),
+        });
+      } catch (credErr) {
+        console.debug('space_access_credentials upsert notice:', credErr);
+      }
+
       return { space: mapDbSpaceToSpace(data, spaceData.desks || []), error: null };
     } catch (err: any) {
       return { space: null, error: err.message || 'Failed to create space in database.' };

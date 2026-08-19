@@ -147,7 +147,10 @@ export const SearchResultsView: React.FC<SearchResultsViewProps> = ({
     setSelectedSpace,
     setIsCheckoutModalOpen,
     showToast,
+    effectiveTheme,
   } = useApp();
+
+  const isLight = effectiveTheme === 'light';
 
   // Local view toggle
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
@@ -511,16 +514,20 @@ export const SearchResultsView: React.FC<SearchResultsViewProps> = ({
   }, [bookingDraft.startDate]);
 
   return (
-    <div className="w-full min-h-screen bg-[#0D0D0D] text-white">
+    <div className={`w-full min-h-screen ${isLight ? 'bg-[#F0F2F5] text-neutral-900' : 'bg-[#0D0D0D] text-white'}`}>
       {/* 1. TOP STICKY SEARCH SUMMARY BAR */}
-      <section aria-label="Search summary bar" className="sticky top-16 sm:top-20 z-30 bg-[#121212]/95 backdrop-blur-md border-b border-[#222222] shadow-xl">
+      <section aria-label="Search summary bar" className={`sticky top-16 sm:top-20 z-30 ${isLight ? 'bg-white/95 border-neutral-200' : 'bg-[#121212]/95 border-[#222222]'} backdrop-blur-md border-b shadow-xl`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             {/* Compact Search summary chips container */}
             <div
               id="search-summary-bar-pill"
               onClick={() => setIsEditSearchOpen(!isEditSearchOpen)}
-              className="flex-1 flex flex-wrap items-center gap-2 sm:gap-3 bg-[#1A1A1A] hover:bg-[#222222] border border-[#2D2D2D] hover:border-[#00C878]/60 rounded-2xl px-3.5 py-2 cursor-pointer transition-all duration-200 shadow-sm"
+              className={`flex-1 flex flex-wrap items-center gap-2 sm:gap-3 ${
+                isLight
+                  ? 'bg-neutral-50 hover:bg-neutral-100/80 border-neutral-200 hover:border-[#00C878]/60 text-neutral-900'
+                  : 'bg-[#1A1A1A] hover:bg-[#222222] border-[#2D2D2D] hover:border-[#00C878]/60 text-white'
+              } rounded-2xl px-3.5 py-2 cursor-pointer transition-all duration-200 shadow-sm`}
             >
               {/* Location Pill */}
               <div className="flex items-center gap-1.5 text-xs font-semibold text-white">

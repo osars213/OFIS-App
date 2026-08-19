@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   QrCode,
@@ -20,6 +20,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { bookingsService } from '../services/bookingsService';
 import { OfisLogo } from './OfisLogo';
 
 export const DigitalPassModal: React.FC = () => {
@@ -34,8 +35,39 @@ export const DigitalPassModal: React.FC = () => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isNfcUnlocking, setIsNfcUnlocking] = useState(false);
   const [nfcSuccess, setNfcSuccess] = useState(false);
+  const [credentials, setCredentials] = useState<{
+    wifiSSID?: string;
+    wifiPass?: string;
+    doorPIN?: string;
+    accessInstructions?: string;
+  }>({});
+
+  useEffect(() => {
+    if (!activePassBooking) return;
+
+    // Load fresh secure credentials for active confirmed booking
+    let isMounted = true;
+    bookingsService.fetchAccessCredentials(activePassBooking.id, activePassBooking.spaceId).then((res) => {
+      if (isMounted) {
+        setCredentials({
+          wifiSSID: res.wifiSSID || activePassBooking.wifiSSID,
+          wifiPass: res.wifiPass || activePassBooking.wifiPass,
+          doorPIN: res.doorPIN || activePassBooking.doorPIN,
+          accessInstructions: res.accessInstructions,
+        });
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activePassBooking]);
 
   if (!isPassModalOpen || !activePassBooking) return null;
+
+  const resolvedWifiSSID = credentials.wifiSSID || activePassBooking.wifiSSID || 'OFIS_Guest_HighSpeed';
+  const resolvedWifiPass = credentials.wifiPass || activePassBooking.wifiPass || 'WorkFocus2026';
+  const resolvedDoorPIN = credentials.doorPIN || activePassBooking.doorPIN || '4829#';
 
   const bookingRef =
     activePassBooking.bookingReference ||
@@ -181,14 +213,14 @@ export const DigitalPassModal: React.FC = () => {
                 <span>High-Speed Wi-Fi</span>
               </div>
               <div className="font-mono text-xs font-bold text-white truncate">
-                {activePassBooking.wifiSSID || 'OFIS-Fast-5G'}
+                {resolvedWifiSSID}
               </div>
               <div className="flex items-center justify-between mt-1">
                 <span className="font-mono text-[11px] text-[#9A9A9A]">
-                  {activePassBooking.wifiPass || 'OfisNaija2026!'}
+                  {resolvedWifiPass}
                 </span>
                 <button
-                  onClick={() => handleCopy(activePassBooking.wifiPass || 'OfisNaija2026!', 'Wi-Fi Password')}
+                  onClick={() => handleCopy(resolvedWifiPass, 'Wi-Fi Password')}
                   className="text-[10px] text-[#00C878] hover:text-[#00C878]/80 font-bold"
                 >
                   {copiedField === 'Wi-Fi Password' ? 'Copied' : 'Copy'}
@@ -203,12 +235,12 @@ export const DigitalPassModal: React.FC = () => {
                 <span>Lobby Door PIN</span>
               </div>
               <div className="font-mono text-lg font-black text-[#D6A83A]">
-                {activePassBooking.doorPIN || '9482#'}
+                {resolvedDoorPIN}
               </div>
               <div className="flex items-center justify-between mt-0.5">
                 <span className="text-[10px] text-[#9A9A9A]">Keypad entry</span>
                 <button
-                  onClick={() => handleCopy(activePassBooking.doorPIN || '9482#', 'Door PIN')}
+                  onClick={() => handleCopy(resolvedDoorPIN, 'Door PIN')}
                   className="text-[10px] text-[#D6A83A] hover:text-[#D6A83A]/80 font-bold"
                 >
                   {copiedField === 'Door PIN' ? 'Copied' : 'Copy'}

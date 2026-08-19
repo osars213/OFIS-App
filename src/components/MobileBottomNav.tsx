@@ -30,7 +30,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     setIsListSpaceModalOpen,
     openAuthModal,
     setSelectedSpace,
+    effectiveTheme,
   } = useApp();
+
+  const isLight = effectiveTheme === 'light';
 
   const activeBookingsCount = currentUser
     ? bookings.filter(
@@ -41,7 +44,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   return (
     <div
       id="mobile-bottom-navigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0E0E0E]/95 backdrop-blur-lg border-t border-[#222222] px-2 py-1.5 shadow-2xl"
+      className={`md:hidden fixed bottom-0 left-0 right-0 z-40 ${
+        isLight ? 'bg-white/95 border-t border-neutral-200 shadow-xl' : 'bg-[#0E0E0E]/95 border-t border-[#222222] shadow-2xl'
+      } backdrop-blur-lg px-2 py-1.5 transition-colors duration-150`}
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         {/* 1. Explore */}
@@ -55,7 +60,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
             currentView === 'explore'
               ? 'text-[#00C878] font-bold'
-              : 'text-[#888888] hover:text-white'
+              : isLight ? 'text-neutral-500 hover:text-neutral-900' : 'text-[#888888] hover:text-white'
           }`}
         >
           <Compass className={`w-5 h-5 mb-0.5 ${currentView === 'explore' ? 'text-[#00C878]' : ''}`} />
@@ -73,7 +78,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
             currentView === 'results'
               ? 'text-[#00C878] font-bold'
-              : 'text-[#888888] hover:text-white'
+              : isLight ? 'text-neutral-500 hover:text-neutral-900' : 'text-[#888888] hover:text-white'
           }`}
         >
           <MapPin className={`w-5 h-5 mb-0.5 ${currentView === 'results' ? 'text-[#00C878]' : ''}`} />
@@ -104,7 +109,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all relative cursor-pointer ${
             currentView === 'passes'
               ? 'text-[#00C878] font-bold'
-              : 'text-[#888888] hover:text-white'
+              : isLight ? 'text-neutral-500 hover:text-neutral-900' : 'text-[#888888] hover:text-white'
           }`}
         >
           <div className="relative">
@@ -123,7 +128,9 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           type="button"
           id="mobile-nav-menu-btn"
           onClick={onOpenNavDrawer}
-          className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[#888888] hover:text-white transition-all cursor-pointer"
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl ${
+            isLight ? 'text-neutral-500 hover:text-neutral-900' : 'text-[#888888] hover:text-white'
+          } transition-all cursor-pointer`}
         >
           <User className="w-5 h-5 mb-0.5" />
           <span className="text-[10px]">Menu</span>

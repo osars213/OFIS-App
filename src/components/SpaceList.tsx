@@ -107,7 +107,10 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
     openAiModal,
     bookingDraft,
     setBookingDraft,
+    effectiveTheme,
   } = useApp();
+
+  const isLight = effectiveTheme === 'light';
 
   const [viewMode, setViewMode] = useState<'grid' | 'split' | 'map'>('grid');
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
@@ -344,7 +347,7 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
   }, [filteredSpaces]);
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-white relative pb-20">
+    <div className={`min-h-screen ${isLight ? 'bg-[#F9FAFB] text-neutral-900' : 'bg-[#0D0D0D] text-white'} relative pb-20 transition-colors duration-150`}>
       {/* Toast notification for Vicinity */}
       {locationToast && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#063B2A] text-[#00C878] border border-[#00C878]/50 px-4 py-2 rounded-2xl shadow-2xl text-xs font-black flex items-center gap-2 animate-in fade-in slide-in-from-top-3">
@@ -354,63 +357,108 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
       )}
 
       {/* 1. HERO SECTION */}
-      <div className="relative overflow-hidden bg-radial from-[#063B2A]/40 via-[#0D0D0D] to-[#0D0D0D] border-b border-[#222222] pt-10 sm:pt-16 pb-12 sm:pb-20">
+      <div className={`relative overflow-hidden ${
+        isLight
+          ? 'bg-radial from-[#E6F9F0]/80 via-[#F9FAFB] to-[#F9FAFB] border-b border-neutral-200'
+          : 'bg-radial from-[#063B2A]/40 via-[#0D0D0D] to-[#0D0D0D] border-b border-[#222222]'
+      } pt-8 sm:pt-12 pb-10 sm:pb-14 transition-colors duration-150`}>
         {/* Subtle Ambient Grid glow */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#141414_1px,transparent_1px),linear-gradient(to_bottom,#141414_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
+        <div className={`absolute inset-0 ${
+          isLight
+            ? 'bg-[linear-gradient(to_right,#E5E7EB_1px,transparent_1px),linear-gradient(to_bottom,#E5E7EB_1px,transparent_1px)] opacity-60'
+            : 'bg-[linear-gradient(to_right,#141414_1px,transparent_1px),linear-gradient(to_bottom,#141414_1px,transparent_1px)] opacity-30'
+        } bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none`} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#171717] border border-[#282828] mb-5 shadow-sm">
+          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full ${
+            isLight ? 'bg-white border-neutral-200 shadow-sm' : 'bg-[#171717] border-[#282828]'
+          } border mb-4`}>
             <span className="w-2 h-2 rounded-full bg-[#00C878] animate-pulse" />
-            <span className="text-xs font-bold tracking-wider uppercase text-[#00C878]">
+            <span className={`text-xs font-bold tracking-wider uppercase ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'}`}>
               Nigeria's Physical Space Network
             </span>
           </div>
 
           {/* Core Headline */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] max-w-4xl mx-auto">
+          <h1 className={`text-3xl sm:text-5xl lg:text-6xl font-black ${
+            isLight ? 'text-neutral-900' : 'text-white'
+          } tracking-tight leading-[1.1] max-w-4xl mx-auto`}>
             Find the right space. <br />
-            <span className="text-[#00C878]">Book it when you need it.</span>
+            <span className={isLight ? 'text-[#00A865]' : 'text-[#00C878]'}>Book it when you need it.</span>
           </h1>
 
-          {/* Subheading & Core Promise */}
-          <div className="mt-3.5 sm:mt-4 max-w-2xl mx-auto">
-            <p className="text-base sm:text-lg font-bold text-[#F2F2F2] tracking-wide">
+          {/* Subheading & Core Promise (High Contrast & Legibility) */}
+          <div className="mt-3 sm:mt-3.5 max-w-2xl mx-auto">
+            <p className={`text-base sm:text-lg font-bold ${isLight ? 'text-neutral-800' : 'text-[#F2F2F2]'} tracking-wide`}>
               Work. Create. Meet. Record.
             </p>
-            <p className="text-xs sm:text-sm text-[#9A9A9A] mt-1 font-normal leading-relaxed">
+            <p className={`text-xs sm:text-sm ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-1 font-normal leading-relaxed`}>
               Book inspiring workspaces, studios, meeting rooms and creative spaces across Nigeria by the hour or day.
             </p>
           </div>
 
-          {/* 3 Trust Badges */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs">
-            <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#171717] border border-[#282828] text-stone-200">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#00C878]" />
-              <span className="font-semibold">Verified</span>
+          {/* Enhanced Feature Pills (Verified, Clear Pricing, Instant Booking) */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs">
+            <div className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl ${
+              isLight
+                ? 'bg-white border-neutral-200 text-neutral-800 shadow-xs hover:border-[#00C878]/50'
+                : 'bg-[#171717] border-[#2A2A2A] text-stone-100 hover:border-[#00C878]/60 shadow-xs'
+            } border transition-all group`}>
+              <div className="w-5 h-5 rounded-lg bg-[#00C878]/15 flex items-center justify-center text-[#00C878] shrink-0">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#00C878]" />
+              </div>
+              <div className="text-left">
+                <span className="font-bold block leading-tight">Verified Spaces</span>
+                <span className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-stone-400'} font-normal`}>24/7 Power & Starlink</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#171717] border border-[#282828] text-stone-200">
-              <span className="font-mono font-black text-xs text-[#00C878]">₦</span>
-              <span className="font-semibold">Clear Pricing</span>
+
+            <div className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl ${
+              isLight
+                ? 'bg-white border-neutral-200 text-neutral-800 shadow-xs hover:border-[#00C878]/50'
+                : 'bg-[#171717] border-[#2A2A2A] text-stone-100 hover:border-[#00C878]/60 shadow-xs'
+            } border transition-all group`}>
+              <div className="w-5 h-5 rounded-lg bg-[#00C878]/15 flex items-center justify-center text-[#00C878] font-mono font-black text-xs shrink-0">
+                ₦
+              </div>
+              <div className="text-left">
+                <span className="font-bold block leading-tight">Clear Pricing</span>
+                <span className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-stone-400'} font-normal`}>No Hidden Fees</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#171717] border border-[#282828] text-stone-200">
-              <Calendar className="w-3.5 h-3.5 text-[#00C878]" />
-              <span className="font-semibold">Instant Booking</span>
+
+            <div className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl ${
+              isLight
+                ? 'bg-white border-neutral-200 text-neutral-800 shadow-xs hover:border-[#00C878]/50'
+                : 'bg-[#171717] border-[#2A2A2A] text-stone-100 hover:border-[#00C878]/60 shadow-xs'
+            } border transition-all group`}>
+              <div className="w-5 h-5 rounded-lg bg-[#00C878]/15 flex items-center justify-center text-[#00C878] shrink-0">
+                <Calendar className="w-3.5 h-3.5 text-[#00C878]" />
+              </div>
+              <div className="text-left">
+                <span className="font-bold block leading-tight">Instant Booking</span>
+                <span className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-stone-400'} font-normal`}>Hourly & Daily Passes</span>
+              </div>
             </div>
           </div>
 
           {/* 2. SEARCH & BOOKING MODULE (Exact 6-Box Grid) */}
-          <div className="mt-7 sm:mt-8 max-w-5xl mx-auto bg-[#171717]/95 backdrop-blur-md rounded-3xl p-4 sm:p-6 border border-[#2A2A2A] shadow-2xl text-left">
-            <div className="px-1 pb-3 text-xs font-black text-[#00C878] uppercase tracking-wider flex items-center justify-between">
+          <div className={`mt-6 sm:mt-7 max-w-5xl mx-auto ${
+            isLight ? 'bg-white text-neutral-900 border-neutral-200 shadow-xl' : 'bg-[#171717]/95 text-white border-[#2A2A2A] shadow-2xl'
+          } backdrop-blur-md rounded-3xl p-4 sm:p-6 border text-left transition-colors duration-150`}>
+            <div className={`px-1 pb-3 text-xs font-black ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} uppercase tracking-wider flex items-center justify-between`}>
               <div className="flex items-center gap-2">
-                <Compass className="w-4 h-4 text-[#00C878]" />
+                <Compass className="w-4 h-4" />
                 <span>WHAT SPACE ARE YOU LOOKING FOR?</span>
               </div>
               <button
                 type="button"
                 onClick={handleLocateVicinity}
                 disabled={isLocating}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#063B2A] hover:bg-[#084c36] text-[#00C878] border border-[#00C878]/40 text-xs font-black transition-all cursor-pointer shadow-xs active:scale-95"
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl ${
+                  isLight ? 'bg-[#E8F8F0] hover:bg-[#D4F4E4] text-[#00A865] border border-[#00C878]/30' : 'bg-[#063B2A] hover:bg-[#084c36] text-[#00C878] border border-[#00C878]/40'
+                } text-xs font-black transition-all cursor-pointer shadow-xs active:scale-95`}
               >
                 {isLocating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LocateFixed className="w-3.5 h-3.5" />}
                 <span>{isLocating ? 'Locating...' : 'Locate in My Vicinity'}</span>
@@ -421,10 +469,12 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
               {/* 6 Input Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 {/* 1. Location Input */}
-                <div className="bg-[#202020] border border-[#2D2D2D] focus-within:border-[#00C878] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors">
+                <div className={`${
+                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
+                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
                   <MapPin className="w-4 h-4 text-[#00C878] shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <label className="block text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider">
+                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
                       Location
                     </label>
                     <input
@@ -432,113 +482,135 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                       placeholder="Lekki, VI, Yaba, Abuja..."
                       value={searchLocation}
                       onChange={e => setSearchLocation(e.target.value)}
-                      className="w-full bg-transparent text-xs font-semibold text-white placeholder:text-[#666666] focus:outline-none"
+                      className={`w-full bg-transparent text-xs font-semibold ${
+                        isLight ? 'text-neutral-900 placeholder:text-neutral-400' : 'text-white placeholder:text-[#666666]'
+                      } focus:outline-none`}
                     />
                   </div>
                 </div>
 
                 {/* 2. Date Input */}
-                <div className="bg-[#202020] border border-[#2D2D2D] focus-within:border-[#00C878] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors">
+                <div className={`${
+                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
+                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
                   <Calendar className="w-4 h-4 text-[#00C878] shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <label className="block text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider">
+                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
                       Date
                     </label>
                     <input
                       type="date"
                       value={searchDate}
                       onChange={e => setSearchDate(e.target.value)}
-                      className="w-full bg-transparent text-xs font-semibold text-white focus:outline-none [color-scheme:dark]"
+                      className={`w-full bg-transparent text-xs font-semibold ${
+                        isLight ? 'text-neutral-900 [color-scheme:light]' : 'text-white [color-scheme:dark]'
+                      } focus:outline-none`}
                     />
                   </div>
                 </div>
 
                 {/* 3. Start Time */}
-                <div className="bg-[#202020] border border-[#2D2D2D] focus-within:border-[#00C878] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors">
+                <div className={`${
+                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
+                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
                   <Clock className="w-4 h-4 text-[#00C878] shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <label className="block text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider">
+                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
                       Start time
                     </label>
                     <select
                       value={searchStartTime}
                       onChange={e => setSearchStartTime(e.target.value)}
-                      className="w-full bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer"
+                      className={`w-full bg-transparent text-xs font-semibold ${
+                        isLight ? 'text-neutral-900' : 'text-white'
+                      } focus:outline-none cursor-pointer`}
                     >
-                      <option value="08:00 AM" className="bg-[#171717] text-white">08:00 AM</option>
-                      <option value="09:00 AM" className="bg-[#171717] text-white">09:00 AM</option>
-                      <option value="10:00 AM" className="bg-[#171717] text-white">10:00 AM</option>
-                      <option value="11:00 AM" className="bg-[#171717] text-white">11:00 AM</option>
-                      <option value="01:00 PM" className="bg-[#171717] text-white">01:00 PM</option>
-                      <option value="04:00 PM" className="bg-[#171717] text-white">04:00 PM</option>
-                      <option value="07:00 PM" className="bg-[#171717] text-white">07:00 PM</option>
+                      <option value="08:00 AM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>08:00 AM</option>
+                      <option value="09:00 AM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>09:00 AM</option>
+                      <option value="10:00 AM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>10:00 AM</option>
+                      <option value="11:00 AM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>11:00 AM</option>
+                      <option value="01:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>01:00 PM</option>
+                      <option value="04:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>04:00 PM</option>
+                      <option value="07:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>07:00 PM</option>
                     </select>
                   </div>
                 </div>
 
                 {/* 4. End Time */}
-                <div className="bg-[#202020] border border-[#2D2D2D] focus-within:border-[#00C878] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors">
+                <div className={`${
+                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
+                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
                   <Clock className="w-4 h-4 text-[#00C878] shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <label className="block text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider">
+                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
                       End time
                     </label>
                     <select
                       value={searchEndTime}
                       onChange={e => setSearchEndTime(e.target.value)}
-                      className="w-full bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer"
+                      className={`w-full bg-transparent text-xs font-semibold ${
+                        isLight ? 'text-neutral-900' : 'text-white'
+                      } focus:outline-none cursor-pointer`}
                     >
-                      <option value="01:00 PM" className="bg-[#171717] text-white">01:00 PM</option>
-                      <option value="02:00 PM" className="bg-[#171717] text-white">02:00 PM</option>
-                      <option value="04:00 PM" className="bg-[#171717] text-white">04:00 PM</option>
-                      <option value="06:00 PM" className="bg-[#171717] text-white">06:00 PM</option>
-                      <option value="08:00 PM" className="bg-[#171717] text-white">08:00 PM</option>
-                      <option value="10:00 PM" className="bg-[#171717] text-white">10:00 PM</option>
+                      <option value="01:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>01:00 PM</option>
+                      <option value="02:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>02:00 PM</option>
+                      <option value="04:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>04:00 PM</option>
+                      <option value="06:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>06:00 PM</option>
+                      <option value="08:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>08:00 PM</option>
+                      <option value="10:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>10:00 PM</option>
                     </select>
                   </div>
                 </div>
 
                 {/* 5. Space Type */}
-                <div className="bg-[#202020] border border-[#2D2D2D] focus-within:border-[#00C878] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors">
+                <div className={`${
+                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
+                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
                   <Layers className="w-4 h-4 text-[#00C878] shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <label className="block text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider">
+                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
                       Space type
                     </label>
                     <select
                       value={searchSpaceType}
                       onChange={e => setSearchSpaceType(e.target.value)}
-                      className="w-full bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer"
+                      className={`w-full bg-transparent text-xs font-semibold ${
+                        isLight ? 'text-neutral-900' : 'text-white'
+                      } focus:outline-none cursor-pointer`}
                     >
-                      <option value="all" className="bg-[#171717] text-white">Coworking, Studio, ...</option>
-                      <option value="coworking" className="bg-[#171717] text-white">Coworking Desk</option>
-                      <option value="office" className="bg-[#171717] text-white">Private Office</option>
-                      <option value="meeting" className="bg-[#171717] text-white">Meeting Room</option>
-                      <option value="podcast" className="bg-[#171717] text-white">Podcast Studio</option>
-                      <option value="photo" className="bg-[#171717] text-white">Photography Studio</option>
-                      <option value="video" className="bg-[#171717] text-white">Creator / Video Studio</option>
-                      <option value="event" className="bg-[#171717] text-white">Event / Training Space</option>
+                      <option value="all" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Coworking, Studio, ...</option>
+                      <option value="coworking" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Coworking Desk</option>
+                      <option value="office" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Private Office</option>
+                      <option value="meeting" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Meeting Room</option>
+                      <option value="podcast" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Podcast Studio</option>
+                      <option value="photo" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Photography Studio</option>
+                      <option value="video" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Creator / Video Studio</option>
+                      <option value="event" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Event / Training Space</option>
                     </select>
                   </div>
                 </div>
 
                 {/* 6. People / Capacity */}
-                <div className="bg-[#202020] border border-[#2D2D2D] focus-within:border-[#00C878] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors">
+                <div className={`${
+                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
+                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
                   <Users className="w-4 h-4 text-[#00C878] shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <label className="block text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider">
+                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
                       People
                     </label>
                     <select
                       value={searchCapacity}
                       onChange={e => setSearchCapacity(e.target.value)}
-                      className="w-full bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer"
+                      className={`w-full bg-transparent text-xs font-semibold ${
+                        isLight ? 'text-neutral-900' : 'text-white'
+                      } focus:outline-none cursor-pointer`}
                     >
-                      <option value="all" className="bg-[#171717] text-white">1 – 10+</option>
-                      <option value="1" className="bg-[#171717] text-white">1 Person</option>
-                      <option value="2-4" className="bg-[#171717] text-white">2 – 4 People</option>
-                      <option value="5-10" className="bg-[#171717] text-white">5 – 10 People</option>
-                      <option value="10+" className="bg-[#171717] text-white">10+ Team</option>
+                      <option value="all" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>1 – 10+</option>
+                      <option value="1" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>1 Person</option>
+                      <option value="2-4" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>2 – 4 People</option>
+                      <option value="5-10" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>5 – 10 People</option>
+                      <option value="10+" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>10+ Team</option>
                     </select>
                   </div>
                 </div>
@@ -556,8 +628,8 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
             </form>
 
             {/* Quick Filters Pill Bar */}
-            <div className="mt-4 pt-3 border-t border-[#262626] flex flex-wrap items-center gap-2 text-xs">
-              <span className="text-[11px] text-[#9A9A9A] font-bold uppercase tracking-wider mr-1">
+            <div className={`mt-4 pt-3 border-t ${isLight ? 'border-neutral-200' : 'border-[#262626]'} flex flex-wrap items-center gap-2 text-xs`}>
+              <span className={`text-[11px] ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} font-bold uppercase tracking-wider mr-1`}>
                 QUICK FILTERS:
               </span>
               <button
@@ -568,6 +640,8 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                   (filters.priceRateType === 'hourly' && (filters.minPriceNGN > 0 || (filters.maxPriceNGN || 75000) < 75000)) ||
                   (filters.priceRateType === 'daily' && ((filters.minDailyPriceNGN || 0) > 0 || (filters.maxDailyPriceNGN || 350000) < 350000))
                     ? 'bg-[#063B2A] border-[#00C878] text-[#00C878]'
+                    : isLight
+                    ? 'bg-neutral-100 border-neutral-300 text-neutral-800 hover:border-[#00C878]'
                     : 'bg-[#202020] border-[#2C2C2C] text-[#F2F2F2] hover:border-[#00C878]/50'
                 }`}
               >
@@ -603,6 +677,8 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                     className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
                       isActive
                         ? 'bg-[#063B2A] border-[#00C878] text-[#00C878]'
+                        : isLight
+                        ? 'bg-neutral-100 border-neutral-300 text-neutral-800 hover:border-[#00C878]'
                         : 'bg-[#202020] border-[#2C2C2C] text-[#F2F2F2] hover:border-[#00C878]/50'
                     }`}
                   >
@@ -619,7 +695,7 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                     setActiveVicinity(null);
                     setUserLocation(null);
                   }}
-                  className="text-[11px] text-[#00C878] hover:underline font-semibold ml-2 cursor-pointer"
+                  className="text-[11px] text-[#00C878] hover:underline font-bold ml-2 cursor-pointer"
                 >
                   Clear filter
                 </button>
@@ -630,12 +706,12 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
       </div>
 
       {/* 3. VICINITY & REGIONAL HUBS QUICK BAR */}
-      <div className="bg-[#141414] border-b border-[#222222] py-3.5">
+      <div className={`${isLight ? 'bg-[#F3F4F6] border-b border-neutral-200' : 'bg-[#141414] border-b border-[#222222]'} py-3.5 transition-colors duration-150`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between gap-4 overflow-x-auto no-scrollbar">
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[11px] font-black uppercase tracking-wider text-[#00C878] flex items-center gap-1.5">
-                <Navigation className="w-3.5 h-3.5 text-[#00C878]" />
+              <span className={`text-[11px] font-black uppercase tracking-wider ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} flex items-center gap-1.5`}>
+                <Navigation className="w-3.5 h-3.5" />
                 <span>Jump Vicinity:</span>
               </span>
             </div>
@@ -655,12 +731,18 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-[#00C878] text-[#0D0D0D] font-black shadow-sm ring-2 ring-[#00C878]/40'
-                        : 'bg-[#1E1E1E] hover:bg-[#282828] text-[#B0B0B0] hover:text-white border border-[#282828]'
+                        : isLight
+                        ? 'bg-white hover:bg-neutral-100 text-neutral-700 hover:text-neutral-900 border border-neutral-200'
+                        : 'bg-[#1E1E1E] hover:bg-[#282828] text-[#D4D4D4] hover:text-white border border-[#282828]'
                     }`}
                   >
                     <span>📍 {vic.shortName}</span>
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                      isSelected ? 'bg-[#0D0D0D] text-[#00C878]' : 'bg-[#2A2A2A] text-[#9A9A9A]'
+                      isSelected
+                        ? 'bg-[#0D0D0D] text-[#00C878]'
+                        : isLight
+                        ? 'bg-neutral-200 text-neutral-700'
+                        : 'bg-[#2A2A2A] text-[#D4D4D4]'
                     }`}>
                       {spaceCount}
                     </span>
@@ -671,7 +753,9 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
 
             <button
               onClick={() => setViewMode(prev => (prev === 'map' ? 'grid' : 'map'))}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#063B2A] text-[#00C878] hover:bg-[#084c36] text-xs font-black border border-[#00C878]/40 shrink-0 transition-colors cursor-pointer"
+              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${
+                isLight ? 'bg-[#E8F8F0] text-[#00A865] hover:bg-[#D4F4E4] border border-[#00C878]/30' : 'bg-[#063B2A] text-[#00C878] hover:bg-[#084c36] border border-[#00C878]/40'
+              } text-xs font-black shrink-0 transition-colors cursor-pointer`}
             >
               <MapIcon className="w-3.5 h-3.5" />
               <span>{viewMode === 'map' ? 'Back to Cards' : 'View on Map'}</span>
@@ -681,10 +765,10 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
       </div>
 
       {/* 4. CATEGORIES ROW */}
-      <div className="border-b border-[#222222] bg-[#121212] py-5">
+      <div className={`border-b ${isLight ? 'border-neutral-200 bg-white' : 'border-[#222222] bg-[#121212]'} py-5 transition-colors duration-150`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-3.5">
-            <h2 className="text-xs font-black text-[#9A9A9A] uppercase tracking-wider flex items-center gap-2">
+            <h2 className={`text-xs font-black ${isLight ? 'text-neutral-600' : 'text-[#A3A3A3]'} uppercase tracking-wider flex items-center gap-2`}>
               <Layers className="w-3.5 h-3.5 text-[#00C878]" />
               <span>Explore by Space Type</span>
             </h2>
@@ -725,13 +809,21 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                   }}
                   className={`flex flex-col items-center text-center p-3 rounded-2xl border transition-all cursor-pointer group ${
                     isSelected
-                      ? 'bg-[#063B2A] border-[#00C878] text-[#00C878] shadow-md shadow-[#00C878]/10'
+                      ? isLight
+                        ? 'bg-[#E8F8F0] border-[#00C878] text-[#00A865] shadow-sm'
+                        : 'bg-[#063B2A] border-[#00C878] text-[#00C878] shadow-md shadow-[#00C878]/10'
+                      : isLight
+                      ? 'bg-neutral-50 border-neutral-200 hover:border-[#00C878]/50 hover:bg-neutral-100 text-neutral-800'
                       : 'bg-[#171717] border-[#262626] hover:border-[#383838] hover:bg-[#1E1E1E] text-[#F2F2F2]'
                   }`}
                 >
                   <div
                     className={`w-10 h-10 rounded-xl flex items-center justify-center mb-1.5 transition-transform group-hover:scale-110 ${
-                      isSelected ? 'bg-[#00C878] text-[#0D0D0D]' : 'bg-[#222222] text-[#00C878]'
+                      isSelected
+                        ? 'bg-[#00C878] text-[#0D0D0D]'
+                        : isLight
+                        ? 'bg-neutral-200 text-[#00A865]'
+                        : 'bg-[#222222] text-[#00C878]'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -747,26 +839,30 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
       {/* 5. MAIN CONTENT AREA: RESULTS, FILTERS, SPACES & MAP */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Top Control Bar: Results count, Smart Filter chips, View modes */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-[#222222]">
+        <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b ${
+          isLight ? 'border-neutral-200' : 'border-[#222222]'
+        }`}>
           <div>
             <div className="flex items-center gap-3">
-              <h3 className="text-lg font-black text-white">
+              <h3 className={`text-lg font-black ${isLight ? 'text-neutral-900' : 'text-white'}`}>
                 {activeVicinity
                   ? `Spaces in ${activeVicinity.shortName}`
                   : filters.city === 'all'
                   ? 'Spaces across Nigeria'
                   : `Spaces in ${filters.city}`}
               </h3>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#171717] border border-[#282828] text-xs font-bold text-[#00C878]">
+              <span className={`px-2.5 py-0.5 rounded-full ${
+                isLight ? 'bg-white border-neutral-200 text-[#00A865] shadow-xs' : 'bg-[#171717] border-[#282828] text-[#00C878]'
+              } border text-xs font-bold`}>
                 {filteredSpaces.length} Available
               </span>
-              <span className="hidden sm:inline-block text-xs text-[#9A9A9A] font-medium">
+              <span className={`hidden sm:inline-block text-xs ${isLight ? 'text-neutral-500' : 'text-[#D4D4D4]'} font-medium`}>
                 • {totalAvailableDesks} Open Desks
               </span>
             </div>
             {userLocation && (
-              <div className="mt-1 flex items-center gap-1.5 text-xs text-[#00C878] font-bold">
-                <LocateFixed className="w-3.5 h-3.5 text-[#00C878]" />
+              <div className={`mt-1 flex items-center gap-1.5 text-xs ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} font-bold`}>
+                <LocateFixed className="w-3.5 h-3.5" />
                 <span>Proximity sorted: closest to {userLocation.label}</span>
               </div>
             )}
@@ -776,18 +872,24 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFilterDrawer(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#171717] border border-[#282828] hover:border-[#3A3A3A] text-xs font-bold text-[#F2F2F2] transition-colors cursor-pointer"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${
+                isLight
+                  ? 'bg-white border-neutral-200 hover:border-neutral-300 text-neutral-800 shadow-xs'
+                  : 'bg-[#171717] border-[#282828] hover:border-[#3A3A3A] text-[#F2F2F2]'
+              } border text-xs font-bold transition-colors cursor-pointer`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5 text-[#D6A83A]" />
               <span>All Filters</span>
             </button>
 
             {/* 3-Way Mode Switcher: Grid, Split, Full Map */}
-            <div className="flex items-center bg-[#171717] p-1 rounded-xl border border-[#282828]">
+            <div className={`flex items-center ${isLight ? 'bg-neutral-100 border-neutral-200' : 'bg-[#171717] border-[#282828]'} p-1 rounded-xl border`}>
               <button
                 onClick={() => setViewMode('grid')}
                 className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                  viewMode === 'grid' ? 'bg-[#222222] text-[#00C878]' : 'text-[#9A9A9A] hover:text-white'
+                  viewMode === 'grid'
+                    ? isLight ? 'bg-white text-[#00A865] shadow-xs' : 'bg-[#222222] text-[#00C878]'
+                    : isLight ? 'text-neutral-600 hover:text-neutral-900' : 'text-[#A3A3A3] hover:text-white'
                 }`}
                 title="Grid View"
               >
@@ -798,7 +900,9 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
               <button
                 onClick={() => setViewMode('split')}
                 className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                  viewMode === 'split' ? 'bg-[#222222] text-[#00C878]' : 'text-[#9A9A9A] hover:text-white'
+                  viewMode === 'split'
+                    ? isLight ? 'bg-white text-[#00A865] shadow-xs' : 'bg-[#222222] text-[#00C878]'
+                    : isLight ? 'text-neutral-600 hover:text-neutral-900' : 'text-[#A3A3A3] hover:text-white'
                 }`}
                 title="Split Map + List"
               >
@@ -809,7 +913,9 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
               <button
                 onClick={() => setViewMode('map')}
                 className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                  viewMode === 'map' ? 'bg-[#222222] text-[#00C878]' : 'text-[#9A9A9A] hover:text-white'
+                  viewMode === 'map'
+                    ? isLight ? 'bg-white text-[#00A865] shadow-xs' : 'bg-[#222222] text-[#00C878]'
+                    : isLight ? 'text-neutral-600 hover:text-neutral-900' : 'text-[#A3A3A3] hover:text-white'
                 }`}
                 title="Full Interactive Map"
               >
@@ -821,7 +927,9 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
         </div>
 
         {/* 6. OFIS AI MATCH PROMPT BANNER */}
-        <div className="my-6 p-4 sm:p-5 rounded-3xl bg-[#171717] border border-[#2A2A2A] relative overflow-hidden">
+        <div className={`my-6 p-4 sm:p-5 rounded-3xl ${
+          isLight ? 'bg-white border-neutral-200 shadow-md' : 'bg-[#171717] border-[#2A2A2A]'
+        } border relative overflow-hidden transition-colors duration-150`}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
             <div className="flex items-center gap-3.5">
               <div className="w-11 h-11 rounded-2xl bg-[#063B2A] border border-[#00C878]/40 flex items-center justify-center shrink-0">
@@ -829,13 +937,13 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-black text-white">OFIS AI Match</h4>
+                  <h4 className={`text-sm font-black ${isLight ? 'text-neutral-900' : 'text-white'}`}>OFIS AI Match</h4>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-black bg-[#D6A83A]/20 text-[#D6A83A] border border-[#D6A83A]/40">
                     SMART SPATIAL ADVISOR
                   </span>
                 </div>
-                <p className="text-xs text-[#9A9A9A] mt-0.5">
-                  "Tell us what you need. We'll find the space." e.g. <span className="text-[#F2F2F2] italic">"I need a quiet desk in Lekki with 24/7 power & Starlink for a 4-hour Zoom sprint."</span>
+                <p className={`text-xs ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-0.5`}>
+                  "Tell us what you need. We'll find the space." e.g. <span className={`${isLight ? 'text-neutral-900 font-semibold' : 'text-[#F2F2F2]'} italic`}>"I need a quiet desk in Lekki with 24/7 power & Starlink for a 4-hour Zoom sprint."</span>
                 </p>
               </div>
             </div>
@@ -855,19 +963,21 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
           /* FULL MAP VIEW */
           <div className="mt-6 space-y-4">
             {/* Top Interactive Map Info Header */}
-            <div className="p-4 rounded-2xl bg-[#171717] border border-[#282828] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className={`p-4 rounded-2xl ${
+              isLight ? 'bg-white border-neutral-200 text-neutral-900 shadow-sm' : 'bg-[#171717] border-[#282828] text-white'
+            } border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3`}>
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-[#063B2A] text-[#00C878] flex items-center justify-center">
                   <Navigation className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-white flex items-center gap-2">
+                  <h4 className={`text-sm font-black ${isLight ? 'text-neutral-900' : 'text-white'} flex items-center gap-2`}>
                     <span>Interactive Nigerian Spatial Cartography</span>
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#00C878] text-[#0D0D0D] font-bold">
                       LIVE RADAR
                     </span>
                   </h4>
-                  <p className="text-xs text-[#9A9A9A]">
+                  <p className={`text-xs ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'}`}>
                     Click markers to explore hourly rates, Starlink speeds, and available desks. Drag & zoom to pan Nigeria.
                   </p>
                 </div>
@@ -876,7 +986,9 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleLocateVicinity}
-                  className="px-3 py-1.5 rounded-xl bg-[#222222] hover:bg-[#2D2D2D] text-[#00C878] text-xs font-bold flex items-center gap-1.5 border border-[#333333] transition-colors cursor-pointer"
+                  className={`px-3 py-1.5 rounded-xl ${
+                    isLight ? 'bg-neutral-100 hover:bg-neutral-200 text-[#00A865] border-neutral-200' : 'bg-[#222222] hover:bg-[#2D2D2D] text-[#00C878] border-[#333333]'
+                  } text-xs font-bold flex items-center gap-1.5 border transition-colors cursor-pointer`}
                 >
                   <LocateFixed className="w-3.5 h-3.5" />
                   <span>Locate Me</span>
@@ -891,7 +1003,7 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
             </div>
 
             {/* Expansive Interactive Map */}
-            <div className="rounded-3xl overflow-hidden border border-[#282828] shadow-2xl">
+            <div className={`rounded-3xl overflow-hidden border ${isLight ? 'border-neutral-200 shadow-xl' : 'border-[#282828] shadow-2xl'}`}>
               <ExploreMapView
                 spaces={filteredSpaces || []}
                 selectedSpaceId={highlightedSpaceId}
@@ -904,10 +1016,10 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
             {/* Bottom Horizontal Quick-Scroll Space Cards */}
             <div className="mt-4">
               <div className="flex items-center justify-between mb-2 px-1">
-                <span className="text-xs font-bold text-[#9A9A9A] uppercase tracking-wider">
+                <span className={`text-xs font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
                   Available in this View ({filteredSpaces.length})
                 </span>
-                <span className="text-xs text-[#00C878] font-semibold">
+                <span className={`text-xs ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} font-semibold`}>
                   Click any card to center marker
                 </span>
               </div>
@@ -923,7 +1035,9 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                         onSelectSpace(space);
                       }}
                       onMouseEnter={() => setHighlightedSpaceId(space.id)}
-                      className="p-3.5 rounded-2xl bg-[#171717] border border-[#282828] hover:border-[#00C878] transition-all cursor-pointer group flex flex-col justify-between"
+                      className={`p-3.5 rounded-2xl ${
+                        isLight ? 'bg-white border-neutral-200 hover:border-[#00C878] shadow-xs' : 'bg-[#171717] border-[#282828] hover:border-[#00C878]'
+                      } border transition-all cursor-pointer group flex flex-col justify-between`}
                     >
                       <div className="flex items-start gap-3">
                         <img
@@ -932,21 +1046,21 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                           className="w-16 h-16 rounded-xl object-cover shrink-0 group-hover:scale-105 transition-transform"
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between text-[10px] text-[#9A9A9A]">
+                          <div className={`flex items-center justify-between text-[10px] ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'}`}>
                             <span>{space.city}</span>
                             {dist !== null && (
-                              <span className="font-bold text-[#00C878]">
+                              <span className={`font-bold ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'}`}>
                                 {dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`}
                               </span>
                             )}
                           </div>
-                          <h5 className="font-bold text-xs text-white group-hover:text-[#00C878] transition-colors truncate mt-0.5">
+                          <h5 className={`font-bold text-xs ${isLight ? 'text-neutral-900 group-hover:text-[#00A865]' : 'text-white group-hover:text-[#00C878]'} transition-colors truncate mt-0.5`}>
                             {space.name}
                           </h5>
-                          <div className="text-[10px] text-[#9A9A9A] truncate">
+                          <div className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} truncate`}>
                             {space.neighborhood}
                           </div>
-                          <div className="text-xs font-black text-[#00C878] mt-1 font-mono">
+                          <div className={`text-xs font-black ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} mt-1 font-mono`}>
                             ₦{space.hourlyRateNGN.toLocaleString()}/hr
                           </div>
                         </div>
@@ -982,6 +1096,7 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                       onSelect={() => onSelectSpace(space)}
                       distanceKm={dist}
                       isHighlighted={highlightedSpaceId === space.id}
+                      isLight={isLight}
                     />
                   </div>
                 );
@@ -989,7 +1104,9 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
             </div>
 
             {/* Map side (Sticky) */}
-            <div className="lg:col-span-5 h-[720px] sticky top-24 rounded-3xl overflow-hidden border border-[#282828] shadow-2xl">
+            <div className={`lg:col-span-5 h-[720px] sticky top-24 rounded-3xl overflow-hidden border ${
+              isLight ? 'border-neutral-200 shadow-xl' : 'border-[#282828] shadow-2xl'
+            }`}>
               <ExploreMapView
                 spaces={filteredSpaces || []}
                 selectedSpaceId={highlightedSpaceId}
@@ -1002,19 +1119,23 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
           /* GRID VIEW WITH INTERACTIVE VICINITY MAP PREVIEW BANNER */
           <div className="space-y-6 mt-6">
             {/* Vicinity Map Quick Discovery Strip */}
-            <div className="p-4 rounded-3xl bg-gradient-to-r from-[#171717] to-[#121212] border border-[#2A2A2A] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className={`p-4 rounded-3xl ${
+              isLight ? 'bg-white border-neutral-200 shadow-sm' : 'bg-gradient-to-r from-[#171717] to-[#121212] border-[#2A2A2A]'
+            } border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`}>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-[#063B2A] border border-[#00C878]/40 flex items-center justify-center text-[#00C878] shrink-0">
                   <MapIcon className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-black text-white">Visual Vicinity Map</h4>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#00C878]/20 text-[#00C878] border border-[#00C878]/30">
+                    <h4 className={`text-sm font-black ${isLight ? 'text-neutral-900' : 'text-white'}`}>Visual Vicinity Map</h4>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                      isLight ? 'bg-[#E8F8F0] text-[#00A865] border border-[#00C878]/30' : 'bg-[#00C878]/20 text-[#00C878] border border-[#00C878]/30'
+                    }`}>
                       {filteredSpaces.length} Hubs Mapped
                     </span>
                   </div>
-                  <p className="text-xs text-[#9A9A9A] mt-0.5">
+                  <p className={`text-xs ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-0.5`}>
                     Explore physical workspace clusters across Lagos, Abuja, Port Harcourt and Ibadan on the live cartography map.
                   </p>
                 </div>
@@ -1023,7 +1144,9 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewMode('split')}
-                  className="px-3.5 py-2 rounded-xl bg-[#222222] hover:bg-[#2A2A2A] text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                  className={`px-3.5 py-2 rounded-xl ${
+                    isLight ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800' : 'bg-[#222222] hover:bg-[#2A2A2A] text-white'
+                  } text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5`}
                 >
                   <Columns className="w-3.5 h-3.5 text-[#D6A83A]" />
                   <span>Split View</span>
@@ -1055,6 +1178,7 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                     }}
                     onSelect={() => onSelectSpace(space)}
                     distanceKm={dist}
+                    isLight={isLight}
                   />
                 );
               })}
@@ -1063,10 +1187,10 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
         )}
 
         {(!filteredSpaces || filteredSpaces.length === 0) && (
-          <div className="text-center py-16 bg-[#171717] rounded-3xl border border-[#282828] my-8">
-            <Building2 className="w-12 h-12 text-[#9A9A9A] mx-auto mb-3" />
-            <h3 className="text-base font-bold text-white">No spaces matched your exact search</h3>
-            <p className="text-xs text-[#9A9A9A] mt-1 max-w-md mx-auto">
+          <div className={`text-center py-16 ${isLight ? 'bg-white border-neutral-200' : 'bg-[#171717] border-[#282828]'} rounded-3xl border my-8`}>
+            <Building2 className={`w-12 h-12 ${isLight ? 'text-neutral-400' : 'text-[#9A9A9A]'} mx-auto mb-3`} />
+            <h3 className={`text-base font-bold ${isLight ? 'text-neutral-900' : 'text-white'}`}>No spaces matched your exact search</h3>
+            <p className={`text-xs ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-1 max-w-md mx-auto`}>
               Try adjusting your city filter or search query, or use OFIS AI Match to discover available spaces.
             </p>
             <button
@@ -1089,16 +1213,20 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
         <button
           id="toggle-view-fab"
           onClick={() => setViewMode(prev => (prev === 'map' ? 'grid' : 'map'))}
-          className="flex items-center gap-2 px-5 py-3 rounded-full bg-[#171717]/95 hover:bg-[#222222] text-white border border-[#2F2F2F] hover:border-[#00C878] shadow-2xl backdrop-blur-md font-black text-xs transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+          className={`flex items-center gap-2 px-5 py-3 rounded-full ${
+            isLight
+              ? 'bg-white/95 hover:bg-neutral-50 text-neutral-900 border-neutral-300 hover:border-[#00C878] shadow-xl'
+              : 'bg-[#171717]/95 hover:bg-[#222222] text-white border-[#2F2F2F] hover:border-[#00C878] shadow-2xl'
+          } backdrop-blur-md font-black text-xs transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border`}
         >
           {viewMode === 'map' ? (
             <>
-              <LayoutGrid className="w-4 h-4 text-[#00C878]" />
+              <LayoutGrid className={`w-4 h-4 ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'}`} />
               <span>Show List View ({filteredSpaces.length})</span>
             </>
           ) : (
             <>
-              <MapIcon className="w-4 h-4 text-[#00C878]" />
+              <MapIcon className={`w-4 h-4 ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'}`} />
               <span>View Interactive Map ({filteredSpaces.length})</span>
             </>
           )}
@@ -1113,15 +1241,17 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
             onClick={() => setShowFilterDrawer(false)}
           />
           <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-[#141414] border-l border-[#282828] text-white p-6 shadow-2xl overflow-y-auto">
-              <div className="flex items-center justify-between pb-4 border-b border-[#282828]">
+            <div className={`w-screen max-w-md ${
+              isLight ? 'bg-white border-neutral-200 text-neutral-900' : 'bg-[#141414] border-[#282828] text-white'
+            } border-l p-6 shadow-2xl overflow-y-auto`}>
+              <div className={`flex items-center justify-between pb-4 border-b ${isLight ? 'border-neutral-200' : 'border-[#282828]'}`}>
                 <div className="flex items-center gap-2">
-                  <SlidersHorizontal className="w-4 h-4 text-[#00C878]" />
-                  <span className="font-black text-base text-white">Filters</span>
+                  <SlidersHorizontal className={`w-4 h-4 ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'}`} />
+                  <span className={`font-black text-base ${isLight ? 'text-neutral-900' : 'text-white'}`}>Filters</span>
                 </div>
                 <button
                   onClick={() => setShowFilterDrawer(false)}
-                  className="p-1.5 rounded-lg hover:bg-[#222222] text-[#9A9A9A] hover:text-white cursor-pointer"
+                  className={`p-1.5 rounded-lg ${isLight ? 'hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900' : 'hover:bg-[#222222] text-[#9A9A9A] hover:text-white'} cursor-pointer`}
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1151,7 +1281,7 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
 
               {/* City Selection */}
               <div className="mt-6">
-                <label className="block text-xs font-bold text-[#00C878] uppercase tracking-wider mb-2">
+                <label className={`block text-xs font-bold ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} uppercase tracking-wider mb-2`}>
                   City / Region
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -1159,10 +1289,10 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                     <button
                       key={c}
                       onClick={() => setFilters(prev => ({ ...prev, city: c }))}
-                      className={`px-3 py-2 rounded-xl text-xs font-bold text-left transition-colors cursor-pointer ${
+                      className={`px-3 py-2 rounded-xl text-xs font-bold text-left transition-colors cursor-pointer border ${
                         filters.city.toLowerCase() === c.toLowerCase()
-                          ? 'bg-[#063B2A] text-[#00C878] border border-[#00C878]'
-                          : 'bg-[#1C1C1C] text-[#9A9A9A] border border-[#282828] hover:text-white'
+                          ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border-[#00C878]' : 'bg-[#063B2A] text-[#00C878] border-[#00C878]'
+                          : isLight ? 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:text-neutral-900' : 'bg-[#1C1C1C] text-[#D4D4D4] border-[#282828] hover:text-white'
                       }`}
                     >
                       {c === 'all' ? 'All Nigeria' : c}
@@ -1173,7 +1303,7 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
 
               {/* Power & Infrastructure Assurance */}
               <div className="mt-6">
-                <label className="block text-xs font-bold text-[#00C878] uppercase tracking-wider mb-2">
+                <label className={`block text-xs font-bold ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} uppercase tracking-wider mb-2`}>
                   Power & Connectivity
                 </label>
                 <div className="space-y-2">
@@ -1197,10 +1327,10 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                               : [...prev.amenities, amenity],
                           }));
                         }}
-                        className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-left transition-colors cursor-pointer ${
+                        className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-left transition-colors cursor-pointer border ${
                           isChecked
-                            ? 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40'
-                            : 'bg-[#1C1C1C] text-[#9A9A9A] border border-[#282828] hover:text-white'
+                            ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border-[#00C878]' : 'bg-[#063B2A] text-[#00C878] border-[#00C878]/40'
+                            : isLight ? 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:text-neutral-900' : 'bg-[#1C1C1C] text-[#D4D4D4] border-[#282828] hover:text-white'
                         }`}
                       >
                         <span>{amenity}</span>
@@ -1211,16 +1341,18 @@ export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateT
                 </div>
               </div>
 
-              <div className="mt-8 pt-4 border-t border-[#282828] flex items-center gap-3">
+              <div className={`mt-8 pt-4 border-t ${isLight ? 'border-neutral-200' : 'border-[#282828]'} flex items-center gap-3`}>
                 <button
                   onClick={resetFilters}
-                  className="flex-1 py-2.5 rounded-xl bg-[#222222] hover:bg-[#2A2A2A] text-white text-xs font-bold cursor-pointer"
+                  className={`flex-1 py-2.5 rounded-xl ${
+                    isLight ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800' : 'bg-[#222222] hover:bg-[#2A2A2A] text-white'
+                  } text-xs font-bold cursor-pointer transition-colors`}
                 >
                   Reset
                 </button>
                 <button
                   onClick={() => setShowFilterDrawer(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] text-xs font-black cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] text-xs font-black cursor-pointer shadow-md transition-colors"
                 >
                   Show Spaces
                 </button>
@@ -1245,6 +1377,7 @@ interface SpaceCardProps {
   onSelect: () => void;
   distanceKm?: number | null;
   isHighlighted?: boolean;
+  isLight?: boolean;
 }
 
 const SpaceCard: React.FC<SpaceCardProps> = ({
@@ -1256,19 +1389,24 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
   onSelect,
   distanceKm,
   isHighlighted = false,
+  isLight = false,
 }) => {
   return (
     <div
       onClick={onSelect}
       id={`space-card-${space.id}`}
-      className={`group bg-[#171717] rounded-3xl border transition-all duration-300 overflow-hidden cursor-pointer flex flex-col ${
-        isHighlighted
-          ? 'border-[#00C878] ring-2 ring-[#00C878]/30 shadow-2xl shadow-[#00C878]/20 -translate-y-1'
-          : 'border-[#262626] hover:border-[#00C878]/50 hover:shadow-2xl hover:shadow-[#00C878]/10'
+      className={`group rounded-3xl border transition-all duration-300 overflow-hidden cursor-pointer flex flex-col ${
+        isLight
+          ? isHighlighted
+            ? 'bg-white border-[#00C878] ring-2 ring-[#00C878]/30 shadow-xl -translate-y-1'
+            : 'bg-white border-neutral-200 hover:border-[#00C878]/60 hover:shadow-xl'
+          : isHighlighted
+          ? 'bg-[#171717] border-[#00C878] ring-2 ring-[#00C878]/30 shadow-2xl shadow-[#00C878]/20 -translate-y-1'
+          : 'bg-[#171717] border-[#262626] hover:border-[#00C878]/50 hover:shadow-2xl hover:shadow-[#00C878]/10'
       }`}
     >
       {/* Large Space Image with Hover Zoom */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-[#111111]">
+      <div className={`relative aspect-[16/10] overflow-hidden ${isLight ? 'bg-neutral-100' : 'bg-[#111111]'}`}>
         <img
           src={space.images?.[0] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80'}
           alt={space.name}
@@ -1276,7 +1414,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
         />
 
         {/* Gradient Shadow Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#171717] via-transparent to-black/40" />
+        <div className={`absolute inset-0 ${isLight ? 'bg-gradient-to-t from-black/60 via-transparent to-black/20' : 'bg-gradient-to-t from-[#171717] via-transparent to-black/40'}`} />
 
         {/* Top Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
@@ -1326,56 +1464,64 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
         <div>
           {/* Location & Rating */}
           <div className="flex items-center justify-between gap-2 text-xs mb-1.5">
-            <span className="text-[#9A9A9A] font-semibold flex items-center gap-1 truncate">
+            <span className={`${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} font-semibold flex items-center gap-1 truncate`}>
               <MapPin className="w-3.5 h-3.5 text-[#00C878] shrink-0" />
               <span>{space.neighborhood || `${space.city}, Nigeria`}</span>
             </span>
-            <div className="flex items-center gap-1 shrink-0 font-bold text-white">
+            <div className={`flex items-center gap-1 shrink-0 font-bold ${isLight ? 'text-neutral-900' : 'text-white'}`}>
               <Star className="w-3.5 h-3.5 text-[#D6A83A] fill-[#D6A83A]" />
               <span>{(space.rating || 4.8).toFixed(1)}</span>
-              <span className="text-[#9A9A9A] font-normal text-[11px]">({space.reviewCount || 12})</span>
+              <span className={`${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} font-normal text-[11px]`}>({space.reviewCount || 12})</span>
             </div>
           </div>
 
           {/* Space Name */}
-          <h3 className="text-base font-black text-white group-hover:text-[#00C878] transition-colors line-clamp-1">
+          <h3 className={`text-base font-black ${isLight ? 'text-neutral-900 group-hover:text-[#00A865]' : 'text-white group-hover:text-[#00C878]'} transition-colors line-clamp-1`}>
             {space.name}
           </h3>
 
           {/* Tagline */}
-          <p className="text-xs text-[#9A9A9A] mt-1 line-clamp-2 leading-relaxed font-normal">
+          <p className={`text-xs ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-1 line-clamp-2 leading-relaxed font-normal`}>
             {space.tagline}
           </p>
 
           {/* Key Amenities Highlights */}
           <div className="flex flex-wrap items-center gap-1.5 mt-3">
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-[#222222] text-[#F2F2F2] border border-[#2D2D2D] flex items-center gap-1">
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg ${
+              isLight ? 'bg-neutral-100 text-neutral-700 border-neutral-200' : 'bg-[#222222] text-[#F2F2F2] border-[#2D2D2D]'
+            } border flex items-center gap-1`}>
               <Zap className="w-2.5 h-2.5 text-[#00C878]" />
               <span>24/7 Power</span>
             </span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-[#222222] text-[#F2F2F2] border border-[#2D2D2D] flex items-center gap-1">
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg ${
+              isLight ? 'bg-neutral-100 text-neutral-700 border-neutral-200' : 'bg-[#222222] text-[#F2F2F2] border-[#2D2D2D]'
+            } border flex items-center gap-1`}>
               <Wifi className="w-2.5 h-2.5 text-[#00C878]" />
               <span>Starlink</span>
             </span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-[#222222] text-[#F2F2F2] border border-[#2D2D2D] flex items-center gap-1">
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg ${
+              isLight ? 'bg-neutral-100 text-neutral-700 border-neutral-200' : 'bg-[#222222] text-[#F2F2F2] border-[#2D2D2D]'
+            } border flex items-center gap-1`}>
               <Wind className="w-2.5 h-2.5 text-[#00C878]" />
               <span>AC</span>
             </span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-[#222222] text-[#9A9A9A] border border-[#2D2D2D]">
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg ${
+              isLight ? 'bg-neutral-100 text-neutral-600 border-neutral-200' : 'bg-[#222222] text-[#D4D4D4] border-[#2D2D2D]'
+            } border`}>
               Cap: {space.capacity}
             </span>
           </div>
         </div>
 
         {/* Pricing & Booking CTA */}
-        <div className="mt-5 pt-3.5 border-t border-[#262626] flex items-center justify-between gap-3">
+        <div className={`mt-5 pt-3.5 border-t ${isLight ? 'border-neutral-200' : 'border-[#262626]'} flex items-center justify-between gap-3`}>
           <div>
-            <div className="text-[10px] text-[#9A9A9A] font-bold uppercase tracking-wider">From</div>
-            <div className="text-base font-black text-white font-mono">
-              <span className="text-[#00C878]">₦{(space.hourlyRateNGN || Math.round(space.hourlyRate * 1550)).toLocaleString()}</span>
-              <span className="text-xs font-normal text-[#9A9A9A]">/hr</span>
+            <div className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} font-bold uppercase tracking-wider`}>From</div>
+            <div className={`text-base font-black ${isLight ? 'text-neutral-900' : 'text-white'} font-mono`}>
+              <span className={isLight ? 'text-[#00A865]' : 'text-[#00C878]'}>₦{(space.hourlyRateNGN || Math.round(space.hourlyRate * 1550)).toLocaleString()}</span>
+              <span className={`text-xs font-normal ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'}`}>/hr</span>
             </div>
-            <div className="text-[10px] text-[#9A9A9A] font-mono">
+            <div className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} font-mono`}>
               ₦{(space.dailyRateNGN || Math.round(space.dailyRate * 1550)).toLocaleString()}/day
             </div>
           </div>

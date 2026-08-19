@@ -1,5 +1,7 @@
 export type UserRole = 'coworker' | 'host' | 'admin';
 
+export type ThemeMode = 'dark' | 'light' | 'system';
+
 export type CurrencyCode = 'NGN' | 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD' | 'JPY' | 'SGD' | 'CHF';
 
 export interface CurrencyConfig {
@@ -246,16 +248,16 @@ export interface Booking {
   totalAmount: number; // final total
   hostNetPayout: number;
 
-  status: 'confirmed' | 'checked_in' | 'completed' | 'cancelled';
+  status: 'pending' | 'payment_pending' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'expired';
   paymentMethod: 'paystack' | 'bank_transfer' | 'ussd' | 'opay_kuda' | 'flutterwave' | 'card';
   cardLast4?: string;
   bankName?: string;
   transactionId: string;
   createdAt: string;
 
-  wifiSSID: string;
-  wifiPass: string;
-  doorPIN: string;
+  wifiSSID?: string;
+  wifiPass?: string;
+  doorPIN?: string;
   qrCodeUrl: string;
   notes?: string;
 }

@@ -132,13 +132,11 @@ export const CheckoutModal: React.FC = () => {
     }
   };
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     setIsProcessing(true);
 
-    setTimeout(() => {
-      setIsProcessing(false);
-
-      const createdBooking = createBooking({
+    try {
+      const createdBooking = await createBooking({
         spaceId: selectedSpace.id,
         spaceName: selectedSpace.name,
         spaceCity: selectedSpace.city,
@@ -152,11 +150,11 @@ export const CheckoutModal: React.FC = () => {
         deskCode: selectedDesk.code,
         deskZone: selectedDesk.zone,
 
-        coworkerId: currentUser.id,
-        coworkerName: currentUser.name,
-        coworkerEmail: currentUser.email,
-        coworkerPhone: currentUser.phone || '+234 800 000 0000',
-        coworkerAvatar: currentUser.avatar,
+        coworkerId: currentUser?.id || 'guest-user',
+        coworkerName: currentUser?.name || 'Coworker',
+        coworkerEmail: currentUser?.email || 'coworker@ofis.ng',
+        coworkerPhone: currentUser?.phone || '+234 800 000 0000',
+        coworkerAvatar: currentUser?.avatar,
 
         hostId: selectedSpace.hostId,
         hostName: selectedSpace.hostName,
@@ -179,14 +177,11 @@ export const CheckoutModal: React.FC = () => {
         totalAmount: totalNaira,
         hostNetPayout: subtotalNaira,
 
-        status: 'confirmed',
+        status: 'pending',
         paymentMethod,
         cardLast4: paymentMethod === 'paystack' ? cardNumber.slice(-4) : undefined,
         bankName: paymentMethod === 'bank_transfer' ? 'Providus Bank' : paymentMethod === 'ussd' ? selectedUssdBank.name : 'OPay Digital Bank',
 
-        wifiSSID: selectedSpace.wifiSSID,
-        wifiPass: selectedSpace.wifiPass,
-        doorPIN: selectedSpace.doorPIN,
         notes: `Hourly reservation via ${paymentMethod.toUpperCase()}`,
       });
 
@@ -203,7 +198,11 @@ export const CheckoutModal: React.FC = () => {
       setActivePassBooking(createdBooking);
       setLatestSuccessBooking(createdBooking);
       setIsBookingSuccessModalOpen(true);
-    }, 1200);
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const formatCountdown = (secs: number) => {

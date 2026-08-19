@@ -26,6 +26,7 @@ import { OfisOpeningAnimation } from './components/OfisOpeningAnimation';
 import { OfisNavigationDrawer } from './components/OfisNavigationDrawer';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { OfisInfoModal, InfoModalSection } from './components/OfisInfoModal';
+import { SettingsModal } from './components/SettingsModal';
 import { OfisLogo } from './components/OfisLogo';
 import {
   Sparkles,
@@ -75,7 +76,12 @@ const AppContent: React.FC = () => {
     latestSuccessBooking,
     setActivePassBooking,
     setIsListSpaceModalOpen,
+    isSettingsModalOpen,
+    setIsSettingsModalOpen,
+    effectiveTheme,
   } = useApp();
+
+  const isLight = effectiveTheme === 'light';
 
   const handleCompleteIntro = useCallback(() => {
     try {
@@ -92,7 +98,9 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-[#F2F2F2] flex flex-col font-sans selection:bg-[#00C878] selection:text-[#0D0D0D]">
+    <div className={`min-h-screen ${
+      isLight ? 'bg-[#F8FAFC] text-neutral-900' : 'bg-[#0D0D0D] text-[#F2F2F2]'
+    } flex flex-col font-sans selection:bg-[#00C878] selection:text-[#0D0D0D] transition-colors duration-150`}>
       {/* Startup Cinematic Animation (runs once on initial launch) */}
       {showIntroAnimation && (
         <OfisOpeningAnimation
@@ -176,26 +184,28 @@ const AppContent: React.FC = () => {
       </main>
 
       {/* Premium Footer */}
-      <footer className="bg-[#0A0A0A] text-[#9A9A9A] text-xs border-t border-[#222222] py-12 px-4 sm:px-6 lg:px-8">
+      <footer className={`${
+        isLight ? 'bg-white text-neutral-600 border-neutral-200' : 'bg-[#0A0A0A] text-[#9A9A9A] border-[#222222]'
+      } text-xs border-t py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-150`}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <OfisLogo size="sm" showTagline={true} />
           </div>
 
           {/* Features badge */}
-          <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] text-[#9A9A9A]">
-            <span className="flex items-center gap-1.5 text-[#F2F2F2]">
+          <div className={`flex flex-wrap items-center justify-center gap-4 text-[11px] ${isLight ? 'text-neutral-600' : 'text-[#9A9A9A]'}`}>
+            <span className={`flex items-center gap-1.5 ${isLight ? 'text-neutral-800 font-semibold' : 'text-[#F2F2F2]'}`}>
               <Zap className="w-3.5 h-3.5 text-[#00C878]" /> Hourly & Daily Space Bookings
             </span>
-            <span className="flex items-center gap-1.5 text-[#F2F2F2]">
+            <span className={`flex items-center gap-1.5 ${isLight ? 'text-neutral-800 font-semibold' : 'text-[#F2F2F2]'}`}>
               <CreditCard className="w-3.5 h-3.5 text-[#D6A83A]" /> Paystack, Flutterwave & Bank Transfer
             </span>
-            <span className="flex items-center gap-1.5 text-[#F2F2F2]">
+            <span className={`flex items-center gap-1.5 ${isLight ? 'text-neutral-800 font-semibold' : 'text-[#F2F2F2]'}`}>
               <Lock className="w-3.5 h-3.5 text-[#00C878]" /> Instant Digital Pass & Keyless Entry
             </span>
           </div>
 
-          <div className="text-[11px] text-[#9A9A9A] font-medium text-center md:text-right">
+          <div className={`text-[11px] ${isLight ? 'text-neutral-500' : 'text-[#9A9A9A]'} font-medium text-center md:text-right`}>
             Lagos • Abuja • Port Harcourt • Ibadan • Benin City • Enugu
           </div>
         </div>
@@ -207,6 +217,10 @@ const AppContent: React.FC = () => {
       <ListSpaceModal />
       <AiAssistantModal />
       <WriteReviewModal />
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+      />
       <SessionReminderModal
         isOpen={isReminderModalOpen}
         onClose={dismissSessionReminder}
@@ -272,7 +286,9 @@ const AppContent: React.FC = () => {
       {toast && (
         <div
           id="global-toast-notification"
-          className="fixed bottom-6 right-6 z-50 p-4 rounded-2xl bg-[#171717] text-white shadow-2xl border border-[#282828] flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-200 text-xs font-semibold max-w-md"
+          className={`fixed bottom-6 right-6 z-50 p-4 rounded-2xl ${
+            isLight ? 'bg-white text-neutral-900 border-neutral-200 shadow-xl' : 'bg-[#171717] text-white border-[#282828] shadow-2xl'
+          } border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-200 text-xs font-semibold max-w-md`}
         >
           {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-[#00C878] shrink-0" />}
           {toast.type === 'warning' && <AlertTriangle className="w-5 h-5 text-[#D6A83A] shrink-0" />}

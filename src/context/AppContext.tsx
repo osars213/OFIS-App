@@ -5,6 +5,7 @@ import {
   Booking,
   User,
   UserRole,
+  ThemeMode,
   CurrencyCode,
   CurrencyConfig,
   FilterState,
@@ -128,6 +129,9 @@ interface AppContextType {
   setIsAiModalOpen: (open: boolean) => void;
   aiModalInitialMode: 'match' | 'optimize';
   openAiModal: (mode: 'match' | 'optimize') => void;
+  isSettingsModalOpen: boolean;
+  setIsSettingsModalOpen: (open: boolean) => void;
+  openSettingsModal: () => void;
 
   // 1-Hour Desk Session Reminder
   reminderBooking: Booking | null;
@@ -143,6 +147,11 @@ interface AppContextType {
   // Live simulation toggle
   liveSimulationActive: boolean;
   setLiveSimulationActive: (active: boolean) => void;
+
+  // Theme support (Dark, Light, System Default)
+  themeMode: ThemeMode;
+  effectiveTheme: 'dark' | 'light';
+  setThemeMode: (mode: ThemeMode) => void;
 
   // Notifications / Toast
   toast: { message: string; type: 'success' | 'info' | 'warning' | 'error' } | null;
@@ -196,12 +205,99 @@ const defaultFilters: FilterState = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_KEY_CURRENCY = 'ofis_currency_ng_v4';
+const LOCAL_STORAGE_KEY_THEME = 'ofis_theme_mode_v1';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isConfigured = isSupabaseConfigured();
   const [databaseStatus] = useState<'connected' | 'demo_mode'>(
     isConfigured ? 'connected' : 'demo_mode'
   );
+
+  // Theme support (Dark, Light, System Default)
+  const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_THEME);
+      if (saved === 'dark' || saved === 'light' || saved === 'system') {
+        return saved;
+      }
+    } catch {
+      // fallback
+    }
+    return 'dark'; // Dark signature default
+  });
+
+  const [systemIsDark, setSystemIsDark] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return true;
+  });
+
+  // Dynamic live system preference listener + Cross-tab sync
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // System color scheme change listener
+    if (window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e: MediaQueryListEvent) => {
+        setSystemIsDark(e.matches);
+      };
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
+  }, []);
+
+  // Listen to cross-tab storage sync
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === LOCAL_STORAGE_KEY_THEME && e.newValue) {
+        if (e.newValue === 'dark' || e.newValue === 'light' || e.newValue === 'system') {
+          setThemeModeState(e.newValue as ThemeMode);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const effectiveTheme: 'dark' | 'light' = themeMode === 'system'
+    ? (systemIsDark ? 'dark' : 'light')
+    : themeMode;
+
+  // Apply class & theme-color to <html> element dynamically
+  useEffect(() => {
+    const root = document.documentElement;
+    if (effectiveTheme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.setAttribute('data-theme', 'dark');
+      root.style.colorScheme = 'dark';
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+      root.setAttribute('data-theme', 'light');
+      root.style.colorScheme = 'light';
+    }
+
+    // Update meta theme-color tag
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement('meta');
+      metaThemeColor.setAttribute('name', 'theme-color');
+      document.head.appendChild(metaThemeColor);
+    }
+    metaThemeColor.setAttribute('content', effectiveTheme === 'dark' ? '#0D0D0D' : '#F0F2F5');
+  }, [effectiveTheme]);
+
+  const setThemeMode = (mode: ThemeMode) => {
+    setThemeModeState(mode);
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY_THEME, mode);
+    } catch {
+      // ignore
+    }
+  };
 
   // Current user & role
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -280,6 +376,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isListSpaceModalOpen, setIsListSpaceModalOpen] = useState(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [aiModalInitialMode, setAiModalInitialMode] = useState<'match' | 'optimize'>('match');
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const openSettingsModal = () => {
+    setIsSettingsModalOpen(true);
+  };
 
   // 1-Hour Desk Session Reminder State
   const [reminderBooking, setReminderBooking] = useState<Booking | null>(null);
@@ -571,18 +671,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Space listing removed.', 'info');
   };
 
-  // Booking management with double-booking verification
+  // Booking management with authoritative server-side payment verification
   const createBooking = async (
     bookingData: Omit<Booking, 'id' | 'createdAt' | 'transactionId' | 'qrCodeUrl' | 'bookingReference'>
   ): Promise<Booking> => {
-    const { booking, error } = await bookingsService.createBooking(bookingData);
+    // 1. Create pending booking in database
+    const { booking: pendingBooking, error: createError } = await bookingsService.createBooking(bookingData);
 
-    if (error) {
-      showToast(error, 'error');
-      throw new Error(error);
+    if (createError || !pendingBooking) {
+      const errMsg = createError || 'Failed to initialize booking';
+      showToast(errMsg, 'error');
+      throw new Error(errMsg);
     }
 
-    const confirmedBooking = booking!;
+    let finalBooking: Booking = pendingBooking;
+
+    // 2. If in Supabase / connected mode, initialize & verify payment authoritatively
+    if (isSupabaseConfigured() && supabase) {
+      const { reference, error: initErr } = await bookingsService.initializePayment(
+        pendingBooking.id,
+        currentUser?.email || bookingData.coworkerEmail || 'coworker@ofis.ng',
+        bookingData.paymentMethod || 'paystack'
+      );
+
+      if (initErr || !reference) {
+        showToast(initErr || 'Payment initialization failed', 'error');
+        throw new Error(initErr || 'Payment initialization failed');
+      }
+
+      // 3. Confirm payment on server via secure RPC
+      const { success, booking: confirmedRow, error: verifyErr } = await bookingsService.verifyAndConfirmPayment(
+        pendingBooking.id,
+        reference,
+        bookingData.paymentMethod || 'paystack'
+      );
+
+      if (!success || verifyErr) {
+        showToast(verifyErr || 'Payment verification failed', 'error');
+        throw new Error(verifyErr || 'Payment verification failed');
+      }
+
+      // 4. Securely fetch access credentials for the confirmed booking
+      const creds = await bookingsService.fetchAccessCredentials(pendingBooking.id, pendingBooking.spaceId);
+
+      finalBooking = {
+        ...(confirmedRow || pendingBooking),
+        status: 'confirmed',
+        transactionId: reference,
+        wifiSSID: creds.wifiSSID,
+        wifiPass: creds.wifiPass,
+        doorPIN: creds.doorPIN,
+      };
+    } else {
+      // Offline/Demo fallback
+      finalBooking = {
+        ...pendingBooking,
+        status: 'confirmed',
+      };
+    }
 
     // Update desk status in space
     updateDeskStatus(bookingData.spaceId, bookingData.deskId, 'reserved', {
@@ -591,36 +737,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       avatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80',
       checkInTime: bookingData.startTime,
       untilTime: bookingData.endTime,
-      bookingId: confirmedBooking.id,
+      bookingId: finalBooking.id,
     });
 
     // Update platform ledger
     setPlatformStats(prev => ({
       ...prev,
-      totalGrossVolumeUSD: +(prev.totalGrossVolumeUSD + (confirmedBooking.totalAmount / 1550)).toFixed(2),
-      totalPlatformCommissionUSD: +(prev.totalPlatformCommissionUSD + (confirmedBooking.platformCommissionFee / 1550)).toFixed(2),
-      totalHostPayoutsUSD: +(prev.totalHostPayoutsUSD + (confirmedBooking.hostNetPayout / 1550)).toFixed(2),
+      totalGrossVolumeUSD: +(prev.totalGrossVolumeUSD + (finalBooking.totalAmount / 1550)).toFixed(2),
+      totalPlatformCommissionUSD: +(prev.totalPlatformCommissionUSD + (finalBooking.platformCommissionFee / 1550)).toFixed(2),
+      totalHostPayoutsUSD: +(prev.totalHostPayoutsUSD + (finalBooking.hostNetPayout / 1550)).toFixed(2),
       totalBookingsCount: prev.totalBookingsCount + 1,
       transactionsLedger: [
         {
-          bookingId: confirmedBooking.id,
-          spaceName: confirmedBooking.spaceName,
-          hostName: confirmedBooking.hostName,
-          coworkerName: confirmedBooking.coworkerName,
-          grossUSD: +(confirmedBooking.totalAmount / 1550).toFixed(2),
-          platformFeeUSD: +(confirmedBooking.platformCommissionFee / 1550).toFixed(2),
-          hostPayoutUSD: +(confirmedBooking.hostNetPayout / 1550).toFixed(2),
+          bookingId: finalBooking.id,
+          spaceName: finalBooking.spaceName,
+          hostName: finalBooking.hostName,
+          coworkerName: finalBooking.coworkerName,
+          grossUSD: +(finalBooking.totalAmount / 1550).toFixed(2),
+          platformFeeUSD: +(finalBooking.platformCommissionFee / 1550).toFixed(2),
+          hostPayoutUSD: +(finalBooking.hostNetPayout / 1550).toFixed(2),
           timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
         },
         ...prev.transactionsLedger,
       ],
     }));
 
-    setBookings(prev => [confirmedBooking, ...prev.filter(b => b.id !== confirmedBooking.id)]);
-    setActivePassBooking(confirmedBooking);
+    setBookings(prev => [finalBooking, ...prev.filter(b => b.id !== finalBooking.id)]);
+    setActivePassBooking(finalBooking);
 
-    showToast(`Booking Confirmed! Pass Reference: ${confirmedBooking.bookingReference}`, 'success');
-    return confirmedBooking;
+    showToast(`Booking Confirmed! Pass Reference: ${finalBooking.bookingReference}`, 'success');
+    return finalBooking;
   };
 
   const cancelBooking = async (bookingId: string) => {
@@ -859,6 +1005,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsAiModalOpen,
         aiModalInitialMode,
         openAiModal,
+        isSettingsModalOpen,
+        setIsSettingsModalOpen,
+        openSettingsModal,
         reminderBooking,
         setReminderBooking,
         isReminderModalOpen,
@@ -870,6 +1019,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         snoozeSessionReminder,
         liveSimulationActive,
         setLiveSimulationActive,
+        themeMode,
+        effectiveTheme,
+        setThemeMode,
         toast,
         showToast,
       }}

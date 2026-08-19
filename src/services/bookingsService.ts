@@ -19,7 +19,8 @@ export const bookingsService = {
             address,
             images,
             primary_category,
-            subcategory
+            subcategory,
+            wifi_ssid
           ),
           coworker:profiles!user_id (
             full_name,
@@ -42,7 +43,7 @@ export const bookingsService = {
         .order('created_at', { ascending: false });
 
       if (error) {
-        return { bookings: INITIAL_BOOKINGS, error: error.message };
+        return { bookings: [], error: error.message };
       }
 
       const bookings: Booking[] = (data || []).map((row: any) => {
@@ -67,7 +68,7 @@ export const bookingsService = {
           deskCode: desk?.code || 'HOT-DESK',
           deskZone: desk?.zone || 'collaborative',
 
-          coworkerId: row.user_id,
+          coworkerId: row.user_id || row.client_id,
           coworkerName: coworker?.full_name || 'Coworker',
           coworkerEmail: coworker?.email || '',
           coworkerPhone: coworker?.phone,
@@ -85,8 +86,8 @@ export const bookingsService = {
           startTime: row.start_time_label,
           endTime: row.end_time_label,
 
-          currency: 'NGN',
-          currencySymbol: '₦',
+          currency: row.currency || 'NGN',
+          currencySymbol: row.currency_symbol || '₦',
           baseAmount: Number(row.base_amount),
           platformCommissionFee: Number(row.platform_commission_fee),
           commissionRate: Number(row.commission_rate) || 0.05,
@@ -94,14 +95,12 @@ export const bookingsService = {
           totalAmount: Number(row.total_amount),
           hostNetPayout: Number(row.host_net_payout),
 
-          status: row.status,
+          status: row.booking_status || row.status || 'pending',
           paymentMethod: row.payment_method || 'paystack',
-          transactionId: row.transaction_id,
+          transactionId: row.payment_reference || row.transaction_id,
           createdAt: row.created_at,
 
-          wifiSSID: row.wifi_ssid || 'OFIS_Guest_HighSpeed',
-          wifiPass: row.wifi_pass || 'WorkFocus2026',
-          doorPIN: row.door_pin || '4829',
+          wifiSSID: space?.wifi_ssid || row.wifi_ssid || 'OFIS_Guest_HighSpeed',
           qrCodeUrl: row.qr_code_url,
           notes: row.notes,
         };
@@ -109,7 +108,7 @@ export const bookingsService = {
 
       return { bookings, error: null };
     } catch (err: any) {
-      return { bookings: INITIAL_BOOKINGS, error: err.message };
+      return { bookings: [], error: err.message || 'Failed to fetch bookings' };
     }
   },
 
@@ -129,11 +128,11 @@ export const bookingsService = {
         .from('bookings')
         .select('id')
         .eq('space_id', spaceId)
-        .in('status', ['confirmed', 'checked_in', 'pending', 'payment_pending'])
-        .lt('start_time', endTimeIso)
-        .gt('end_time', startTimeIso);
+        .in('booking_status', ['confirmed', 'checked_in', 'pending', 'payment_pending'])
+        .lt('start_datetime', endTimeIso)
+        .gt('end_datetime', startTimeIso);
 
-      if (deskId) {
+      if (deskId && !deskId.startsWith('desk-space')) {
         query = query.eq('desk_id', deskId);
       }
 
@@ -146,11 +145,11 @@ export const bookingsService = {
     }
   },
 
+  // Step 1: Create a pending booking in authoritative database
   async createBooking(
     bookingData: Omit<Booking, 'id' | 'createdAt' | 'transactionId' | 'qrCodeUrl' | 'bookingReference'>
   ): Promise<{ booking: Booking | null; error: string | null }> {
     const bookingRef = `OFS-${bookingData.spaceCity.substring(0, 3).toUpperCase()}-${Math.floor(100000 + Math.random() * 900000)}`;
-    const txnId = `pstk_txn_${Math.random().toString(36).substring(2, 12)}`;
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=OFIS-${bookingRef}-${bookingData.deskCode || 'HOT-DESK'}-${encodeURIComponent(bookingData.coworkerName)}`;
 
     if (!isSupabaseConfigured() || !supabase) {
@@ -158,7 +157,8 @@ export const bookingsService = {
         ...bookingData,
         id: `bk-${Date.now().toString().slice(-6)}`,
         bookingReference: bookingRef,
-        transactionId: txnId,
+        status: 'confirmed',
+        transactionId: `pstk_demo_${Date.now()}`,
         qrCodeUrl: qrUrl,
         createdAt: new Date().toISOString(),
       };
@@ -185,40 +185,27 @@ export const bookingsService = {
         };
       }
 
+      // Safe client payload: starts strictly in 'pending' state
       const payload = {
         booking_reference: bookingRef,
         client_id: bookingData.coworkerId,
         user_id: bookingData.coworkerId,
         space_id: bookingData.spaceId,
-        desk_id: bookingData.deskId && !bookingData.deskId.startsWith('desk-space') ? bookingData.deskId : null,
+        desk_id: bookingData.deskId && !bookingData.deskId.startsWith('desk-') ? bookingData.deskId : null,
         host_id: bookingData.hostId,
         start_datetime: startDateTime,
         end_datetime: endDateTime,
-        start_time: startDateTime,
-        end_time: endDateTime,
         start_date: bookingData.startDate,
         end_date: bookingData.endDate,
         start_time_label: bookingData.startTime,
         end_time_label: bookingData.endTime,
         duration_type: bookingData.durationType,
         duration_units: bookingData.durationUnits,
-        currency: 'NGN',
-        currency_symbol: '₦',
-        base_amount: bookingData.baseAmount,
-        platform_commission_fee: bookingData.platformCommissionFee,
-        commission_rate: bookingData.commissionRate || 0.05,
-        taxes: bookingData.taxes,
-        total_amount: bookingData.totalAmount,
-        host_net_payout: bookingData.hostNetPayout,
-        status: bookingData.status || 'confirmed',
-        booking_status: 'confirmed',
-        payment_method: bookingData.paymentMethod,
-        payment_status: 'successful',
-        transaction_id: txnId,
+        booking_status: 'pending',
+        status: 'pending',
+        payment_status: 'pending',
+        payment_method: bookingData.paymentMethod || 'paystack',
         qr_code_url: qrUrl,
-        wifi_ssid: bookingData.wifiSSID,
-        wifi_pass: bookingData.wifiPass,
-        door_pin: bookingData.doorPIN,
         notes: bookingData.notes || '',
       };
 
@@ -229,67 +216,251 @@ export const bookingsService = {
         .single();
 
       if (error) {
-        console.error('Supabase booking insert notice:', error.message);
-        // Fallback to local booking object so flow does not fail for the user
-        const fallbackBooking: Booking = {
-          ...bookingData,
-          id: `bk-${Date.now().toString().slice(-6)}`,
-          bookingReference: bookingRef,
-          transactionId: txnId,
-          qrCodeUrl: qrUrl,
-          createdAt: new Date().toISOString(),
-        };
-        return { booking: fallbackBooking, error: null };
+        return { booking: null, error: error.message };
       }
 
-      // Record associated payment ledger entry
-      try {
-        await supabase.from('payments').insert({
-          booking_id: data.id,
-          user_id: bookingData.coworkerId,
-          transaction_reference: txnId,
-          amount: bookingData.totalAmount,
-          currency: 'NGN',
-          provider: bookingData.paymentMethod === 'card' ? 'paystack' : bookingData.paymentMethod,
-          payment_status: 'successful',
-        });
-      } catch (payErr) {
-        // Non-blocking log
-        console.debug('Payment record write notice:', payErr);
-      }
-
-      // Send in-app notification to client and host
-      try {
-        await supabase.from('notifications').insert([
-          {
-            user_id: bookingData.coworkerId,
-            type: 'booking',
-            title: 'Booking Confirmed!',
-            message: `Your booking for ${bookingData.spaceName} (${bookingData.startDate}) is confirmed. Ref: ${bookingRef}`,
-          },
-          {
-            user_id: bookingData.hostId,
-            type: 'booking',
-            title: 'New Space Booking',
-            message: `${bookingData.coworkerName} has booked ${bookingData.spaceName} for ${bookingData.startDate}.`,
-          }
-        ]);
-      } catch (notifErr) {
-        console.debug('Notification write notice:', notifErr);
-      }
-
-      const createdBooking: Booking = {
+      const pendingBooking: Booking = {
         ...bookingData,
         id: data.id,
         bookingReference: data.booking_reference,
+        status: data.booking_status || 'pending',
+        baseAmount: Number(data.base_amount),
+        platformCommissionFee: Number(data.platform_commission_fee),
+        taxes: Number(data.taxes),
+        totalAmount: Number(data.total_amount),
+        hostNetPayout: Number(data.host_net_payout),
         transactionId: data.transaction_id,
         qrCodeUrl: data.qr_code_url,
         createdAt: data.created_at,
       };
 
-      return { booking: createdBooking, error: null };
+      return { booking: pendingBooking, error: null };
     } catch (err: any) {
       return { booking: null, error: err.message || 'Failed to create booking.' };
+    }
+  },
+
+  // Step 2: Initialize Payment with Paystack Gateway via Server
+  async initializePayment(bookingId: string, email: string, paymentMethod: string = 'paystack'): Promise<{
+    reference: string;
+    authorizationUrl: string | null;
+    accessCode: string | null;
+    amount: number;
+    sandbox: boolean;
+    error: string | null;
+  }> {
+    try {
+      const response = await fetch('/api/payments/initialize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId,
+          email,
+          paymentMethod,
+          callbackUrl: window.location.origin,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        return {
+          reference: '',
+          authorizationUrl: null,
+          accessCode: null,
+          amount: 0,
+          sandbox: false,
+          error: data.error || 'Failed to initialize payment gateway',
+        };
+      }
+
+      return {
+        reference: data.reference,
+        authorizationUrl: data.authorizationUrl,
+        accessCode: data.accessCode,
+        amount: data.amount,
+        sandbox: !!data.sandbox,
+        error: null,
+      };
+    } catch (err: any) {
+      return {
+        reference: '',
+        authorizationUrl: null,
+        accessCode: null,
+        amount: 0,
+        sandbox: false,
+        error: err.message || 'Network error initializing payment',
+      };
+    }
+  },
+
+  // Step 3: Authoritatively verify payment and confirm booking on server
+  async verifyAndConfirmPayment(bookingId: string, reference: string, provider: string = 'paystack'): Promise<{
+    success: boolean;
+    booking: Booking | null;
+    error: string | null;
+  }> {
+    if (!isSupabaseConfigured() || !supabase) {
+      return {
+        success: true,
+        booking: null,
+        error: null,
+      };
+    }
+
+    try {
+      const response = await fetch('/api/payments/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId,
+          reference,
+          provider,
+        }),
+      });
+
+      const resData = await response.json();
+      if (!response.ok || !resData.success) {
+        return {
+          success: false,
+          booking: null,
+          error: resData.error || 'Payment confirmation failed',
+        };
+      }
+
+      const row = resData.booking;
+      const space = row?.spaces;
+      const confirmedBooking: Booking | null = row ? {
+        id: row.id,
+        bookingReference: row.booking_reference,
+        spaceId: row.space_id,
+        spaceName: space?.name || 'OFIS Space',
+        spaceCity: space?.city || 'Lagos',
+        spaceAddress: space?.address || 'Victoria Island',
+        spaceImage: (space?.images && space?.images[0]) || 'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=1200&q=80',
+        primaryCategory: space?.primary_category || 'WORK',
+        subcategory: space?.subcategory || 'coworking_desks',
+        deskId: row.desk_id || 'desk-1',
+        deskName: 'Dedicated Workstation',
+        deskCode: 'D-01',
+        deskZone: 'collaborative',
+        coworkerId: row.user_id || row.client_id,
+        coworkerName: 'Coworker',
+        coworkerEmail: '',
+        hostId: row.host_id,
+        hostName: 'OFIS Host',
+        durationType: row.duration_type || 'hourly',
+        durationUnits: Number(row.duration_units) || 1,
+        startDate: row.start_date,
+        endDate: row.end_date,
+        startTime: row.start_time_label,
+        endTime: row.end_time_label,
+        currency: row.currency || 'NGN',
+        currencySymbol: row.currency_symbol || '₦',
+        baseAmount: Number(row.base_amount),
+        platformCommissionFee: Number(row.platform_commission_fee),
+        commissionRate: Number(row.commission_rate) || 0.05,
+        taxes: Number(row.taxes),
+        totalAmount: Number(row.total_amount),
+        hostNetPayout: Number(row.host_net_payout),
+        status: 'confirmed',
+        paymentMethod: row.payment_method || provider,
+        transactionId: row.payment_reference || reference,
+        createdAt: row.created_at,
+        wifiSSID: space?.wifi_ssid || row.wifi_ssid || 'OFIS_Guest_HighSpeed',
+        qrCodeUrl: row.qr_code_url,
+        notes: row.notes,
+      } : null;
+
+      return {
+        success: true,
+        booking: confirmedBooking,
+        error: null,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        booking: null,
+        error: err.message || 'Payment confirmation network error',
+      };
+    }
+  },
+
+  // Step 4: Securely fetch WiFi & Door Access credentials for a confirmed booking
+  async fetchAccessCredentials(bookingId: string, spaceId?: string): Promise<{
+    wifiSSID: string;
+    wifiPass: string;
+    doorPIN: string;
+    accessInstructions: string;
+    error: string | null;
+  }> {
+    if (!isSupabaseConfigured() || !supabase) {
+      return {
+        wifiSSID: 'OFIS_Guest_HighSpeed',
+        wifiPass: 'WorkFocus2026',
+        doorPIN: '4829',
+        accessInstructions: 'Check in at reception with valid ID and quote your booking reference.',
+        error: null,
+      };
+    }
+
+    try {
+      // 1. Try Supabase direct RPC first
+      const { data, error } = await supabase.rpc('get_space_access_credentials', {
+        p_space_id: spaceId,
+        p_booking_id: bookingId,
+      });
+
+      if (!error && data) {
+        return {
+          wifiSSID: data.wifi_ssid || 'OFIS_Guest_HighSpeed',
+          wifiPass: data.wifi_pass || 'WorkFocus2026',
+          doorPIN: data.door_pin || '4829',
+          accessInstructions: data.access_instructions || 'Check in at reception with valid ID.',
+          error: null,
+        };
+      }
+
+      // 2. Fallback to authenticated server proxy
+      const session = (await supabase.auth.getSession()).data.session;
+      if (session?.access_token) {
+        const res = await fetch('/api/bookings/credentials', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ bookingId, spaceId }),
+        });
+
+        if (res.ok) {
+          const resData = await res.json();
+          if (resData.credentials) {
+            return {
+              wifiSSID: resData.credentials.wifiSSID,
+              wifiPass: resData.credentials.wifiPass,
+              doorPIN: resData.credentials.doorPIN,
+              accessInstructions: resData.credentials.accessInstructions,
+              error: null,
+            };
+          }
+        }
+      }
+
+      return {
+        wifiSSID: 'OFIS_Guest_HighSpeed',
+        wifiPass: 'WorkFocus2026',
+        doorPIN: '4829',
+        accessInstructions: 'Check in at reception with valid ID.',
+        error: error?.message || null,
+      };
+    } catch (err: any) {
+      return {
+        wifiSSID: 'OFIS_Guest_HighSpeed',
+        wifiPass: 'WorkFocus2026',
+        doorPIN: '4829',
+        accessInstructions: 'Check in at reception with valid ID.',
+        error: err.message,
+      };
     }
   },
 
@@ -301,7 +472,11 @@ export const bookingsService = {
     try {
       const { error } = await supabase
         .from('bookings')
-        .update({ status, updated_at: new Date().toISOString() })
+        .update({
+          status,
+          booking_status: status,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', bookingId);
 
       if (error) return { success: false, error: error.message };

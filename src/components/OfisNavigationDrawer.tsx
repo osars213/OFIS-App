@@ -9,13 +9,19 @@ import {
   ShieldCheck,
   FileText,
   Lock,
-  PlusCircle,
   Clock,
   Info,
-  ChevronRight
+  ChevronRight,
+  Sun,
+  Moon,
+  Smartphone,
+  Check,
+  Settings
 } from 'lucide-react';
 import { OfisLogo } from './OfisLogo';
 import { InfoModalSection } from './OfisInfoModal';
+import { useApp } from '../context/AppContext';
+import { ThemeMode } from '../types';
 
 interface OfisNavigationDrawerProps {
   isOpen: boolean;
@@ -46,12 +52,16 @@ export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
   onOpenListSpace,
   onOpenInfoSection,
 }) => {
+  const { themeMode, effectiveTheme, setThemeMode, openSettingsModal } = useApp();
+
   if (!isOpen) return null;
 
   const handleAction = (cb: () => void) => {
     onClose();
     cb();
   };
+
+  const isLight = effectiveTheme === 'light';
 
   return (
     <div
@@ -66,10 +76,12 @@ export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
         exit={{ x: '-100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 280 }}
         onClick={(e) => e.stopPropagation()}
-        className="fixed inset-y-0 left-0 w-full max-w-[340px] sm:max-w-sm bg-[#0E0E0E] border-r border-[#222222] text-white shadow-2xl flex flex-col z-50 overflow-hidden"
+        className={`fixed inset-y-0 left-0 w-full max-w-[340px] sm:max-w-sm ${
+          isLight ? 'bg-[#FFFFFF] border-r border-[#E5E7EB] text-[#111827]' : 'bg-[#0E0E0E] border-r border-[#222222] text-white'
+        } shadow-2xl flex flex-col z-50 overflow-hidden transition-colors duration-150`}
       >
         {/* Drawer Header */}
-        <div className="p-5 sm:p-6 border-b border-[#222222] flex items-center justify-between bg-[#121212] shrink-0">
+        <div className={`p-5 sm:p-6 border-b ${isLight ? 'border-[#E5E7EB] bg-[#F9FAFB]' : 'border-[#222222] bg-[#121212]'} flex items-center justify-between shrink-0`}>
           <div className="flex items-center">
             <OfisLogo size="md" />
           </div>
@@ -78,7 +90,7 @@ export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
             type="button"
             id="drawer-close-btn"
             onClick={onClose}
-            className="p-2 rounded-xl text-stone-400 hover:text-white hover:bg-[#202020] transition-colors cursor-pointer"
+            className={`p-2 rounded-xl ${isLight ? 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100' : 'text-stone-400 hover:text-white hover:bg-[#202020]'} transition-colors cursor-pointer`}
             aria-label="Close navigation drawer"
           >
             <X className="w-5 h-5" />
@@ -88,25 +100,94 @@ export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
         {/* Drawer Scrollable Links Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 text-sm">
           
+          {/* THEME SELECTOR: Dark, Light, System Default */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-black text-[#00C878] uppercase tracking-wider">
+                Appearance & Theme
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                isLight ? 'bg-[#E8F8F0] text-[#00A865]' : 'bg-[#063B2A] text-[#00C878]'
+              }`}>
+                {themeMode === 'system' ? 'System Default' : themeMode === 'light' ? 'Light Mode' : 'Dark Mode'}
+              </span>
+            </div>
+
+            <div className={`p-1.5 rounded-2xl border ${isLight ? 'bg-[#F3F4F6] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} grid grid-cols-3 gap-1`}>
+              {/* Option 1: Dark Mode */}
+              <button
+                type="button"
+                id="theme-btn-dark"
+                onClick={() => setThemeMode('dark')}
+                className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  themeMode === 'dark'
+                    ? 'bg-[#00C878] text-[#0A0A0A] shadow-md shadow-[#00C878]/20 font-black'
+                    : isLight
+                    ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60'
+                    : 'text-stone-300 hover:text-white hover:bg-[#222222]'
+                }`}
+              >
+                <Moon className="w-4 h-4 mb-1" />
+                <span className="text-[11px]">Dark</span>
+              </button>
+
+              {/* Option 2: Light Mode */}
+              <button
+                type="button"
+                id="theme-btn-light"
+                onClick={() => setThemeMode('light')}
+                className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  themeMode === 'light'
+                    ? 'bg-[#00C878] text-[#0A0A0A] shadow-md shadow-[#00C878]/20 font-black'
+                    : isLight
+                    ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60'
+                    : 'text-stone-300 hover:text-white hover:bg-[#222222]'
+                }`}
+              >
+                <Sun className="w-4 h-4 mb-1" />
+                <span className="text-[11px]">Light</span>
+              </button>
+
+              {/* Option 3: System Default */}
+              <button
+                type="button"
+                id="theme-btn-system"
+                onClick={() => setThemeMode('system')}
+                className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  themeMode === 'system'
+                    ? 'bg-[#00C878] text-[#0A0A0A] shadow-md shadow-[#00C878]/20 font-black'
+                    : isLight
+                    ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60'
+                    : 'text-stone-300 hover:text-white hover:bg-[#222222]'
+                }`}
+              >
+                <Smartphone className="w-4 h-4 mb-1" />
+                <span className="text-[11px]">System</span>
+              </button>
+            </div>
+          </div>
+
           {/* Main Discover & Experience Section */}
           <div className="space-y-1">
             <div className="px-2.5 py-1 text-[11px] font-black text-[#00C878] uppercase tracking-wider">
               Navigation & Guide
             </div>
 
-            <div className="bg-[#151515] border border-[#242424] rounded-2xl p-1 space-y-0.5">
+            <div className={`${isLight ? 'bg-[#F9FAFB] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} border rounded-2xl p-1 space-y-0.5`}>
               {/* 1. About OFIS */}
               <button
                 type="button"
                 id="drawer-item-about"
                 onClick={() => handleAction(() => onOpenInfoSection('about'))}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-200 hover:text-white hover:bg-[#202020] transition-colors cursor-pointer group"
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
+                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
+                } transition-colors cursor-pointer group`}
               >
                 <div className="flex items-center gap-2.5">
                   <Info className="w-4 h-4 text-[#00C878]" />
                   <span>About OFIS</span>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-stone-300 transition-transform group-hover:translate-x-0.5" />
+                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
               </button>
 
               {/* 2. How It Works */}
@@ -114,13 +195,15 @@ export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
                 type="button"
                 id="drawer-item-how-it-works"
                 onClick={() => handleAction(() => onOpenInfoSection('how_it_works'))}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-200 hover:text-white hover:bg-[#202020] transition-colors cursor-pointer group"
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
+                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
+                } transition-colors cursor-pointer group`}
               >
                 <div className="flex items-center gap-2.5">
                   <Clock className="w-4 h-4 text-[#00C878]" />
                   <span>How It Works</span>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-stone-300 transition-transform group-hover:translate-x-0.5" />
+                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
               </button>
 
               {/* 3. Why OFIS */}
@@ -128,13 +211,15 @@ export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
                 type="button"
                 id="drawer-item-why-ofis"
                 onClick={() => handleAction(() => onOpenInfoSection('why_ofis'))}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-200 hover:text-white hover:bg-[#202020] transition-colors cursor-pointer group"
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
+                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
+                } transition-colors cursor-pointer group`}
               >
                 <div className="flex items-center gap-2.5">
                   <ShieldCheck className="w-4 h-4 text-[#00C878]" />
                   <span>Why OFIS</span>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-stone-300 transition-transform group-hover:translate-x-0.5" />
+                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
               </button>
 
               {/* 4. Explore Spaces */}
@@ -142,7 +227,7 @@ export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
                 type="button"
                 id="drawer-item-explore-spaces"
                 onClick={() => handleAction(() => onNavigate('explore'))}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-[#00C878] hover:bg-[#063B2A]/40 transition-colors cursor-pointer group"
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-[#00C878] hover:bg-[#00C878]/10 transition-colors cursor-pointer group"
               >
                 <div className="flex items-center gap-2.5">
                   <Compass className="w-4 h-4 text-[#00C878]" />
@@ -153,39 +238,27 @@ export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
             </div>
           </div>
 
-          {/* Hosting Section */}
+          {/* Space Owners Guide Section */}
           <div className="space-y-1">
             <div className="px-2.5 py-1 text-[11px] font-black text-[#00C878] uppercase tracking-wider">
               Space Owners
             </div>
 
-            <div className="bg-[#151515] border border-[#242424] rounded-2xl p-1 space-y-0.5">
-              {/* 5. List a Space */}
-              <button
-                type="button"
-                id="drawer-item-list-space"
-                onClick={() => handleAction(() => onOpenListSpace())}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold bg-[#00C878]/10 text-[#00C878] hover:bg-[#00C878]/20 transition-colors cursor-pointer group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <PlusCircle className="w-4 h-4 text-[#00C878]" />
-                  <span>List a Space</span>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 text-[#00C878] transition-transform group-hover:translate-x-0.5" />
-              </button>
-
-              {/* 6. How Hosting Works */}
+            <div className={`${isLight ? 'bg-[#F9FAFB] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} border rounded-2xl p-1`}>
+              {/* How Hosting Works */}
               <button
                 type="button"
                 id="drawer-item-how-hosting-works"
                 onClick={() => handleAction(() => onOpenInfoSection('how_hosting_works'))}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-200 hover:text-white hover:bg-[#202020] transition-colors cursor-pointer group"
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
+                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
+                } transition-colors cursor-pointer group`}
               >
                 <div className="flex items-center gap-2.5">
                   <Building2 className="w-4 h-4 text-[#00C878]" />
                   <span>How Hosting Works</span>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-stone-300 transition-transform group-hover:translate-x-0.5" />
+                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
               </button>
             </div>
           </div>
@@ -196,19 +269,21 @@ export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
               Help & Support
             </div>
 
-            <div className="bg-[#151515] border border-[#242424] rounded-2xl p-1 space-y-0.5">
+            <div className={`${isLight ? 'bg-[#F9FAFB] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} border rounded-2xl p-1 space-y-0.5`}>
               {/* 7. Help Centre */}
               <button
                 type="button"
                 id="drawer-item-help-centre"
                 onClick={() => handleAction(() => onOpenInfoSection('help_centre'))}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-200 hover:text-white hover:bg-[#202020] transition-colors cursor-pointer group"
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
+                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
+                } transition-colors cursor-pointer group`}
               >
                 <div className="flex items-center gap-2.5">
                   <HelpCircle className="w-4 h-4 text-[#00C878]" />
                   <span>Help Centre</span>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-stone-300 transition-transform group-hover:translate-x-0.5" />
+                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
               </button>
 
               {/* 8. Contact Us */}
@@ -216,36 +291,68 @@ export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
                 type="button"
                 id="drawer-item-contact-us"
                 onClick={() => handleAction(() => onOpenInfoSection('contact_us'))}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-stone-200 hover:text-white hover:bg-[#202020] transition-colors cursor-pointer group"
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
+                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
+                } transition-colors cursor-pointer group`}
               >
                 <div className="flex items-center gap-2.5">
                   <Mail className="w-4 h-4 text-[#00C878]" />
                   <span>Contact Us</span>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-stone-500 group-hover:text-stone-300 transition-transform group-hover:translate-x-0.5" />
+                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
+              </button>
+            </div>
+          </div>
+
+          {/* Settings & System Preferences */}
+          <div className="space-y-1">
+            <div className="px-2.5 py-1 text-[11px] font-black text-[#00C878] uppercase tracking-wider">
+              Preferences & System
+            </div>
+
+            <div className={`${isLight ? 'bg-[#F9FAFB] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} border rounded-2xl p-1`}>
+              <button
+                type="button"
+                id="drawer-item-settings"
+                onClick={() => handleAction(() => openSettingsModal())}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold ${
+                  isLight ? 'text-neutral-900 hover:bg-[#E8F8F0] hover:text-[#00A865]' : 'text-stone-100 hover:bg-[#063B2A]/40 hover:text-[#00C878]'
+                } transition-colors cursor-pointer group`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Settings className="w-4 h-4 text-[#00C878]" />
+                  <span>Settings & Permissions</span>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                  isLight ? 'bg-neutral-200/80 text-neutral-700' : 'bg-[#222222] text-[#A3A3A3]'
+                }`}>
+                  v2.4.1
+                </span>
               </button>
             </div>
           </div>
 
           {/* Legal Section */}
           <div className="space-y-1">
-            <div className="px-2.5 py-1 text-[11px] font-black text-stone-400 uppercase tracking-wider">
+            <div className={`px-2.5 py-1 text-[11px] font-black ${isLight ? 'text-neutral-500' : 'text-stone-400'} uppercase tracking-wider`}>
               Legal
             </div>
 
-            <div className="bg-[#151515] border border-[#242424] rounded-2xl p-1 space-y-0.5">
+            <div className={`${isLight ? 'bg-[#F9FAFB] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} border rounded-2xl p-1 space-y-0.5`}>
               {/* 9. Terms & Conditions */}
               <button
                 type="button"
                 id="drawer-item-terms"
                 onClick={() => handleAction(() => onOpenInfoSection('terms'))}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-stone-400 hover:text-stone-200 hover:bg-[#202020] transition-colors cursor-pointer"
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs ${
+                  isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100' : 'text-stone-400 hover:text-stone-200 hover:bg-[#202020]'
+                } transition-colors cursor-pointer`}
               >
                 <div className="flex items-center gap-2.5">
                   <FileText className="w-3.5 h-3.5 text-stone-400" />
                   <span>Terms & Conditions</span>
                 </div>
-                <ChevronRight className="w-3 h-3 text-stone-600" />
+                <ChevronRight className="w-3 h-3 text-stone-400" />
               </button>
 
               {/* 10. Privacy Policy */}
@@ -253,24 +360,26 @@ export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
                 type="button"
                 id="drawer-item-privacy"
                 onClick={() => handleAction(() => onOpenInfoSection('privacy'))}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-stone-400 hover:text-stone-200 hover:bg-[#202020] transition-colors cursor-pointer"
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs ${
+                  isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100' : 'text-stone-400 hover:text-stone-200 hover:bg-[#202020]'
+                } transition-colors cursor-pointer`}
               >
                 <div className="flex items-center gap-2.5">
                   <Lock className="w-3.5 h-3.5 text-stone-400" />
                   <span>Privacy Policy</span>
                 </div>
-                <ChevronRight className="w-3 h-3 text-stone-600" />
+                <ChevronRight className="w-3 h-3 text-stone-400" />
               </button>
             </div>
           </div>
         </div>
 
         {/* MENU FOOTER */}
-        <div className="p-5 border-t border-[#222222] bg-[#121212] shrink-0 text-center">
+        <div className={`p-5 border-t ${isLight ? 'border-[#E5E7EB] bg-[#F9FAFB]' : 'border-[#222222] bg-[#121212]'} shrink-0 text-center`}>
           <div className="flex justify-center mb-1.5">
             <OfisLogo size="sm" />
           </div>
-          <p className="text-[11px] text-[#00C878] font-semibold">
+          <p className="text-[11px] text-[#00C878] font-bold">
             Nigeria's Physical Space Network
           </p>
         </div>
