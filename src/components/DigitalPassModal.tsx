@@ -66,8 +66,8 @@ export const DigitalPassModal: React.FC = () => {
   if (!isPassModalOpen || !activePassBooking) return null;
 
   const resolvedWifiSSID = credentials.wifiSSID || activePassBooking.wifiSSID || 'OFIS_Guest_HighSpeed';
-  const resolvedWifiPass = credentials.wifiPass || activePassBooking.wifiPass || 'WorkFocus2026';
-  const resolvedDoorPIN = credentials.doorPIN || activePassBooking.doorPIN || '4829#';
+  const resolvedWifiPass = credentials.wifiPass || activePassBooking.wifiPass || '—';
+  const resolvedDoorPIN = credentials.doorPIN || activePassBooking.doorPIN || '—';
 
   const bookingRef =
     activePassBooking.bookingReference ||

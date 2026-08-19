@@ -48,8 +48,8 @@ export const mapDbSpaceToSpace = (row: any, desks: Desk[] = []): Space => {
     openingHours: row.opening_hours || '08:00 AM - 08:00 PM (Mon - Sat)',
     
     wifiSSID: row.wifi_ssid || 'OFIS_Guest_HighSpeed',
-    wifiPass: row.wifi_pass || 'WorkFocus2026',
-    doorPIN: row.door_pin || '4829',
+    wifiPass: row.wifi_pass || '',
+    doorPIN: row.door_pin || '',
 
     dailyRate: Number(row.daily_rate_usd) || Math.round((Number(row.daily_rate_ngn) || 25000) / 1550),
     hourlyRate: Number(row.hourly_rate_usd) || Math.round((Number(row.hourly_rate_ngn) || 5000) / 1550),
@@ -219,8 +219,8 @@ export const spacesService = {
         equipment: spaceData.equipment || [],
         images: spaceData.images || ['https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?auto=format&fit=crop&w=1200&q=80'],
         wifi_ssid: spaceData.wifiSSID || 'OFIS_Guest_HighSpeed',
-        wifi_pass: spaceData.wifiPass || 'WorkFocus2026',
-        door_pin: spaceData.doorPIN || '4829',
+        wifi_pass: spaceData.wifiPass || '',
+        door_pin: spaceData.doorPIN || '',
         verified: true,
         status: 'available',
         verification_status: 'verified',
@@ -263,8 +263,8 @@ export const spacesService = {
         await supabase.from('space_access_credentials').upsert({
           space_id: data.id,
           wifi_ssid: spaceData.wifiSSID || 'OFIS_Guest_HighSpeed',
-          wifi_pass: spaceData.wifiPass || 'WorkFocus2026',
-          door_pin: spaceData.doorPIN || '4829',
+          wifi_pass: spaceData.wifiPass || '',
+          door_pin: spaceData.doorPIN || '',
           access_instructions: 'Show your OFIS digital QR pass at reception or dial keypad PIN.',
           updated_at: new Date().toISOString(),
         });

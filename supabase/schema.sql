@@ -303,8 +303,8 @@ create trigger trg_sync_space_fields
 create table if not exists public.space_access_credentials (
     space_id uuid primary key references public.spaces(id) on delete cascade,
     wifi_ssid text default 'OFIS_Guest_HighSpeed',
-    wifi_pass text not null default 'WorkFocus2026',
-    door_pin text not null default '4829',
+    wifi_pass text not null default '',
+    door_pin text not null default '',
     access_instructions text default 'Check in at reception with valid ID and quote your booking reference.',
     created_at timestamptz not null default timezone('utc'::text, now()),
     updated_at timestamptz not null default timezone('utc'::text, now())
@@ -1139,8 +1139,8 @@ create trigger trg_enforce_host_verification_security
 create table if not exists public.space_access_credentials (
     space_id uuid primary key references public.spaces(id) on delete cascade,
     wifi_ssid text default 'OFIS_Guest_HighSpeed',
-    wifi_pass text not null default 'WorkFocus2026',
-    door_pin text not null default '4829',
+    wifi_pass text not null default '',
+    door_pin text not null default '',
     access_instructions text default 'Check in at reception with valid ID and quote your booking reference.',
     created_at timestamptz not null default timezone('utc'::text, now()),
     updated_at timestamptz not null default timezone('utc'::text, now())
@@ -1202,7 +1202,7 @@ begin
     end if;
 
     if not v_has_access then
-        raise exception 'Access Denied: You must have a confirmed booking for this space to view WiFi and Door credentials';
+        raise exception 'Access Denied: You must have an active confirmed booking for this space to view access credentials';
     end if;
 
     select * into v_creds from public.space_access_credentials where space_id = p_space_id;
@@ -1210,9 +1210,9 @@ begin
         return jsonb_build_object(
             'space_id', p_space_id,
             'wifi_ssid', coalesce(v_space.wifi_ssid, 'OFIS_Guest_HighSpeed'),
-            'wifi_pass', 'WorkFocus2026',
-            'door_pin', '4829',
-            'access_instructions', 'Check in at reception with your booking reference.'
+            'wifi_pass', '',
+            'door_pin', '',
+            'access_instructions', 'Check in at reception desk with your booking reference.'
         );
     end if;
 

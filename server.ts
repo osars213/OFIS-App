@@ -14,8 +14,8 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Initialize Supabase Server Admin Client safely with sanitized base origin
-  const rawSupabaseUrl = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '').trim();
+  // Initialize Supabase Server Admin Client strictly using SUPABASE_SERVICE_ROLE_KEY (no fallback to anon/public keys)
+  const rawSupabaseUrl = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '').trim();
   let supabaseUrl = rawSupabaseUrl;
   try {
     if (rawSupabaseUrl.startsWith('http')) {
@@ -24,8 +24,9 @@ async function startServer() {
   } catch {
     supabaseUrl = rawSupabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
   }
-  const supabaseServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '').trim();
+  const supabaseServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
+  // Privileged server client ONLY initialized if SUPABASE_SERVICE_ROLE_KEY is provided
   const supabaseAdmin = (supabaseUrl && supabaseServiceKey)
     ? createClient(supabaseUrl, supabaseServiceKey, {
         auth: { persistSession: false, autoRefreshToken: false },
@@ -155,14 +156,26 @@ async function startServer() {
       }
 
       if (!supabaseAdmin) {
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({ error: 'SUPABASE_SERVICE_ROLE_KEY is required on the server for payment operations' });
+        }
         // Fallback reference for local / offline demo environments
-        const fallbackRef = `pstk_ref_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const fallbackRef = `pstk_test_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
         return res.json({
           reference: fallbackRef,
           authorizationUrl: null,
           sandbox: true,
-          message: 'Payment initialized in sandbox mode',
+          message: 'Payment initialized in demo sandbox mode',
         });
+      }
+
+      // Optional Auth Verification on Initialize
+      const authHeader = req.headers.authorization;
+      let authenticatedUser: any = null;
+      if (authHeader) {
+        const token = authHeader.replace(/^Bearer\s+/i, '');
+        const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+        authenticatedUser = user;
       }
 
       // Fetch authoritative booking directly from database
@@ -173,7 +186,22 @@ async function startServer() {
         .single();
 
       if (bookingErr || !booking) {
-        return res.status(404).json({ error: 'Booking not found in authoritative records' });
+        return res.status(404).json({ error: 'Authoritative booking record not found' });
+      }
+
+      // If user is authenticated, ensure they own the booking or are admin
+      if (authenticatedUser) {
+        const isOwner = (booking.client_id === authenticatedUser.id || booking.user_id === authenticatedUser.id);
+        const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', authenticatedUser.id).single();
+        const isAdmin = profile?.role === 'admin';
+        if (!isOwner && !isAdmin) {
+          return res.status(403).json({ error: 'Unauthorized: You do not own this booking' });
+        }
+      }
+
+      // Prevent re-initialization on cancelled / expired bookings
+      if (booking.booking_status === 'cancelled' || booking.booking_status === 'expired' || booking.status === 'cancelled') {
+        return res.status(400).json({ error: `Cannot initialize payment for ${booking.booking_status || booking.status} booking` });
       }
 
       const totalAmountNGN = Number(booking.total_amount);
@@ -188,7 +216,7 @@ async function startServer() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            email: email || 'coworker@ofis.ng',
+            email: email || booking.coworker_email || 'coworker@ofis.ng',
             amount: amountInKobo,
             callback_url: callbackUrl,
             metadata: {
@@ -216,8 +244,12 @@ async function startServer() {
         });
       }
 
-      // Otherwise generate secure server-signed transaction reference
-      const reference = `pstk_ref_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(503).json({ error: 'PAYSTACK_SECRET_KEY environment variable is required in production' });
+      }
+
+      // Non-production sandbox reference
+      const reference = `pstk_test_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
       return res.json({
         reference,
         authorizationUrl: null,
@@ -243,8 +275,19 @@ async function startServer() {
 
       if (!supabaseAdmin) {
         return res.status(503).json({
-          error: 'Supabase database service is not configured on the server',
+          error: 'SUPABASE_SERVICE_ROLE_KEY is required on the server to verify payments',
         });
+      }
+
+      // Auth validation
+      const authHeader = req.headers.authorization;
+      let authenticatedUser: any = null;
+      if (authHeader) {
+        const token = authHeader.replace(/^Bearer\s+/i, '');
+        const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(token);
+        if (!userErr && user) {
+          authenticatedUser = user;
+        }
       }
 
       // Look up booking authoritative details
@@ -258,7 +301,32 @@ async function startServer() {
         return res.status(404).json({ error: 'Authoritative booking record not found' });
       }
 
-      // If Paystack Secret Key is configured, verify transaction against Paystack
+      // Enforce caller ownership when user is authenticated
+      if (authenticatedUser) {
+        const isOwner = (booking.client_id === authenticatedUser.id || booking.user_id === authenticatedUser.id);
+        const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', authenticatedUser.id).single();
+        const isAdmin = profile?.role === 'admin';
+        if (!isOwner && !isAdmin) {
+          return res.status(403).json({ error: 'Unauthorized: You do not own this booking' });
+        }
+      }
+
+      // Check status: prevent confirmation of cancelled/expired bookings
+      if (booking.booking_status === 'cancelled' || booking.booking_status === 'expired' || booking.status === 'cancelled') {
+        return res.status(400).json({ error: `Cannot verify payment for a ${booking.booking_status || booking.status} booking` });
+      }
+
+      // Idempotency check: If already confirmed with this reference, return idempotent success
+      if ((booking.booking_status === 'confirmed' || booking.status === 'confirmed') && booking.payment_reference === reference) {
+        return res.json({
+          success: true,
+          booking,
+          alreadyConfirmed: true,
+          message: 'Booking is already confirmed for this payment reference',
+        });
+      }
+
+      // If Paystack Secret Key is configured, verify transaction strictly against Paystack
       if (process.env.PAYSTACK_SECRET_KEY) {
         const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
           headers: {
@@ -267,9 +335,16 @@ async function startServer() {
         });
 
         const verifyData = await verifyRes.json();
-        if (!verifyRes.ok || !verifyData.status || verifyData.data.status !== 'success') {
+        if (!verifyRes.ok || !verifyData.status || verifyData.data?.status !== 'success') {
           return res.status(400).json({
             error: verifyData.data?.gateway_response || 'Payment verification failed at provider gateway',
+          });
+        }
+
+        // Verify currency
+        if (verifyData.data.currency && verifyData.data.currency !== 'NGN' && verifyData.data.currency !== booking.currency) {
+          return res.status(400).json({
+            error: `Currency mismatch: received ${verifyData.data.currency}, expected NGN`,
           });
         }
 
@@ -281,6 +356,17 @@ async function startServer() {
             error: `Payment amount mismatch: received ${verifiedKobo / 100} NGN, expected ${booking.total_amount} NGN`,
           });
         }
+
+        // Verify booking metadata binding if present
+        if (verifyData.data.metadata?.booking_id && verifyData.data.metadata.booking_id !== booking.id) {
+          return res.status(400).json({
+            error: 'Payment transaction reference does not match this booking record',
+          });
+        }
+      } else if (process.env.NODE_ENV === 'production') {
+        return res.status(503).json({
+          error: 'PAYSTACK_SECRET_KEY environment variable is required in production',
+        });
       }
 
       // Invoke the hardened confirm_booking_payment RPC using service_role authority
@@ -314,7 +400,7 @@ async function startServer() {
 
       return res.json({
         success: true,
-        booking: updatedBooking,
+        booking: updatedBooking || booking,
         confirmResult,
         message: 'Payment successfully verified and booking confirmed',
       });
@@ -327,8 +413,16 @@ async function startServer() {
   // 3. Webhook Receiver for Gateway Callbacks (Paystack / Flutterwave)
   app.post('/api/payments/webhook', async (req, res) => {
     try {
+      if (!supabaseAdmin) {
+        return res.status(503).json({ error: 'SUPABASE_SERVICE_ROLE_KEY is required for webhook operations' });
+      }
+
       if (process.env.PAYSTACK_SECRET_KEY) {
         const signature = req.headers['x-paystack-signature'];
+        if (!signature) {
+          return res.status(401).json({ error: 'Missing x-paystack-signature header' });
+        }
+
         const hash = crypto
           .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY)
           .update(JSON.stringify(req.body))
@@ -336,26 +430,30 @@ async function startServer() {
 
         if (signature !== hash) {
           console.warn('Invalid Paystack webhook signature received');
-          return res.status(400).send('Invalid signature');
+          return res.status(401).send('Invalid signature');
         }
       }
 
       const event = req.body;
-      if (event && event.event === 'charge.success' && supabaseAdmin) {
-        const { reference, amount, metadata } = event.data;
+      if (event && event.event === 'charge.success') {
+        const { reference, amount, metadata } = event.data || {};
         const bookingId = metadata?.booking_id;
 
         if (bookingId && reference) {
-          await supabaseAdmin.rpc('confirm_booking_payment', {
-            p_booking_id: bookingId,
-            p_transaction_reference: reference,
-            p_provider: 'paystack',
-            p_amount: amount ? amount / 100 : null,
-            p_metadata: {
-              webhook_event_id: event.id,
-              received_at: new Date().toISOString(),
-            },
-          });
+          // Fetch booking to verify amount
+          const { data: booking } = await supabaseAdmin.from('bookings').select('id, total_amount').eq('id', bookingId).single();
+          if (booking) {
+            await supabaseAdmin.rpc('confirm_booking_payment', {
+              p_booking_id: bookingId,
+              p_transaction_reference: reference,
+              p_provider: 'paystack',
+              p_amount: amount ? amount / 100 : Number(booking.total_amount),
+              p_metadata: {
+                webhook_event_id: event.id,
+                received_at: new Date().toISOString(),
+              },
+            });
+          }
         }
       }
 
@@ -377,40 +475,65 @@ async function startServer() {
       }
 
       if (!supabaseAdmin) {
-        return res.status(503).json({ error: 'Database service unavailable' });
+        return res.status(503).json({ error: 'SUPABASE_SERVICE_ROLE_KEY is required to retrieve space credentials' });
       }
 
       const token = authHeader.replace(/^Bearer\s+/i, '');
       const { data: { user }, error: userErr } = await supabaseAdmin.auth.getUser(token);
 
       if (userErr || !user) {
-        return res.status(401).json({ error: 'Invalid user authentication token' });
+        return res.status(401).json({ error: 'Invalid or expired user authentication token' });
       }
 
-      // Check access permission: user must be the booker, space owner, or admin
+      // Check access permission: user must be the booker of an active confirmed booking, space host, or admin
       let userHasAccess = false;
+      let targetSpaceId = spaceId;
 
       // Check booking
       if (bookingId) {
         const { data: b } = await supabaseAdmin
           .from('bookings')
-          .select('id, client_id, user_id, host_id, booking_status, space_id')
+          .select('id, client_id, user_id, host_id, booking_status, status, space_id, start_datetime, end_datetime')
           .eq('id', bookingId)
           .single();
 
-        if (b && (b.client_id === user.id || b.user_id === user.id || b.host_id === user.id)) {
-          if (b.booking_status === 'confirmed' || b.booking_status === 'checked_in') {
+        if (b) {
+          targetSpaceId = b.space_id;
+          const isBooker = (b.client_id === user.id || b.user_id === user.id);
+          const isHost = (b.host_id === user.id);
+
+          if (isBooker) {
+            const currentStatus = b.booking_status || b.status;
+            // Booker must have confirmed or checked_in booking
+            if (currentStatus === 'confirmed' || currentStatus === 'checked_in') {
+              // Check access window (active or up to 2 hours post-session)
+              const endEpoch = b.end_datetime ? new Date(b.end_datetime).getTime() : Date.now() + 3600000;
+              const isSessionActive = endEpoch >= Date.now() - (2 * 60 * 60 * 1000);
+
+              if (isSessionActive) {
+                userHasAccess = true;
+              } else {
+                return res.status(403).json({
+                  error: 'Access Denied: Booking session has expired. Access credentials are only available during active booking windows.',
+                });
+              }
+            } else {
+              return res.status(403).json({
+                error: `Access Denied: Booking is in ${currentStatus} status. Credentials require a confirmed payment.`,
+              });
+            }
+          } else if (isHost) {
             userHasAccess = true;
           }
         }
       }
 
-      // Check space host
-      if (!userHasAccess && spaceId) {
+      // Check space host if not yet granted
+      if (!userHasAccess && targetSpaceId) {
         const { data: s } = await supabaseAdmin
           .from('spaces')
           .select('id, host_id, owner_id')
-          .eq('id', spaceId)
+          .eq('id', targetSpaceId)
           .single();
 
         if (s && (s.host_id === user.id || s.owner_id === user.id)) {
@@ -418,7 +541,7 @@ async function startServer() {
         }
       }
 
-      // Check admin
+      // Check admin if not yet granted
       if (!userHasAccess) {
         const { data: p } = await supabaseAdmin
           .from('profiles')
@@ -433,29 +556,33 @@ async function startServer() {
 
       if (!userHasAccess) {
         return res.status(403).json({
-          error: 'Access Denied: You must have a confirmed booking or host privileges to view space credentials',
+          error: 'Access Denied: You must have an active confirmed booking or host privileges to view space credentials',
         });
       }
 
-      // Retrieve credentials from space_access_credentials
-      const targetSpaceId = spaceId || (bookingId ? (await supabaseAdmin.from('bookings').select('space_id').eq('id', bookingId).single()).data?.space_id : null);
-      
       if (!targetSpaceId) {
         return res.status(400).json({ error: 'Could not resolve space ID' });
       }
 
+      // Retrieve credentials from space_access_credentials without hardcoded password fallbacks
       const { data: creds } = await supabaseAdmin
         .from('space_access_credentials')
         .select('*')
         .eq('space_id', targetSpaceId)
         .single();
 
+      const { data: spaceInfo } = await supabaseAdmin
+        .from('spaces')
+        .select('wifi_ssid')
+        .eq('id', targetSpaceId)
+        .single();
+
       return res.json({
         credentials: {
-          wifiSSID: creds?.wifi_ssid || 'OFIS_Guest_HighSpeed',
-          wifiPass: creds?.wifi_pass || 'WorkFocus2026',
-          doorPIN: creds?.door_pin || '4829',
-          accessInstructions: creds?.access_instructions || 'Check in at reception with your booking reference.',
+          wifiSSID: creds?.wifi_ssid || spaceInfo?.wifi_ssid || 'OFIS_Guest_HighSpeed',
+          wifiPass: creds?.wifi_pass || '',
+          doorPIN: creds?.door_pin || '',
+          accessInstructions: creds?.access_instructions || 'Check in at reception desk with your booking reference.',
         },
       });
     } catch (err: any) {

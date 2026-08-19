@@ -399,7 +399,7 @@ export const UserBookingsView: React.FC = () => {
                               <div>
                                 <div className="text-[10px] text-[#9A9A9A] uppercase tracking-wider font-bold">Door PIN</div>
                                 <div className="text-sm font-black font-mono text-[#00C878] tracking-widest">
-                                  {booking.doorPIN || '4829#'}
+                                  {booking.doorPIN || '—'}
                                 </div>
                               </div>
                             </div>

@@ -250,9 +250,17 @@ export const bookingsService = {
     error: string | null;
   }> {
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (isSupabaseConfigured() && supabase) {
+        const session = (await supabase.auth.getSession()).data.session;
+        if (session?.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+      }
+
       const response = await fetch('/api/payments/initialize', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           bookingId,
           email,
@@ -308,9 +316,15 @@ export const bookingsService = {
     }
 
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const session = (await supabase.auth.getSession()).data.session;
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/payments/verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           bookingId,
           reference,
@@ -396,9 +410,9 @@ export const bookingsService = {
     if (!isSupabaseConfigured() || !supabase) {
       return {
         wifiSSID: 'OFIS_Guest_HighSpeed',
-        wifiPass: 'WorkFocus2026',
-        doorPIN: '4829',
-        accessInstructions: 'Check in at reception with valid ID and quote your booking reference.',
+        wifiPass: '',
+        doorPIN: '',
+        accessInstructions: 'Check in at reception desk with your booking reference.',
         error: null,
       };
     }
@@ -413,8 +427,8 @@ export const bookingsService = {
       if (!error && data) {
         return {
           wifiSSID: data.wifi_ssid || 'OFIS_Guest_HighSpeed',
-          wifiPass: data.wifi_pass || 'WorkFocus2026',
-          doorPIN: data.door_pin || '4829',
+          wifiPass: data.wifi_pass || '',
+          doorPIN: data.door_pin || '',
           accessInstructions: data.access_instructions || 'Check in at reception with valid ID.',
           error: null,
         };
@@ -436,10 +450,10 @@ export const bookingsService = {
           const resData = await res.json();
           if (resData.credentials) {
             return {
-              wifiSSID: resData.credentials.wifiSSID,
-              wifiPass: resData.credentials.wifiPass,
-              doorPIN: resData.credentials.doorPIN,
-              accessInstructions: resData.credentials.accessInstructions,
+              wifiSSID: resData.credentials.wifiSSID || 'OFIS_Guest_HighSpeed',
+              wifiPass: resData.credentials.wifiPass || '',
+              doorPIN: resData.credentials.doorPIN || '',
+              accessInstructions: resData.credentials.accessInstructions || 'Check in at reception with valid ID.',
               error: null,
             };
           }
@@ -448,16 +462,16 @@ export const bookingsService = {
 
       return {
         wifiSSID: 'OFIS_Guest_HighSpeed',
-        wifiPass: 'WorkFocus2026',
-        doorPIN: '4829',
+        wifiPass: '',
+        doorPIN: '',
         accessInstructions: 'Check in at reception with valid ID.',
         error: error?.message || null,
       };
     } catch (err: any) {
       return {
         wifiSSID: 'OFIS_Guest_HighSpeed',
-        wifiPass: 'WorkFocus2026',
-        doorPIN: '4829',
+        wifiPass: '',
+        doorPIN: '',
         accessInstructions: 'Check in at reception with valid ID.',
         error: err.message,
       };
