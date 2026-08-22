@@ -1,507 +1,436 @@
-import React, { useState, useEffect } from 'react';
-import {
-  X,
-  ShieldCheck,
-  CreditCard,
-  Lock,
-  CheckCircle2,
-  Sparkles,
-  ArrowRight,
+import React, { useState } from 'react';
+import { 
+  X, 
+  ShieldCheck, 
+  Zap, 
+  CreditCard, 
+  Wallet, 
+  CheckCircle2, 
+  Calendar, 
+  Clock, 
   AlertCircle,
-  Building2,
-  Calendar,
-  Clock,
-  Laptop,
-  Copy,
-  Check,
-  Smartphone,
-  Landmark,
-  Zap,
   QrCode,
-  CheckCheck,
-  RefreshCw,
-  Info,
-  MapPin,
-  Users
+  ArrowLeft,
+  Lock
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
-import { BookingDurationType, CurrencyCode } from '../types';
-import { OfisLogo } from './OfisLogo';
+import { bookingsService } from '../services/bookingsService';
+import confetti from 'canvas-confetti';
+import { Booking } from '../types';
 
 export const CheckoutModal: React.FC = () => {
   const {
-    isCheckoutModalOpen,
-    setIsCheckoutModalOpen,
-    selectedSpace,
-    selectedDesk,
+    isCheckoutOpen,
+    setIsCheckoutOpen,
+    checkoutSpace,
     currentUser,
-    currentCurrency,
-    formatPrice,
-    convertPrice,
-    formatPriceNaira,
     createBooking,
     setActivePassBooking,
-    setIsPassModalOpen,
-    setIsBookingSuccessModalOpen,
-    setLatestSuccessBooking,
-    showToast,
-    bookingDraft,
+    setCurrentView,
+    currency,
+    formatPrice,
   } = useApp();
 
-  const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'bank_transfer' | 'ussd'>('paystack');
+  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'card' | 'transfer' | 'ussd'>('wallet');
+  const [selectedDate, setSelectedDate] = useState('Saturday, 22 August');
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState('10:00 AM');
+  const [durationHours, setDurationHours] = useState(3);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [transferCountdown, setTransferCountdown] = useState(1799); // 30 mins countdown
-  const [isAccountCopied, setIsAccountCopied] = useState(false);
-  const [isUssdCopied, setIsUssdCopied] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isPaymentFailed, setIsPaymentFailed] = useState(false);
+  const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
 
-  // Card Inputs for Paystack simulation
-  const [cardNumber, setCardNumber] = useState('5399 4100 8821 4242');
-  const [cardExpiry, setCardExpiry] = useState('11/28');
-  const [cardCvv, setCardCvv] = useState('739');
+  if (!isCheckoutOpen || !checkoutSpace) return null;
 
-  // Bank selection for Nigerian USSD & Direct Transfer
-  const [selectedUssdBank, setSelectedUssdBank] = useState({ name: 'GTBank (*737#)', code: '*737*' });
+  const subtotal = checkoutSpace.pricePerHour * durationHours;
+  const platformFee = 0;
+  const totalAmount = subtotal + platformFee;
 
-  // 30 min countdown timer effect for bank transfer
-  useEffect(() => {
-    if (!isCheckoutModalOpen) return;
-    const timer = setInterval(() => {
-      setTransferCountdown(prev => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [isCheckoutModalOpen]);
-
-  if (!isCheckoutModalOpen || !selectedSpace || !selectedDesk) return null;
-
-  const durationUnits = bookingDraft.durationUnits || 3;
-  const startDate = bookingDraft.startDate || new Date().toISOString().split('T')[0];
-  const startTime = bookingDraft.startTime || '09:00 AM';
-
-  // Compute calculated end time
-  const getCalculatedEndTime = () => {
-    try {
-      const [time, modifier] = startTime.split(' ');
-      let [hours, minutes] = time.split(':').map(Number);
-      if (modifier === 'PM' && hours < 12) hours += 12;
-      if (modifier === 'AM' && hours === 12) hours = 0;
-
-      const d = new Date();
-      d.setHours(hours, minutes, 0, 0);
-      d.setHours(d.getHours() + durationUnits);
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return '05:00 PM';
-    }
+  // Calculate natural end time
+  const getEndTime = (startTime: string, hours: number) => {
+    if (startTime.includes('10:00 AM')) return hours === 1 ? '11:00 AM' : hours === 2 ? '12:00 PM' : hours === 3 ? '1:00 PM' : '2:00 PM';
+    if (startTime.includes('12:00 PM')) return hours === 1 ? '1:00 PM' : hours === 2 ? '2:00 PM' : hours === 3 ? '3:00 PM' : '4:00 PM';
+    if (startTime.includes('02:00 PM') || startTime.includes('2:00 PM')) return hours === 1 ? '3:00 PM' : hours === 2 ? '4:00 PM' : hours === 3 ? '5:00 PM' : '6:00 PM';
+    if (startTime.includes('04:00 PM') || startTime.includes('4:00 PM')) return hours === 1 ? '5:00 PM' : hours === 2 ? '6:00 PM' : hours === 3 ? '7:00 PM' : '8:00 PM';
+    return `${hours} hrs access`;
   };
 
-  const endTime = getCalculatedEndTime();
+  const formattedEndTime = getEndTime(selectedTimeSlot, durationHours);
 
-  // Pricing calculations in Naira
-  const hourlyRateNaira = selectedSpace.hourlyRateNGN || Math.round(selectedSpace.hourlyRate * 1550);
-  const subtotalNaira = hourlyRateNaira * durationUnits;
-  const serviceFeeNaira = Math.round(subtotalNaira * 0.05); // 5% OFIS fee
-  const totalNaira = subtotalNaira + serviceFeeNaira;
-
-  // Generated Nigerian Virtual Account for instant reservation
-  const virtualAccountNumber = '9920148201';
-  const virtualAccountName = `OFIS / ${selectedSpace.name.slice(0, 16)}`;
-
-  const ussdBanks = [
-    { name: 'Guaranty Trust Bank (GTBank)', code: '*737*' },
-    { name: 'Zenith Bank', code: '*966*' },
-    { name: 'Access Bank', code: '*901*' },
-    { name: 'United Bank for Africa (UBA)', code: '*919*' },
-    { name: 'First Bank of Nigeria', code: '*894*' },
-  ];
-
-  const generatedUssdString = `${selectedUssdBank.code}2*${Math.round(totalNaira)}*${virtualAccountNumber}#`;
-
-  const copyToClipboard = (text: string, type: 'acc' | 'ussd') => {
-    if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(text).catch(() => {});
-    }
-    if (type === 'acc') {
-      setIsAccountCopied(true);
-      showToast('Virtual account number copied to clipboard', 'success');
-      setTimeout(() => setIsAccountCopied(false), 2000);
-    } else {
-      setIsUssdCopied(true);
-      showToast('USSD code copied to dialer', 'success');
-      setTimeout(() => setIsUssdCopied(false), 2000);
-    }
-  };
-
-  const handlePayment = async () => {
+  const handleConfirmPayment = () => {
+    setErrorMessage(null);
+    setIsPaymentFailed(false);
     setIsProcessing(true);
 
-    try {
-      const createdBooking = await createBooking({
-        spaceId: selectedSpace.id,
-        spaceName: selectedSpace.name,
-        spaceCity: selectedSpace.city,
-        spaceAddress: selectedSpace.address,
-        spaceImage: selectedSpace.images[0],
-        primaryCategory: selectedSpace.primaryCategory,
-        subcategory: selectedSpace.subcategory,
+    // 1. Authoritative availability / conflict protection check
+    const availability = bookingsService.checkBookingAvailability(
+      checkoutSpace.id,
+      selectedDate,
+      selectedTimeSlot,
+      durationHours
+    );
 
-        deskId: selectedDesk.id,
-        deskName: selectedDesk.name,
-        deskCode: selectedDesk.code,
-        deskZone: selectedDesk.zone,
+    if (!availability.available) {
+      setIsProcessing(false);
+      setErrorMessage(availability.conflictMessage || 'That time has just been taken. Please choose another available time to continue.');
+      return;
+    }
 
-        coworkerId: currentUser?.id || 'guest-user',
-        coworkerName: currentUser?.name || 'Coworker',
-        coworkerEmail: currentUser?.email || 'coworker@ofis.ng',
-        coworkerPhone: currentUser?.phone || '+234 800 000 0000',
-        coworkerAvatar: currentUser?.avatar,
+    // 2. Check wallet balance if wallet payment
+    if (paymentMethod === 'wallet' && currentUser.walletBalance < totalAmount) {
+      setIsProcessing(false);
+      setErrorMessage(`Insufficient wallet balance (${formatPrice(currentUser.walletBalance)}). Please choose Debit Card or top up your wallet.`);
+      return;
+    }
 
-        hostId: selectedSpace.hostId,
-        hostName: selectedSpace.hostName,
-        hostPhone: selectedSpace.hostPhone,
-        hostWhatsApp: selectedSpace.hostWhatsApp,
-
-        durationType: 'hourly',
-        durationUnits,
-        startDate: `${startDate}T${startTime.replace(' ', '')}:00.000Z`,
-        endDate: `${startDate}T${endTime.replace(' ', '')}:00.000Z`,
-        startTime,
-        endTime,
-
-        currency: 'NGN',
-        currencySymbol: '₦',
-        baseAmount: subtotalNaira,
-        platformCommissionFee: serviceFeeNaira,
-        commissionRate: 0.05,
-        taxes: 0,
-        totalAmount: totalNaira,
-        hostNetPayout: subtotalNaira,
-
-        status: 'pending',
+    // 3. Complete payment & pass issuance
+    setTimeout(() => {
+      setIsProcessing(false);
+      const booking = createBooking({
+        spaceId: checkoutSpace.id,
+        spaceTitle: checkoutSpace.title,
+        spaceImage: checkoutSpace.featuredImage,
+        spaceAddress: checkoutSpace.address,
+        spaceCity: checkoutSpace.city,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        userEmail: currentUser.email,
+        userPhone: currentUser.phone,
+        bookingType: 'hourly',
+        startDate: selectedDate,
+        startTime: selectedTimeSlot,
+        durationHours,
+        guestsCount: 1,
+        subtotal,
+        serviceFee: platformFee,
+        totalPrice: totalAmount,
+        currency: currency,
+        paymentStatus: 'paid',
         paymentMethod,
-        cardLast4: paymentMethod === 'paystack' ? cardNumber.slice(-4) : undefined,
-        bankName: paymentMethod === 'bank_transfer' ? 'Providus Bank' : paymentMethod === 'ussd' ? selectedUssdBank.name : 'OPay Digital Bank',
-
-        notes: `Hourly reservation via ${paymentMethod.toUpperCase()}`,
+        paymentReference: `PSTK_${Math.floor(100000 + Math.random() * 900000)}`,
+        bookingStatus: 'confirmed',
       });
 
-      // Confetti effect
+      setCreatedBooking(booking);
+
       try {
         confetti({
           particleCount: 80,
           spread: 70,
           origin: { y: 0.6 },
+          colors: ['#00C878', '#00E58B', '#FFFFFF'],
         });
-      } catch (e) {}
-
-      setIsCheckoutModalOpen(false);
-      setActivePassBooking(createdBooking);
-      setLatestSuccessBooking(createdBooking);
-      setIsBookingSuccessModalOpen(true);
-    } catch (err: any) {
-      console.error('Checkout error:', err);
-    } finally {
-      setIsProcessing(false);
-    }
+      } catch (e) {
+        // Safe fallback
+      }
+    }, 850);
   };
 
-  const formatCountdown = (secs: number) => {
-    const mins = Math.floor(secs / 60);
-    const remainder = secs % 60;
-    return `${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
+  const handleClose = () => {
+    setIsCheckoutOpen(false);
+    setCreatedBooking(null);
+    setErrorMessage(null);
+    setIsPaymentFailed(false);
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150">
-      <div className="bg-[#171717] rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border border-[#282828] animate-in zoom-in-95 duration-150 text-white">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-[#262626] bg-[#121212]">
-          <div className="flex items-center gap-3">
-            <OfisLogo size="sm" showTagline={false} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+      <div className="w-full max-w-lg bg-[#141816] rounded-2xl border border-[#232D28] shadow-2xl p-5 sm:p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150 my-6">
+        
+        {/* State 1: Booking Confirmed (Payment Success) */}
+        {createdBooking ? (
+          <div className="text-center py-4 space-y-4">
+            <div className="w-14 h-14 rounded-full bg-[#00C878]/20 border border-[#00C878] flex items-center justify-center mx-auto text-[#00C878]">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-black tracking-tight text-white">
-                  Booking Summary & Checkout
-                </h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#063B2A] text-[#00C878] border border-[#00C878]/30">
-                  PAYSTACK SECURED
-                </span>
-              </div>
-              <p className="text-xs text-[#9A9A9A] font-normal">
-                Reserve your space with instant digital pass issuance
+              <h3 className="text-xl font-bold text-[#F2F2F2]">Booking Confirmed</h3>
+              <p className="text-xs text-[#9EABA3] max-w-xs mx-auto mt-1">
+                Your space is booked. Your digital access pass is ready.
               </p>
             </div>
-          </div>
 
-          <button
-            id="close-checkout-modal-btn"
-            onClick={() => setIsCheckoutModalOpen(false)}
-            className="p-2 rounded-xl text-[#9A9A9A] hover:text-white hover:bg-[#222222] transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-5 sm:p-7 space-y-6 max-h-[80vh] overflow-y-auto">
-          {/* 1. Itemized Booking Summary Card */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#1C1C1C] border border-[#2A2A2A] space-y-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src={selectedSpace.images[0]}
-                  alt={selectedSpace.name}
-                  className="w-14 h-14 rounded-xl object-cover ring-1 ring-[#2D2D2D]"
-                />
-                <div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#063B2A] text-[#00C878] uppercase">
-                    {selectedSpace.primaryCategory}
-                  </span>
-                  <h3 className="font-black text-sm text-white mt-1">
-                    {selectedSpace.name}
-                  </h3>
-                  <div className="flex items-center gap-1 text-xs text-[#9A9A9A]">
-                    <MapPin className="w-3.5 h-3.5 text-[#00C878]" />
-                    <span>{selectedSpace.address}, {selectedSpace.city}</span>
-                  </div>
-                </div>
+            {/* Confirmed Details */}
+            <div className="p-4 rounded-xl bg-[#1A201D] border border-[#232D28] text-left space-y-2.5 text-xs">
+              <div className="flex justify-between items-center border-b border-[#232D28] pb-2">
+                <span className="text-[#9EABA3]">Space</span>
+                <span className="text-[#F2F2F2] font-semibold truncate max-w-[200px]">{checkoutSpace.title}</span>
               </div>
-
-              <div className="text-right shrink-0">
-                <span className="text-[10px] font-bold text-[#9A9A9A] block uppercase">Workstation</span>
-                <span className="text-xs font-mono font-bold text-white px-2 py-0.5 rounded-md bg-[#282828]">
-                  {selectedDesk.code}
-                </span>
+              <div className="flex justify-between items-center">
+                <span className="text-[#9EABA3]">Date</span>
+                <span className="text-[#F2F2F2] font-semibold">{selectedDate}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#9EABA3]">Time</span>
+                <span className="text-[#F2F2F2] font-semibold">{selectedTimeSlot} – {formattedEndTime}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#9EABA3]">Duration</span>
+                <span className="text-[#F2F2F2] font-semibold">{durationHours} {durationHours === 1 ? 'hour' : 'hours'}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#9EABA3]">Amount Paid</span>
+                <span className="font-mono text-[#00C878] font-bold text-sm">₦{totalAmount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-[#9EABA3]">Booking Reference</span>
+                <span className="font-mono text-[#9EABA3]">{createdBooking.id}</span>
+              </div>
+              <div className="flex justify-between items-center pt-1 border-t border-[#232D28]">
+                <span className="text-[#9EABA3]">Turnstile PIN</span>
+                <span className="font-mono text-[#00C878] font-bold text-sm">{createdBooking.passCode}</span>
               </div>
             </div>
 
-            {/* Date / Time / Duration Row */}
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#282828] text-xs">
-              <div className="flex items-center gap-2 text-[#9A9A9A]">
-                <Calendar className="w-4 h-4 text-[#00C878] shrink-0" />
-                <div>
-                  <span className="text-[10px] text-[#9A9A9A] block">Date</span>
-                  <span className="font-bold text-white">{startDate}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 text-[#9A9A9A]">
-                <Clock className="w-4 h-4 text-[#00C878] shrink-0" />
-                <div>
-                  <span className="text-[10px] text-[#9A9A9A] block">Time</span>
-                  <span className="font-bold text-white">{startTime} – {endTime}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 text-[#9A9A9A]">
-                <Zap className="w-4 h-4 text-[#D6A83A] shrink-0" />
-                <div>
-                  <span className="text-[10px] text-[#9A9A9A] block">Duration</span>
-                  <span className="font-bold text-white">{durationUnits} Hours</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 2. Step 4 Review: Booking Amount + Service Fee + Total */}
-          <div className="p-4 rounded-2xl bg-[#1C1C1C] border border-[#2A2A2A] space-y-2 text-xs">
-            <div className="font-bold text-[#00C878] uppercase text-[11px] border-b border-[#282828] pb-1.5 flex items-center justify-between">
-              <span>Payment Breakdown</span>
-              <span>Nigerian Naira (₦)</span>
-            </div>
-
-            <div className="flex items-center justify-between text-[#9A9A9A]">
-              <span>Space Rental ({formatPriceNaira(hourlyRateNaira)} × {durationUnits} hrs)</span>
-              <span className="font-mono font-bold text-white">{formatPriceNaira(subtotalNaira)}</span>
-            </div>
-
-            <div className="flex items-center justify-between text-[#9A9A9A]">
-              <span className="flex items-center gap-1">
-                <span>OFIS Platform & Service Fee (5%)</span>
-                <Info className="w-3.5 h-3.5 text-[#9A9A9A]" />
-              </span>
-              <span className="font-mono font-bold text-white">{formatPriceNaira(serviceFeeNaira)}</span>
-            </div>
-
-            <div className="border-t border-[#282828] pt-2 flex items-center justify-between text-base font-black text-white">
-              <span>Total Payable</span>
-              <span className="font-mono text-[#00C878]">{formatPriceNaira(totalNaira)}</span>
-            </div>
-          </div>
-
-          {/* 3. Step 5: Choose Payment Method */}
-          <div className="space-y-3">
-            <label className="block text-xs font-bold text-white uppercase tracking-wider">
-              Choose Payment Method
-            </label>
-
-            <div className="grid grid-cols-3 gap-2">
+            {/* Action CTAs */}
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
               <button
                 type="button"
-                onClick={() => setPaymentMethod('paystack')}
-                className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
-                  paymentMethod === 'paystack'
-                    ? 'bg-[#063B2A] border-[#00C878] text-[#00C878] font-bold shadow-md'
-                    : 'bg-[#202020] border-[#2A2A2A] text-[#9A9A9A] hover:text-white'
-                }`}
+                onClick={() => {
+                  handleClose();
+                  setActivePassBooking(createdBooking);
+                }}
+                className="w-full sm:flex-1 py-3 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs shadow-lg flex items-center justify-center gap-1.5 transition-all"
               >
-                <CreditCard className="w-5 h-5 mx-auto mb-1 text-[#00C878]" />
-                <div className="text-xs font-bold">Paystack Card</div>
-                <div className="text-[10px] text-[#9A9A9A]">Mastercard, Visa, Verve</div>
+                <QrCode className="w-4 h-4" />
+                <span>View Digital Pass</span>
               </button>
-
+              
               <button
                 type="button"
-                onClick={() => setPaymentMethod('bank_transfer')}
-                className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
-                  paymentMethod === 'bank_transfer'
-                    ? 'bg-[#063B2A] border-[#00C878] text-[#00C878] font-bold shadow-md'
-                    : 'bg-[#202020] border-[#2A2A2A] text-[#9A9A9A] hover:text-white'
-                }`}
+                onClick={() => {
+                  handleClose();
+                  setCurrentView('explore');
+                }}
+                className="w-full sm:w-auto px-4 py-3 rounded-xl bg-[#161D19] border border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2] text-xs font-semibold"
               >
-                <Landmark className="w-5 h-5 mx-auto mb-1 text-[#00C878]" />
-                <div className="text-xs font-bold">Bank Transfer</div>
-                <div className="text-[10px] text-[#9A9A9A]">Instant Virtual Providus</div>
+                Explore More Spaces
               </button>
+            </div>
+          </div>
+        ) : isPaymentFailed ? (
+          /* State 2: Payment Failure State */
+          <div className="text-center py-4 space-y-4">
+            <div className="w-14 h-14 rounded-full bg-rose-500/20 border border-rose-500 flex items-center justify-center mx-auto text-rose-400">
+              <AlertCircle className="w-8 h-8" />
+            </div>
 
+            <div>
+              <h3 className="text-lg font-bold text-[#F2F2F2]">Payment didn't go through</h3>
+              <p className="text-xs text-[#9EABA3] max-w-xs mx-auto mt-1">
+                Your booking hasn't been confirmed. Please try again.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
               <button
                 type="button"
-                onClick={() => setPaymentMethod('ussd')}
-                className={`p-3 rounded-2xl border text-center transition-all cursor-pointer ${
-                  paymentMethod === 'ussd'
-                    ? 'bg-[#063B2A] border-[#00C878] text-[#00C878] font-bold shadow-md'
-                    : 'bg-[#202020] border-[#2A2A2A] text-[#9A9A9A] hover:text-white'
-                }`}
+                onClick={() => {
+                  setIsPaymentFailed(false);
+                  handleConfirmPayment();
+                }}
+                className="w-full sm:flex-1 py-3 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs shadow-lg"
               >
-                <Smartphone className="w-5 h-5 mx-auto mb-1 text-[#00C878]" />
-                <div className="text-xs font-bold">USSD</div>
-                <div className="text-[10px] text-[#9A9A9A]">*737#, *966#, *901#</div>
+                Try Again
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPaymentFailed(false)}
+                className="w-full sm:w-auto px-4 py-3 rounded-xl bg-[#161D19] border border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2] text-xs font-semibold"
+              >
+                Back to Booking
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* State 3: Review Your Booking & Payment */
+          <>
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#1E2522] pb-3">
+              <div>
+                <h3 className="text-base font-bold text-[#F2F2F2]">Review Your Booking</h3>
+                <p className="text-xs text-[#9EABA3]">{checkoutSpace.neighborhood}, {checkoutSpace.city}</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleClose}
+                className="p-1.5 rounded-lg text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#1A231E]"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Paystack Card Simulation Form */}
-            {paymentMethod === 'paystack' && (
-              <div className="p-4 rounded-2xl bg-[#202020] border border-[#2D2D2D] space-y-3 animate-in fade-in duration-150">
-                <div>
-                  <label className="block text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider mb-1">
-                    Card Number
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={cardNumber}
-                      onChange={e => setCardNumber(e.target.value)}
-                      className="w-full text-xs font-mono font-bold bg-[#171717] border border-[#2F2F2F] text-white p-2.5 rounded-xl pl-9 focus:outline-none focus:border-[#00C878]"
-                    />
-                    <CreditCard className="w-4 h-4 text-[#00C878] absolute left-3 top-3" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider mb-1">
-                      Expiry Date
-                    </label>
-                    <input
-                      type="text"
-                      value={cardExpiry}
-                      onChange={e => setCardExpiry(e.target.value)}
-                      className="w-full text-xs font-mono font-bold bg-[#171717] border border-[#2F2F2F] text-white p-2.5 rounded-xl focus:outline-none focus:border-[#00C878]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider mb-1">
-                      CVV
-                    </label>
-                    <input
-                      type="password"
-                      value={cardCvv}
-                      onChange={e => setCardCvv(e.target.value)}
-                      className="w-full text-xs font-mono font-bold bg-[#171717] border border-[#2F2F2F] text-white p-2.5 rounded-xl focus:outline-none focus:border-[#00C878]"
-                    />
-                  </div>
-                </div>
+            {/* Error Message */}
+            {errorMessage && (
+              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-xs text-rose-300 flex items-start gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+                <span>{errorMessage}</span>
               </div>
             )}
 
-            {/* Bank Transfer Details */}
-            {paymentMethod === 'bank_transfer' && (
-              <div className="p-4 rounded-2xl bg-[#202020] border border-[#2D2D2D] space-y-3 animate-in fade-in duration-150 text-xs">
-                <div className="flex items-center justify-between text-[#9A9A9A]">
-                  <span>Dedicated Transfer Account</span>
-                  <span className="font-mono text-[#00C878] font-bold">{formatCountdown(transferCountdown)} left</span>
-                </div>
-
-                <div className="p-3 bg-[#171717] rounded-xl border border-[#282828] flex items-center justify-between">
-                  <div>
-                    <div className="text-[10px] text-[#9A9A9A]">Providus Bank</div>
-                    <div className="font-mono font-black text-sm text-[#00C878]">{virtualAccountNumber}</div>
-                    <div className="text-[10px] text-[#9A9A9A]">{virtualAccountName}</div>
-                  </div>
-                  <button
-                    onClick={() => copyToClipboard(virtualAccountNumber, 'acc')}
-                    className="p-2 rounded-lg bg-[#252525] hover:bg-[#303030] text-white transition-colors"
-                  >
-                    {isAccountCopied ? <Check className="w-4 h-4 text-[#00C878]" /> : <Copy className="w-4 h-4 text-[#9A9A9A]" />}
-                  </button>
+            {/* Space Summary */}
+            <div className="p-3.5 rounded-xl bg-[#1A201D] border border-[#1E2522] flex items-center space-x-3">
+              <img
+                src={checkoutSpace.featuredImage}
+                alt={checkoutSpace.title}
+                className="w-14 h-14 rounded-lg object-cover"
+              />
+              <div className="overflow-hidden">
+                <h4 className="text-xs font-bold text-[#F2F2F2] truncate">{checkoutSpace.title}</h4>
+                <p className="text-[11px] text-[#9EABA3] mt-0.5">{checkoutSpace.category} • {checkoutSpace.address}</p>
+                <div className="flex items-center space-x-1 text-[11px] text-[#00C878] mt-0.5 font-medium">
+                  <Zap className="w-3 h-3" />
+                  <span>24/7 Verified Solar Power</span>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* USSD Details */}
-            {paymentMethod === 'ussd' && (
-              <div className="p-4 rounded-2xl bg-[#202020] border border-[#2D2D2D] space-y-3 animate-in fade-in duration-150 text-xs">
-                <label className="block text-[10px] font-bold text-[#9A9A9A] uppercase tracking-wider mb-1">
-                  Select Your Bank
+            {/* Schedule / Date Selection */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-[#9EABA3] flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-[#00C878]" />
+                  <span>Date</span>
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {ussdBanks.map(b => (
-                    <button
-                      key={b.name}
-                      onClick={() => setSelectedUssdBank(b)}
-                      className={`p-2 rounded-xl text-left border transition-colors ${
-                        selectedUssdBank.name === b.name
-                          ? 'bg-[#063B2A] border-[#00C878] text-[#00C878] font-bold'
-                          : 'bg-[#171717] border-[#2A2A2A] text-[#9A9A9A]'
-                      }`}
-                    >
-                      {b.name}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="p-3 bg-[#171717] rounded-xl border border-[#282828] flex items-center justify-between">
-                  <span className="font-mono font-black text-sm text-[#00C878]">{generatedUssdString}</span>
-                  <button
-                    onClick={() => copyToClipboard(generatedUssdString, 'ussd')}
-                    className="p-2 rounded-lg bg-[#252525] text-white"
-                  >
-                    {isUssdCopied ? <Check className="w-4 h-4 text-[#00C878]" /> : <Copy className="w-4 h-4 text-[#9A9A9A]" />}
-                  </button>
-                </div>
+                <select
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#161D19] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                >
+                  <option value="Saturday, 22 August">Saturday, 22 August (Today)</option>
+                  <option value="Sunday, 23 August">Sunday, 23 August (Tomorrow)</option>
+                  <option value="Monday, 24 August">Monday, 24 August</option>
+                  <option value="Tuesday, 25 August">Tuesday, 25 August</option>
+                  <option value="Wednesday, 26 August">Wednesday, 26 August</option>
+                </select>
               </div>
-            )}
-          </div>
 
-          {/* Action CTA */}
-          <button
-            id="confirm-pay-now-btn"
-            disabled={isProcessing}
-            onClick={handlePayment}
-            className="w-full py-4 rounded-2xl bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] font-black text-sm transition-all shadow-xl shadow-[#00C878]/10 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-98"
-          >
-            {isProcessing ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin text-[#0D0D0D]" />
-                <span>Securing Reservation...</span>
-              </>
-            ) : (
-              <>
-                <Lock className="w-4 h-4 text-[#0D0D0D]" />
-                <span>Authorize & Pay {formatPriceNaira(totalNaira)}</span>
-              </>
-            )}
-          </button>
-        </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-[#9EABA3] flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-[#00C878]" />
+                  <span>Start Time</span>
+                </label>
+                <select
+                  value={selectedTimeSlot}
+                  onChange={(e) => setSelectedTimeSlot(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#161D19] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                >
+                  <option value="10:00 AM">10:00 AM</option>
+                  <option value="12:00 PM">12:00 PM</option>
+                  <option value="02:00 PM">02:00 PM</option>
+                  <option value="04:00 PM">04:00 PM</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Duration Selector */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-[#9EABA3]">Duration</label>
+                <span className="text-[11px] text-[#00C878] font-medium">{selectedTimeSlot} – {formattedEndTime}</span>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {[1, 2, 3, 4].map((hrs) => (
+                  <button
+                    key={hrs}
+                    type="button"
+                    onClick={() => setDurationHours(hrs)}
+                    className={`py-2 rounded-xl text-xs font-bold transition-all border ${
+                      durationHours === hrs
+                        ? 'bg-[#00C878] text-[#0D0D0D] border-[#00C878]'
+                        : 'bg-[#161D19] border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2]'
+                    }`}
+                  >
+                    {hrs} {hrs === 1 ? 'hour' : 'hours'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Payment Method Selector */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-[#9EABA3]">Payment Method</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('wallet')}
+                  className={`p-3 rounded-xl text-left border flex items-center space-x-2.5 transition-all ${
+                    paymentMethod === 'wallet'
+                      ? 'bg-[#00C878]/15 border-[#00C878] text-[#00C878]'
+                      : 'bg-[#161D19] border-[#232D28] text-[#9EABA3]'
+                  }`}
+                >
+                  <Wallet className="w-4 h-4 shrink-0" />
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-bold truncate">OFIS Wallet</p>
+                    <p className="text-[10px] text-[#718079]">{formatPrice(currentUser.walletBalance)}</p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('card')}
+                  className={`p-3 rounded-xl text-left border flex items-center space-x-2.5 transition-all ${
+                    paymentMethod === 'card'
+                      ? 'bg-[#00C878]/15 border-[#00C878] text-[#00C878]'
+                      : 'bg-[#161D19] border-[#232D28] text-[#9EABA3]'
+                  }`}
+                >
+                  <CreditCard className="w-4 h-4 shrink-0" />
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-bold truncate">Debit Card</p>
+                    <p className="text-[10px] text-[#718079]">Paystack / Bank Card</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Price Breakdown */}
+            <div className="p-3.5 rounded-xl bg-[#1A201D] space-y-1.5 text-xs">
+              <div className="flex justify-between text-[#9EABA3]">
+                <span>Space ({durationHours} hrs × {formatPrice(checkoutSpace.pricePerHour)})</span>
+                <span className="font-mono text-[#F2F2F2]">{formatPrice(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-[#9EABA3]">
+                <span>Service Fee</span>
+                <span className="text-[#00C878] font-semibold">{formatPrice(0)} (Free)</span>
+              </div>
+              <div className="pt-2 border-t border-[#232D28] flex justify-between items-center font-bold text-sm text-[#F2F2F2]">
+                <span>Total</span>
+                <span className="text-[#00C878] font-mono text-base font-extrabold">{formatPrice(totalAmount)}</span>
+              </div>
+            </div>
+
+            {/* Confirm Payment CTA */}
+            <button
+              type="button"
+              disabled={isProcessing}
+              onClick={handleConfirmPayment}
+              className="w-full py-3.5 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-extrabold text-sm transition-all shadow-[0_4px_16px_rgba(0,200,120,0.3)] active:scale-95 flex items-center justify-center space-x-2 disabled:opacity-60"
+            >
+              {isProcessing ? (
+                <div className="flex flex-col items-center">
+                  <span>Processing your payment…</span>
+                  <span className="text-[11px] font-normal opacity-80">Please don't close this page.</span>
+                </div>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4" />
+                  <span>Pay {formatPrice(totalAmount)}</span>
+                </>
+              )}
+            </button>
+
+            {/* Supporting Trust Copy */}
+            <div className="flex items-center justify-center space-x-2 text-[11px] text-[#718079]">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#00C878]" />
+              <span>Clear pricing • Secure payment • Instant booking</span>
+            </div>
+          </>
+        )}
+
       </div>
     </div>
   );

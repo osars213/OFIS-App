@@ -1,777 +1,535 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import {
-  MapPin,
-  Star,
-  Compass,
-  Layers,
-  ZoomIn,
-  ZoomOut,
-  Crosshair,
-  Maximize2,
-  Minimize2,
-  Navigation,
-  Globe,
+import React, { useState, useMemo } from 'react';
+import { 
+  MapPin, 
+  Zap, 
+  Star, 
+  ChevronRight, 
+  Navigation, 
+  Globe2, 
+  Compass, 
+  Wifi, 
+  Search, 
   CheckCircle2,
-  Monitor,
-  Wifi,
-  Sparkles,
-  ArrowRight,
-  X,
   Building2,
-  ChevronRight,
-  LocateFixed,
-  Sliders,
-  Eye,
-  Video,
-  Camera,
-  Mic,
-  Zap,
-  Briefcase,
-  Search,
-  BatteryCharging,
-  Shield
+  Filter,
+  Sparkles
 } from 'lucide-react';
-import { Space } from '../types';
 import { useApp } from '../context/AppContext';
 
-interface ExploreMapViewProps {
-  spaces: Space[];
-  onSelectSpace: (space: Space) => void;
-  selectedSpaceId?: string | null;
-  height?: string;
-  isFullWidth?: boolean;
-}
+type MapRegion = 'all' | 'nigeria' | 'east_africa' | 'southern_africa' | 'west_africa' | 'north_africa';
 
-// Preset City Centers across Nigeria with spatial coordinates
-const NIGERIAN_CITY_PRESETS: {
-  name: string;
-  label: string;
-  sublabel: string;
-  lat: number;
-  lng: number;
-  zoom: number;
-  flag: string;
-}[] = [
-  { name: 'all', label: 'All Nigeria', sublabel: 'Nationwide', lat: 7.6, lng: 6.2, zoom: 3.4, flag: '🇳🇬' },
-  { name: 'Lagos', label: 'Lagos', sublabel: 'Lekki, VI & Yaba', lat: 6.465, lng: 3.42, zoom: 6.5, flag: '🌊' },
-  { name: 'Abuja', label: 'Abuja (FCT)', sublabel: 'Maitama & Wuse 2', lat: 9.08, lng: 7.48, zoom: 6.5, flag: '🏛️' },
-  { name: 'Port Harcourt', label: 'Port Harcourt', sublabel: 'GRA Phase 2', lat: 4.82, lng: 7.05, zoom: 6.5, flag: '🛢️' },
-  { name: 'Ibadan', label: 'Ibadan', sublabel: 'Bodija & Ring Road', lat: 7.42, lng: 3.91, zoom: 6.5, flag: '🌳' },
-];
+export const ExploreMapView: React.FC = () => {
+  const { 
+    spaces, 
+    setSelectedSpaceId, 
+    setCurrentView, 
+    setCheckoutSpace, 
+    setIsCheckoutOpen, 
+    formatPrice, 
+    currency 
+  } = useApp();
 
-export const ExploreMapView: React.FC<ExploreMapViewProps> = ({
-  spaces,
-  onSelectSpace,
-  selectedSpaceId,
-  height = '620px',
-  isFullWidth = false,
-}) => {
-  const { formatPriceNaira, formatPrice, currentCurrency, setSelectedSpace } = useApp();
+  const [activeRegion, setActiveRegion] = useState<MapRegion>('all');
+  const [selectedCity, setSelectedCity] = useState<string>('all');
+  const [showRegusOnly, setShowRegusOnly] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedPinId, setSelectedPinId] = useState<string>('space_regus_africare');
+  const [hoveredPinId, setHoveredPinId] = useState<string | null>(null);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Map viewport state centered on Nigeria
-  const [center, setCenter] = useState<{ lat: number; lng: number }>({ lat: 7.6, lng: 6.2 });
-  const [zoom, setZoom] = useState<number>(3.4);
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('all');
-  const [mapSearchQuery, setMapSearchQuery] = useState<string>('');
-
-  // Dragging state
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [startCenter, setStartCenter] = useState<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
-
-  // Active space card in map drawer
-  const [hoveredSpace, setHoveredSpace] = useState<Space | null>(null);
-  const [activeSpace, setActiveSpace] = useState<Space | null>(null);
-  const [showDensityOverlay, setShowDensityOverlay] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  // Dimensions
-  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({
-    width: 900,
-    height: 600,
-  });
-
-  // Track container size dynamically
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const updateSize = () => {
-      if (containerRef.current) {
-        setDimensions({
-          width: containerRef.current.clientWidth || 900,
-          height: containerRef.current.clientHeight || 600,
-        });
-      }
-    };
-    updateSize();
-    const resizeObserver = new ResizeObserver(updateSize);
-    resizeObserver.observe(containerRef.current);
-    return () => resizeObserver.disconnect();
-  }, [isFullscreen]);
-
-  // Spherical Web Mercator Projection Math
-  const projectCoordinates = useCallback(
-    (lat: number, lng: number): { x: number; y: number; isVisible: boolean } => {
-      const { width, height } = dimensions;
-
-      // Base scale factor based on zoom
-      const mapScale = 256 * Math.pow(2, zoom);
-
-      // Longitude to X
-      const lngX = ((lng + 180) / 360) * mapScale;
-      const centerLngX = ((center.lng + 180) / 360) * mapScale;
-
-      // Latitude to Y using Mercator
-      const latRad = (lat * Math.PI) / 180;
-      const mercN = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
-      const latY = (1 - mercN / Math.PI) * (mapScale / 2);
-
-      const centerLatRad = (center.lat * Math.PI) / 180;
-      const centerMercN = Math.log(Math.tan(Math.PI / 4 + centerLatRad / 2));
-      const centerLatY = (1 - centerMercN / Math.PI) * (mapScale / 2);
-
-      const screenX = width / 2 + (lngX - centerLngX);
-      const screenY = height / 2 + (latY - centerLatY);
-
-      const isVisible = screenX >= -100 && screenX <= width + 100 && screenY >= -100 && screenY <= height + 100;
-
-      return { x: screenX, y: screenY, isVisible };
-    },
-    [center, zoom, dimensions]
-  );
-
-  // Dragging handlers for smooth pan
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('.interactive-map-control')) return;
-    setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-    setStartCenter({ lat: center.lat, lng: center.lng });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    const dx = e.clientX - dragStart.x;
-    const dy = e.clientY - dragStart.y;
-
-    const scale = 256 * Math.pow(2, zoom);
-    const dLng = -(dx / scale) * 360;
-    const dLat = (dy / scale) * 180;
-
-    setCenter({
-      lat: Math.max(3.0, Math.min(14.5, startCenter.lat + dLat)),
-      lng: Math.max(1.5, Math.min(15.5, startCenter.lng + dLng)),
+  // Available African cities
+  const africanCities = useMemo(() => {
+    const citySet = new Set<string>();
+    spaces.forEach(s => {
+      if (s.city) citySet.add(s.city);
     });
-  };
+    return Array.from(citySet);
+  }, [spaces]);
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  // Filtered spaces based on search, region, city & Regus toggle
+  const filteredSpaces = useMemo(() => {
+    return spaces.filter(space => {
+      const isRegus = space.tags.some(t => t.toLowerCase().includes('regus')) || 
+                      space.title.toLowerCase().includes('regus') ||
+                      space.amenities.some(a => a.toLowerCase().includes('regus'));
 
-  // Zoom wheel handling - allow normal page scroll unless user holds Ctrl/Cmd or map is in fullscreen
-  const handleWheel = (e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey || isFullscreen) {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.15 : 0.15;
-      setZoom(prev => Math.max(2.8, Math.min(7.8, prev + delta)));
-    }
-  };
+      if (showRegusOnly && !isRegus) return false;
 
-  const handleZoom = (delta: number) => {
-    setZoom(prev => Math.max(2.8, Math.min(7.8, prev + delta)));
-  };
-
-  const handleJumpToCity = (preset: typeof NIGERIAN_CITY_PRESETS[0]) => {
-    setCenter({ lat: preset.lat, lng: preset.lng });
-    setZoom(preset.zoom);
-  };
-
-  const handleFitAll = () => {
-    setCenter({ lat: 7.6, lng: 6.2 });
-    setZoom(3.4);
-    setActiveSpace(null);
-  };
-
-  // Filter spaces based on category and search
-  const visibleMapSpaces = useMemo(() => {
-    return (spaces || []).filter(space => {
-      if (activeCategoryFilter !== 'all') {
-        const target = activeCategoryFilter.toLowerCase();
-        const subcat = (space.subcategory || '').toLowerCase();
-        const primary = (space.primaryCategory || '').toLowerCase();
-        const cat = ((space as any).category || '').toLowerCase();
-        const type = (space.type || '').toLowerCase();
-        
-        const match =
-          subcat.includes(target) ||
-          target.includes(subcat) ||
-          primary.includes(target) ||
-          target.includes(primary) ||
-          cat.includes(target) ||
-          target.includes(cat) ||
-          type.includes(target);
-
-        if (!match) return false;
+      // Text search
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesQuery = 
+          space.title.toLowerCase().includes(query) ||
+          space.city.toLowerCase().includes(query) ||
+          (space.country && space.country.toLowerCase().includes(query)) ||
+          space.neighborhood.toLowerCase().includes(query) ||
+          space.address.toLowerCase().includes(query);
+        if (!matchesQuery) return false;
       }
-      if (mapSearchQuery.trim()) {
-        const q = mapSearchQuery.toLowerCase();
-        const matchName = (space.name || '').toLowerCase().includes(q);
-        const matchCity = (space.city || '').toLowerCase().includes(q);
-        const matchNeigh = (space.neighborhood || '').toLowerCase().includes(q);
-        const matchAmenity = (space.amenities || []).some(a => (a || '').toLowerCase().includes(q));
-        if (!matchName && !matchCity && !matchNeigh && !matchAmenity) return false;
+
+      // City filter
+      if (selectedCity !== 'all' && space.city !== selectedCity) {
+        return false;
       }
+
+      // Region filter
+      if (activeRegion === 'nigeria') {
+        return space.city === 'Lagos' || space.city === 'Abuja' || space.city === 'Port Harcourt' || space.city === 'Ibadan';
+      }
+      if (activeRegion === 'east_africa') {
+        return space.city === 'Nairobi' || space.city === 'Kigali' || space.country === 'Kenya' || space.country === 'Rwanda';
+      }
+      if (activeRegion === 'southern_africa') {
+        return space.city === 'Johannesburg' || space.city === 'Cape Town' || space.country === 'South Africa';
+      }
+      if (activeRegion === 'west_africa') {
+        return space.city === 'Accra' || space.city === 'Abidjan' || space.city === 'Dakar' || space.country === 'Ghana' || space.country === 'Ivory Coast' || space.country === 'Senegal';
+      }
+      if (activeRegion === 'north_africa') {
+        return space.city === 'Cairo' || space.city === 'Casablanca' || space.country === 'Egypt' || space.country === 'Morocco';
+      }
+
       return true;
     });
-  }, [spaces, activeCategoryFilter, mapSearchQuery]);
+  }, [spaces, activeRegion, selectedCity, showRegusOnly, searchQuery]);
 
-  // Nigerian City Clusters
-  const cityClusters = useMemo(() => {
-    const map = new Map<string, { city: string; lat: number; lng: number; count: number; totalOpenDesks: number; spaces: Space[] }>();
+  const regusCount = useMemo(() => {
+    return spaces.filter(s => 
+      s.tags.some(t => t.toLowerCase().includes('regus')) || 
+      s.title.toLowerCase().includes('regus')
+    ).length;
+  }, [spaces]);
 
-    (visibleMapSpaces || []).forEach(space => {
-      if (!space.city || !space.coordinates) return;
-      const existing = map.get(space.city);
-      const openDesks = (space.desks || []).filter(d => d.status === 'available').length;
+  const activeSpace = useMemo(() => {
+    return spaces.find(s => s.id === selectedPinId) || filteredSpaces[0] || spaces[0];
+  }, [spaces, selectedPinId, filteredSpaces]);
 
-      if (!existing) {
-        map.set(space.city, {
-          city: space.city,
-          lat: space.coordinates.lat,
-          lng: space.coordinates.lng,
-          count: 1,
-          totalOpenDesks: openDesks,
-          spaces: [space],
-        });
-      } else {
-        existing.count += 1;
-        existing.totalOpenDesks += openDesks;
-        existing.spaces.push(space);
-      }
-    });
+  // Visual layout mapping for pins on Pan-African Map
+  const getPinCoordinate = (spaceId: string, idx: number) => {
+    const coordinateMap: Record<string, { top: string; left: string }> = {
+      // North Africa
+      'space_regus_casablanca_twin': { top: '14%', left: '18%' }, // Casablanca, Morocco
+      'space_regus_cairo_nile': { top: '16%', left: '76%' },      // Cairo, Egypt
 
-    return Array.from(map.values());
-  }, [visibleMapSpaces]);
+      // West Africa (Dakar -> Abidjan -> Accra -> Lagos -> Abuja -> PH)
+      'space_regus_dakar_atryum': { top: '34%', left: '10%' },     // Dakar, Senegal
+      'space_regus_abidjan_ccia': { top: '46%', left: '22%' },     // Abidjan, Ivory Coast
+      'space_regus_accra_roman': { top: '48%', left: '28%' },      // Accra, Ghana
+      'space_regus_africare': { top: '48%', left: '38%' },         // Lagos VI
+      'space_1': { top: '51%', left: '35%' },                      // Lagos VI Foundry
+      'space_regus_mulliner': { top: '44%', left: '40%' },         // Lagos Ikoyi
+      'space_4': { top: '41%', left: '44%' },                      // Lagos Ikoyi Studio
+      'space_regus_landmark': { top: '54%', left: '41%' },         // Lagos Oniru
+      'space_regus_wings': { top: '47%', left: '33%' },            // Lagos Ozumba
+      'space_regus_churchgate': { top: '53%', left: '37%' },       // Lagos Churchgate
+      'space_2': { top: '56%', left: '44%' },                      // Lekki Phase 1
+      'space_3': { top: '42%', left: '36%' },                      // Ikeja GRA
+      'space_5': { top: '52%', left: '46%' },                      // Lekki Photo
+      'space_regus_abuja': { top: '39%', left: '42%' },            // Abuja CBD
+      'space_regus_ph': { top: '57%', left: '40%' },               // Port Harcourt
+      'space_6': { top: '60%', left: '42%' },                      // Port Harcourt Innovation
 
-  // Total Open Desks
-  const totalOpenDesks = useMemo(() => {
-    return (visibleMapSpaces || []).reduce((sum, sp) => sum + (sp.desks || []).filter(d => d.status === 'available').length, 0);
-  }, [visibleMapSpaces]);
+      // East Africa
+      'space_regus_nairobi_vienna': { top: '54%', left: '72%' },   // Nairobi Kilimani
+      'space_regus_nairobi_delta': { top: '50%', left: '75%' },    // Nairobi Westlands
+      'space_regus_kigali_heights': { top: '58%', left: '65%' },   // Kigali Heights
 
-  // Sync when selectedSpaceId prop changes
-  useEffect(() => {
-    if (selectedSpaceId) {
-      const target = spaces.find(s => s.id === selectedSpaceId);
-      if (target) {
-        setActiveSpace(target);
-        setCenter({ lat: target.coordinates.lat, lng: target.coordinates.lng });
-        if (zoom < 5.0) setZoom(6.2);
-      }
+      // Southern Africa
+      'space_regus_sandton': { top: '78%', left: '60%' },          // Johannesburg Sandton
+      'space_regus_capetown_convention': { top: '88%', left: '50%' } // Cape Town Foreshore
+    };
+
+    if (coordinateMap[spaceId]) {
+      return coordinateMap[spaceId];
     }
-  }, [selectedSpaceId, spaces]);
-
-  // Quick category tags
-  const mapCategories = [
-    { id: 'all', label: 'All Spaces' },
-    { id: 'coworking_hotdesk', label: '💻 Desks', icon: Briefcase },
-    { id: 'private_office', label: '🏢 Offices', icon: Building2 },
-    { id: 'podcast_studio', label: '🎙️ Podcasts', icon: Mic },
-    { id: 'photography_studio', label: '📸 Studios', icon: Camera },
-    { id: 'creator_studio', label: '🎥 Content', icon: Video },
-    { id: 'meeting_room', label: '👥 Boardrooms', icon: Sparkles },
-  ];
+    const fallbackList = [
+      { top: '48%', left: '38%' },
+      { top: '52%', left: '70%' },
+      { top: '78%', left: '58%' },
+      { top: '18%', left: '72%' },
+      { top: '44%', left: '26%' },
+      { top: '86%', left: '48%' },
+    ];
+    return fallbackList[idx % fallbackList.length];
+  };
 
   return (
-    <div
-      ref={containerRef}
-      id="explore-map-container"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onWheel={handleWheel}
-      style={{ height: isFullscreen ? '100vh' : height }}
-      className={`relative w-full rounded-3xl overflow-hidden border border-[#282828] shadow-xl select-none bg-[#0D0D0D] text-white transition-all duration-300 ${
-        isFullscreen ? 'fixed inset-0 z-50 rounded-none border-none' : ''
-      } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-    >
-      {/* Background Cartography & Topographic Nigeria Canvas */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Subtle coordinate dot matrix */}
-        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#00C878_1.5px,transparent_1.5px)] [background-size:28px_28px]" />
+    <div className="min-h-screen bg-[#0D0D0D] pb-24 pt-4 transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Header Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+          <div>
+            <div className="flex items-center space-x-2.5">
+              <h1 className="text-xl font-bold text-[#F2F2F2]">Pan-African Regus & Workspace Directory</h1>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#00C878]/15 text-[#00C878] border border-[#00C878]/30 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center space-x-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00C878] animate-ping" />
+                <span>Africa Live Radar</span>
+              </span>
+            </div>
+            <p className="text-xs text-[#9EABA3] mt-0.5">
+              Interactive map covering official Regus business centres and verified workspaces across <strong>Nigeria, Kenya, South Africa, Ghana, Rwanda, Egypt, Morocco, Senegal & Ivory Coast</strong> • Rates in <strong className="text-[#00C878]">{currency === 'USD' ? 'USD ($)' : 'NGN (₦)'}</strong>
+            </p>
+          </div>
 
-        {/* Dynamic Vector Map & Nigerian Landmarks */}
-        <svg className="w-full h-full absolute inset-0">
-          <defs>
-            <radialGradient id="oceanGrad" cx="50%" cy="100%" r="80%">
-              <stop offset="0%" stopColor="#063B2A" stopOpacity="0.45" />
-              <stop offset="100%" stopColor="#0D0D0D" stopOpacity="0.0" />
-            </radialGradient>
-            <linearGradient id="riverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#063B2A" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#00C878" stopOpacity="0.9" />
-            </linearGradient>
-            <pattern id="naijaGrid" width="64" height="64" patternUnits="userSpaceOnUse">
-              <path d="M 64 0 L 0 0 0 64" fill="none" stroke="#1F1F1F" strokeWidth="1" opacity="0.6" />
-            </pattern>
-          </defs>
-
-          <rect width="100%" height="100%" fill="url(#naijaGrid)" />
-
-          {/* Atlantic Ocean / Gulf of Guinea Coastal Water Body */}
-          {(() => {
-            const coastPoint = projectCoordinates(4.2, 5.5);
-            if (coastPoint.y < dimensions.height + 200) {
-              return (
-                <rect
-                  x="0"
-                  y={Math.max(0, coastPoint.y)}
-                  width={dimensions.width}
-                  height={Math.max(0, dimensions.height - coastPoint.y)}
-                  fill="url(#oceanGrad)"
-                />
-              );
-            }
-            return null;
-          })()}
-
-          {/* Approximate Niger & Benue River Confluence Paths */}
-          {(() => {
-            const riverNW = projectCoordinates(10.5, 4.2); // River Niger North-West
-            const riverConf = projectCoordinates(7.8, 6.7); // Lokoja Confluence
-            const riverNE = projectCoordinates(9.3, 11.8);  // River Benue North-East
-            const riverDelta = projectCoordinates(4.6, 6.2); // Niger Delta Coast
-
-            return (
-              <g opacity="0.4" stroke="url(#riverGrad)" fill="none" strokeLinecap="round">
-                <path
-                  d={`M ${riverNW.x} ${riverNW.y} Q ${(riverNW.x + riverConf.x) / 2 + 20} ${(riverNW.y + riverConf.y) / 2} ${riverConf.x} ${riverConf.y}`}
-                  strokeWidth="2.5"
-                />
-                <path
-                  d={`M ${riverNE.x} ${riverNE.y} Q ${(riverNE.x + riverConf.x) / 2} ${(riverNE.y + riverConf.y) / 2 - 10} ${riverConf.x} ${riverConf.y}`}
-                  strokeWidth="2.5"
-                />
-                <path
-                  d={`M ${riverConf.x} ${riverConf.y} Q ${(riverConf.x + riverDelta.x) / 2 - 15} ${(riverConf.y + riverDelta.y) / 2} ${riverDelta.x} ${riverDelta.y}`}
-                  strokeWidth="3.5"
-                />
-              </g>
-            );
-          })()}
-
-          {/* Regional Hub Density Pulse Waves */}
-          {showDensityOverlay &&
-            cityClusters.map(cluster => {
-              const pos = projectCoordinates(cluster.lat, cluster.lng);
-              if (!pos.isVisible) return null;
-              const radius = Math.max(32, Math.min(130, 24 * zoom));
-
-              return (
-                <g key={`density-${cluster.city}`} className="transition-all duration-300">
-                  <circle
-                    cx={pos.x}
-                    cy={pos.y}
-                    r={radius}
-                    fill="rgba(0, 200, 120, 0.08)"
-                    stroke="rgba(0, 200, 120, 0.4)"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                  />
-                  <circle
-                    cx={pos.x}
-                    cy={pos.y}
-                    r={radius * 0.45}
-                    fill="rgba(0, 200, 120, 0.15)"
-                  />
-                </g>
-              );
-            })}
-
-          {/* Nigerian Region / Landmark Text Labels */}
-          {(() => {
-            const lagosCoord = projectCoordinates(6.45, 3.42);
-            const abujaCoord = projectCoordinates(9.08, 7.48);
-            const phCoord = projectCoordinates(4.82, 7.05);
-            const ibadanCoord = projectCoordinates(7.42, 3.91);
-            const oceanCoord = projectCoordinates(3.6, 5.5);
-
-            return (
-              <g className="text-[11px] font-black uppercase tracking-widest fill-[#9A9A9A] opacity-60 select-none">
-                {lagosCoord.isVisible && (
-                  <text x={lagosCoord.x - 30} y={lagosCoord.y + 42} fill="#00C878" fontSize="10" fontWeight="bold">
-                    LAGOS REGION
-                  </text>
-                )}
-                {abujaCoord.isVisible && (
-                  <text x={abujaCoord.x - 35} y={abujaCoord.y - 30} fill="#D6A83A" fontSize="10" fontWeight="bold">
-                    FEDERAL CAPITAL (ABUJA)
-                  </text>
-                )}
-                {phCoord.isVisible && (
-                  <text x={phCoord.x - 35} y={phCoord.y + 38} fill="#00C878" fontSize="10" fontWeight="bold">
-                    NIGER DELTA (PH)
-                  </text>
-                )}
-                {ibadanCoord.isVisible && (
-                  <text x={ibadanCoord.x - 45} y={ibadanCoord.y - 25} fill="#9A9A9A" fontSize="10" fontWeight="bold">
-                    OYO / IBADAN
-                  </text>
-                )}
-                {oceanCoord.isVisible && (
-                  <text x={oceanCoord.x - 60} y={oceanCoord.y} fill="#063B2A" fontSize="11" fontWeight="bold" opacity="0.8">
-                    ATLANTIC OCEAN (GULF OF GUINEA)
-                  </text>
-                )}
-              </g>
-            );
-          })()}
-        </svg>
-      </div>
-
-      {/* Top Map Control Bar: City Presets & In-Map Search */}
-      <div className="interactive-map-control absolute top-3.5 left-3.5 right-3.5 z-20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pointer-events-auto">
-        {/* City Centering Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1 bg-[#171717]/95 backdrop-blur-md p-1.5 rounded-2xl border border-[#282828] shadow-lg">
-          {NIGERIAN_CITY_PRESETS.map(preset => {
-            const isSelected =
-              preset.name === 'all'
-                ? zoom <= 3.8
-                : Math.abs(center.lat - preset.lat) < 0.6 && Math.abs(center.lng - preset.lng) < 0.6;
-
-            const cityCount = preset.name === 'all'
-              ? spaces.length
-              : spaces.filter(s => s.city.toLowerCase() === preset.name.toLowerCase()).length;
-
-            return (
-              <button
-                key={preset.name}
-                id={`map-jump-city-${preset.name.toLowerCase().replace(/\s+/g, '-')}`}
-                onClick={() => handleJumpToCity(preset)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-[#00C878] text-[#0D0D0D] shadow-sm font-black'
-                    : 'bg-[#222222] hover:bg-[#2A2A2A] text-[#9A9A9A] hover:text-white'
-                }`}
-              >
-                <span>{preset.flag}</span>
-                <span>{preset.label}</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                  isSelected ? 'bg-[#0D0D0D] text-[#00C878]' : 'bg-[#333333] text-[#9A9A9A]'
-                }`}>
-                  {cityCount}
-                </span>
-              </button>
-            );
-          })}
+          <div className="flex items-center space-x-3">
+            <button
+              id="switch-grid-view-btn"
+              type="button"
+              onClick={() => setCurrentView('explore')}
+              className="text-xs font-semibold text-[#00C878] hover:underline flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-[#141816] border border-[#232D28] shadow-sm transition-colors"
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>Grid View</span>
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
         </div>
 
-        {/* In-Map Quick Search Bar */}
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="w-3.5 h-3.5 text-[#9A9A9A] absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={mapSearchQuery}
-              onChange={(e) => setMapSearchQuery(e.target.value)}
-              placeholder="Search Lekki, Studio, Starlink..."
-              className="w-full pl-8 pr-7 py-1.5 bg-[#171717]/95 backdrop-blur-md rounded-xl border border-[#282828] text-xs font-medium text-white placeholder:text-[#777777] focus:outline-none focus:border-[#00C878] transition-colors shadow-lg"
-            />
-            {mapSearchQuery && (
-              <button
-                onClick={() => setMapSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9A9A9A] hover:text-white cursor-pointer"
-              >
-                <X className="w-3 h-3" />
-              </button>
+        {/* Search & Filter Controls Row */}
+        <div className="flex flex-col gap-3 p-3.5 rounded-2xl bg-[#121614] border border-[#1E2522] mb-4 shadow-sm">
+          
+          {/* Top Row: Search Input + Regus Network Toggle */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative flex-1 w-full">
+              <Search className="w-4 h-4 text-[#718079] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="african-map-search-input"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search African cities, hubs or Regus centres (e.g. Sandton, Nairobi, Lagos, Cairo)..."
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] placeholder-[#718079] focus:outline-none focus:border-[#00C878] transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#718079] hover:text-[#F2F2F2]"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Quick Regus Filter Toggle */}
+            <button
+              id="regus-only-filter-toggle"
+              type="button"
+              onClick={() => setShowRegusOnly(!showRegusOnly)}
+              className={`w-full sm:w-auto whitespace-nowrap px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center space-x-2 border ${
+                showRegusOnly
+                  ? 'bg-[#00C878]/15 border-[#00C878] text-[#00C878] ring-1 ring-[#00C878]/40'
+                  : 'bg-[#161D19] border-[#2A362F] text-[#9EABA3] hover:text-[#F2F2F2]'
+              }`}
+            >
+              <Globe2 className="w-3.5 h-3.5 text-[#00C878]" />
+              <span>Regus Global Network ({regusCount})</span>
+              {showRegusOnly && <CheckCircle2 className="w-3.5 h-3.5 text-[#00C878]" />}
+            </button>
+          </div>
+
+          {/* Region & Continental Tabs */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-[#1E2522]">
+            <button
+              type="button"
+              onClick={() => { setActiveRegion('all'); setSelectedCity('all'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                activeRegion === 'all' && selectedCity === 'all'
+                  ? 'bg-[#00C878] text-[#0D0D0D] font-bold shadow-sm'
+                  : 'bg-[#18201B] text-[#9EABA3] hover:text-[#F2F2F2]'
+              }`}
+            >
+              All Africa ({spaces.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => { setActiveRegion('nigeria'); setSelectedCity('all'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                activeRegion === 'nigeria'
+                  ? 'bg-[#00C878] text-[#0D0D0D] font-bold shadow-sm'
+                  : 'bg-[#18201B] text-[#9EABA3] hover:text-[#F2F2F2]'
+              }`}
+            >
+              Nigeria (Lagos, Abuja, PH)
+            </button>
+            <button
+              type="button"
+              onClick={() => { setActiveRegion('east_africa'); setSelectedCity('all'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                activeRegion === 'east_africa'
+                  ? 'bg-[#00C878] text-[#0D0D0D] font-bold shadow-sm'
+                  : 'bg-[#18201B] text-[#9EABA3] hover:text-[#F2F2F2]'
+              }`}
+            >
+              East Africa (Nairobi, Kigali)
+            </button>
+            <button
+              type="button"
+              onClick={() => { setActiveRegion('southern_africa'); setSelectedCity('all'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                activeRegion === 'southern_africa'
+                  ? 'bg-[#00C878] text-[#0D0D0D] font-bold shadow-sm'
+                  : 'bg-[#18201B] text-[#9EABA3] hover:text-[#F2F2F2]'
+              }`}
+            >
+              Southern Africa (Sandton, Cape Town)
+            </button>
+            <button
+              type="button"
+              onClick={() => { setActiveRegion('west_africa'); setSelectedCity('all'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                activeRegion === 'west_africa'
+                  ? 'bg-[#00C878] text-[#0D0D0D] font-bold shadow-sm'
+                  : 'bg-[#18201B] text-[#9EABA3] hover:text-[#F2F2F2]'
+              }`}
+            >
+              West Africa (Accra, Abidjan, Dakar)
+            </button>
+            <button
+              type="button"
+              onClick={() => { setActiveRegion('north_africa'); setSelectedCity('all'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                activeRegion === 'north_africa'
+                  ? 'bg-[#00C878] text-[#0D0D0D] font-bold shadow-sm'
+                  : 'bg-[#18201B] text-[#9EABA3] hover:text-[#F2F2F2]'
+              }`}
+            >
+              North Africa (Cairo, Casablanca)
+            </button>
+          </div>
+
+        </div>
+
+        {/* Main Grid: Pan-African Map Canvas + Selected Space Card */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[640px]">
+          
+          {/* Left: Interactive Pan-African Map Canvas */}
+          <div className="lg:col-span-8 bg-[#121714] rounded-2xl border border-[#1E2522] overflow-hidden relative shadow-2xl flex flex-col p-3 sm:p-4 transition-colors">
+            
+            {/* Map Canvas Container */}
+            <div className="w-full flex-1 min-h-[500px] relative rounded-xl overflow-hidden bg-[#0A0D0B] border border-[#1A231E]">
+              
+              {/* Background Geometric Grid Pattern */}
+              <div className="absolute inset-0 bg-[radial-gradient(#1E2B23_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none" />
+
+              {/* Pan-African Continental Contour Glows */}
+              <div className="absolute top-[12%] left-[12%] w-48 h-32 bg-[#00C878]/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-[45%] left-[24%] w-64 h-40 bg-[#00C878]/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-[50%] right-[20%] w-56 h-36 bg-[#00C878]/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-[10%] left-[45%] w-60 h-44 bg-[#00C878]/5 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Geographic Anchor Badges across Africa */}
+              <div className="absolute top-4 left-6 px-2.5 py-1 rounded-md bg-[#0D120F]/80 border border-[#1E2822] text-[10px] font-mono uppercase tracking-widest text-[#5A6D63] pointer-events-none">
+                North Africa • Casablanca & Cairo
+              </div>
+              <div className="absolute top-[32%] left-4 px-2 py-0.5 rounded-md bg-[#0D120F]/80 border border-[#1E2822] text-[9px] font-mono uppercase tracking-widest text-[#5A6D63] pointer-events-none">
+                Senegal / Dakar
+              </div>
+              <div className="absolute top-[43%] left-[18%] px-2.5 py-1 rounded-md bg-[#0D120F]/80 border border-[#1E2822] text-[10px] font-mono uppercase tracking-widest text-[#5A6D63] pointer-events-none">
+                Gulf of Guinea Corridor • Abidjan, Accra & Lagos
+              </div>
+              <div className="absolute top-[46%] right-6 px-2.5 py-1 rounded-md bg-[#0D120F]/80 border border-[#1E2822] text-[10px] font-mono uppercase tracking-widest text-[#5A6D63] pointer-events-none">
+                East Africa • Nairobi & Kigali
+              </div>
+              <div className="absolute bottom-6 left-[38%] px-2.5 py-1 rounded-md bg-[#0D120F]/80 border border-[#1E2822] text-[10px] font-mono uppercase tracking-widest text-[#5A6D63] pointer-events-none">
+                Southern Africa • Sandton & Cape Town
+              </div>
+
+              {/* Interactive Space Pins */}
+              {filteredSpaces.map((space, idx) => {
+                const isSelected = space.id === selectedPinId;
+                const isHovered = space.id === hoveredPinId;
+                const pos = getPinCoordinate(space.id, idx);
+                const isRegus = space.tags.some(t => t.toLowerCase().includes('regus')) || 
+                                space.title.toLowerCase().includes('regus');
+
+                return (
+                  <div
+                    key={space.id}
+                    style={{ top: pos.top, left: pos.left }}
+                    className="absolute transform -translate-x-1/2 -translate-y-1/2 z-20 group"
+                    onMouseEnter={() => setHoveredPinId(space.id)}
+                    onMouseLeave={() => setHoveredPinId(null)}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPinId(space.id)}
+                      className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 shadow-2xl cursor-pointer ${
+                        isSelected
+                          ? 'bg-[#00C878] text-[#0D0D0D] ring-4 ring-[#00C878]/35 scale-110 z-30 font-black'
+                          : isRegus
+                          ? 'bg-[#141B17] text-[#00E58B] border border-[#00C878]/60 hover:border-[#00C878] hover:scale-105'
+                          : 'bg-[#141816] text-[#F2F2F2] border border-[#232D28] hover:border-[#00C878] hover:scale-105'
+                      }`}
+                    >
+                      {isRegus ? (
+                        <Globe2 className={`w-3.5 h-3.5 ${isSelected ? 'text-[#0D0D0D]' : 'text-[#00C878]'}`} />
+                      ) : (
+                        <MapPin className={`w-3.5 h-3.5 ${isSelected ? 'text-[#0D0D0D]' : 'text-[#00C878]'}`} />
+                      )}
+                      <span className="font-mono tracking-tight">{formatPrice(space.pricePerHour)}/hr</span>
+                    </button>
+
+                    {/* Hover Card Preview Tooltip */}
+                    {isHovered && !isSelected && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 p-2.5 rounded-xl bg-[#141816] border border-[#2A362F] shadow-2xl text-left pointer-events-none z-40 animate-in fade-in duration-150">
+                        <div className="flex items-center space-x-1 text-[10px] text-[#00C878] font-bold mb-0.5">
+                          {isRegus && <Globe2 className="w-3 h-3" />}
+                          <span>{space.city}{space.country ? `, ${space.country}` : ''}</span>
+                        </div>
+                        <p className="text-[11px] font-bold text-[#F2F2F2] line-clamp-1">{space.title}</p>
+                        <div className="flex items-center justify-between text-[10px] text-[#9EABA3] mt-1.5 pt-1 border-t border-[#1E2522]">
+                          <span>{space.neighborhood}</span>
+                          <span className="text-[#00C878] font-mono font-bold">{formatPrice(space.pricePerHour)}/hr</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Bottom Map Info Overlay */}
+              <div className="absolute bottom-3 left-3 bg-[#121714]/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-[#232D28] text-[11px] text-[#9EABA3] flex items-center space-x-2.5 shadow-lg">
+                <Navigation className="w-3.5 h-3.5 text-[#00C878]" />
+                <span>Showing <strong className="text-[#F2F2F2]">{filteredSpaces.length}</strong> spaces • Tap any marker to inspect pass options</span>
+              </div>
+
+              {/* Regus Network Legend Badge */}
+              <div className="absolute top-3 right-3 bg-[#121714]/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-[#00C878]/30 text-[10px] font-semibold text-[#00C878] flex items-center space-x-1.5 shadow-lg">
+                <Globe2 className="w-3 h-3 text-[#00C878]" />
+                <span>Regus Verified Partner Network ({regusCount})</span>
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Right: Selected Space Detailed Card */}
+          <div className="lg:col-span-4 flex flex-col justify-between space-y-4">
+            {activeSpace ? (
+              <div className="bg-[#141816] rounded-2xl border border-[#1E2522] p-5 shadow-xl space-y-4 flex-1 flex flex-col justify-between transition-colors">
+                
+                <div className="space-y-3.5">
+                  
+                  {/* Space Image & Regus Badge */}
+                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-[#1A201D] border border-[#232D28]">
+                    <img
+                      src={activeSpace.featuredImage}
+                      alt={activeSpace.title}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Top Left Power Badge */}
+                    <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-lg bg-[#0D0D0D]/85 backdrop-blur-md border border-[#232D28] text-[10px] font-bold text-[#00C878] flex items-center space-x-1.5">
+                      <Zap className="w-3 h-3 text-[#00C878]" />
+                      <span>{activeSpace.backupPowerType.split(' ')[0]} Power</span>
+                    </div>
+
+                    {/* Regus Tag if applicable */}
+                    {(activeSpace.tags.some(t => t.toLowerCase().includes('regus')) || activeSpace.title.toLowerCase().includes('regus')) && (
+                      <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg bg-[#00C878] text-[#0D0D0D] font-mono text-[10px] font-black uppercase tracking-wider flex items-center space-x-1 shadow-lg">
+                        <Globe2 className="w-3 h-3 text-[#0D0D0D]" />
+                        <span>Regus Center</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Title, Location & Tagline */}
+                  <div>
+                    <div className="flex items-center justify-between text-xs text-[#9EABA3] mb-1">
+                      <div className="flex items-center space-x-1 text-[#F2F2F2]">
+                        <Star className="w-3.5 h-3.5 fill-[#00C878] text-[#00C878]" />
+                        <span className="font-bold">{activeSpace.rating}</span>
+                        <span className="text-[#718079]">({activeSpace.reviewsCount} reviews)</span>
+                      </div>
+                      <span className="font-medium text-[#9EABA3]">
+                        {activeSpace.city}{activeSpace.country ? `, ${activeSpace.country}` : ''}
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-[#F2F2F2] line-clamp-1">{activeSpace.title}</h3>
+                    <p className="text-xs text-[#9EABA3] line-clamp-2 mt-1 leading-relaxed">{activeSpace.tagline}</p>
+                  </div>
+
+                  {/* Key Highlights */}
+                  <div className="p-3 rounded-xl bg-[#161D19] border border-[#1E2522] space-y-2">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-[#9EABA3] flex items-center space-x-1.5">
+                        <MapPin className="w-3 h-3 text-[#00C878]" />
+                        <span>Address</span>
+                      </span>
+                      <span className="text-[#F2F2F2] font-medium truncate max-w-[170px]" title={activeSpace.address}>
+                        {activeSpace.address}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-[#9EABA3] flex items-center space-x-1.5">
+                        <Wifi className="w-3 h-3 text-[#00C878]" />
+                        <span>Internet Speed</span>
+                      </span>
+                      <span className="text-[#00C878] font-mono font-bold">
+                        {activeSpace.internetSpeedMbps} Mbps Fiber
+                      </span>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Pricing & Call to Actions */}
+                <div className="pt-3 border-t border-[#1E2522] space-y-3">
+                  <div className="flex items-baseline justify-between">
+                    <div>
+                      <span className="text-[11px] text-[#718079] block">Hourly Pass Rate</span>
+                      <span className="text-lg font-black text-[#00C878] font-mono">
+                        {formatPrice(activeSpace.pricePerHour)}
+                        <span className="text-xs text-[#718079] font-normal font-sans ml-1">/ hour</span>
+                      </span>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="text-[11px] text-[#718079] block">All-Day Pass</span>
+                      <span className="text-sm font-bold text-[#F2F2F2] font-mono">
+                        {formatPrice(activeSpace.pricePerDay)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedSpaceId(activeSpace.id);
+                        setCurrentView('details');
+                      }}
+                      className="py-2.5 rounded-xl bg-[#161D19] border border-[#232D28] text-xs font-semibold text-[#F2F2F2] hover:bg-[#1E2522] transition-colors"
+                    >
+                      View Details
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCheckoutSpace(activeSpace);
+                        setIsCheckoutOpen(true);
+                      }}
+                      className="py-2.5 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs shadow-md transition-colors"
+                    >
+                      Instant Book Pass
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            ) : (
+              <div className="bg-[#141816] rounded-2xl border border-[#1E2522] p-8 text-center text-[#9EABA3] flex-1 flex flex-col items-center justify-center">
+                <Compass className="w-8 h-8 text-[#00C878] mb-2 opacity-60" />
+                <p className="text-sm font-semibold text-[#F2F2F2]">No spaces match this filter</p>
+                <p className="text-xs text-[#718079] mt-1">Try searching another African city or clearing the filters.</p>
+              </div>
             )}
           </div>
 
-          {/* Quick Hub Stats Pill */}
-          <div className="hidden lg:flex items-center gap-2 bg-[#171717]/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-[#282828] text-xs shadow-lg">
-            <span className="w-2 h-2 rounded-full bg-[#00C878] animate-pulse" />
-            <span className="font-bold text-white">{visibleMapSpaces.length} Spaces</span>
-            <span className="text-[#333333]">•</span>
-            <span className="text-[#9A9A9A] font-medium">{totalOpenDesks} Stations</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Category Pills Strip (Left Floating Toolbar) */}
-      <div className="interactive-map-control absolute top-18 sm:top-16 left-3.5 z-20 flex items-center gap-1.5 overflow-x-auto no-scrollbar pointer-events-auto bg-[#171717]/90 backdrop-blur-md p-1 rounded-xl border border-[#282828]">
-        {mapCategories.map(cat => {
-          const isSelected = activeCategoryFilter === cat.id;
-          return (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategoryFilter(cat.id)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors cursor-pointer ${
-                isSelected
-                  ? 'bg-[#00C878] text-[#0D0D0D] font-black shadow-xs'
-                  : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
-              }`}
-            >
-              {cat.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Interactive Space Markers on Nigerian Coordinates */}
-      <div className="absolute inset-0 pointer-events-none z-10">
-        {(visibleMapSpaces || []).map(space => {
-          if (!space.coordinates) return null;
-          const coords = projectCoordinates(space.coordinates.lat, space.coordinates.lng);
-          if (!coords.isVisible) return null;
-
-          const isSelected = activeSpace?.id === space.id || selectedSpaceId === space.id;
-          const isHovered = hoveredSpace?.id === space.id;
-          const openDesks = (space.desks || []).filter(d => d.status === 'available').length;
-
-          const getCategoryEmoji = () => {
-            if (space.category === 'creator_studio') return '🎥';
-            if (space.category === 'photography_studio') return '📸';
-            if (space.category === 'podcast_studio') return '🎙️';
-            if (space.category === 'private_office') return '🏢';
-            if (space.category === 'meeting_room') return '👥';
-            return '💼';
-          };
-
-          return (
-            <div
-              key={space.id}
-              id={`map-marker-${space.id}`}
-              style={{
-                left: `${coords.x}px`,
-                top: `${coords.y}px`,
-                transform: 'translate(-50%, -100%)',
-              }}
-              onMouseEnter={() => setHoveredSpace(space)}
-              onMouseLeave={() => setHoveredSpace(null)}
-              onClick={() => {
-                setActiveSpace(space);
-                setSelectedSpace(space);
-              }}
-              className="interactive-map-control absolute pointer-events-auto cursor-pointer transition-all duration-200 group"
-            >
-              {/* Radar Pulsing Wave on Selected / Open Marker */}
-              {isSelected && (
-                <div className="absolute -inset-3 rounded-full bg-[#00C878]/40 animate-ping pointer-events-none" />
-              )}
-
-              {/* Marker Pill Card */}
-              <div
-                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-2xl font-bold shadow-xl border transition-all duration-200 ${
-                  isSelected
-                    ? 'bg-[#00C878] text-[#0D0D0D] border-[#00C878] scale-110 ring-4 ring-[#00C878]/30 font-black'
-                    : isHovered
-                    ? 'bg-[#1F1F1F] text-[#00C878] border-[#00C878] scale-108 -translate-y-1'
-                    : 'bg-[#171717]/95 text-white border-[#282828] hover:border-[#00C878] backdrop-blur-md'
-                }`}
-              >
-                <span className="text-xs">{getCategoryEmoji()}</span>
-                
-                <div className="flex items-center gap-1">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      openDesks > 0 ? 'bg-[#00C878] animate-pulse' : 'bg-rose-500'
-                    }`}
-                  />
-                  <span className="text-xs font-black tracking-tight">{formatPriceNaira(space.dailyRateNGN || Math.round(space.dailyRate * 1550))}</span>
-                </div>
-
-                <div className="flex items-center gap-0.5 text-[10px] opacity-90 pl-1 border-l border-current/20">
-                  <Star className="w-2.5 h-2.5 fill-[#D6A83A] text-[#D6A83A]" />
-                  <span>{space.rating}</span>
-                </div>
-
-                {/* Marker Arrow Point */}
-                <div
-                  className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-r border-b ${
-                    isSelected
-                      ? 'bg-[#00C878] border-[#00C878]'
-                      : isHovered
-                      ? 'bg-[#1F1F1F] border-[#00C878]'
-                      : 'bg-[#171717] border-[#282828]'
-                  }`}
-                />
-              </div>
-
-              {/* City & Name Tag */}
-              <div
-                className={`mt-1.5 text-center text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-md whitespace-nowrap transition-all ${
-                  isSelected
-                    ? 'bg-[#00C878] text-[#0D0D0D]'
-                    : 'bg-[#121212]/90 text-[#9A9A9A] backdrop-blur-md border border-[#282828]'
-                }`}
-              >
-                🇳🇬 {space.city || 'Nigeria'} • {(space.neighborhood || space.city || 'Workspace').split(',')[0]}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Floating Active Space Drawer Card */}
-      {activeSpace && (
-        <div
-          id="map-space-preview-card"
-          className="interactive-map-control absolute bottom-4 left-4 right-4 sm:right-auto sm:max-w-md z-30 bg-[#171717]/95 backdrop-blur-xl text-white rounded-3xl border border-[#282828] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200"
-        >
-          <div className="relative">
-            <img
-              src={activeSpace.images?.[0] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80'}
-              alt={activeSpace.name}
-              className="w-full h-36 sm:h-40 object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#171717] via-transparent to-black/40" />
-
-            <button
-              onClick={() => setActiveSpace(null)}
-              className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-black/60 hover:bg-black/90 text-white backdrop-blur-md transition-colors cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#063B2A] text-[#00C878] border border-[#00C878]/30">
-                🇳🇬 {activeSpace.city || 'Nigeria'}
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#00C878] text-[#0D0D0D] flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#0D0D0D] animate-pulse" />
-                {(activeSpace.desks || []).filter(d => d.status === 'available').length} Open
-              </span>
-            </div>
-
-            <div className="absolute bottom-2.5 right-2.5 bg-[#121212]/90 backdrop-blur-md text-[#D6A83A] px-2 py-0.5 rounded-lg text-xs font-bold flex items-center gap-1 border border-[#282828]">
-              <Star className="w-3 h-3 fill-[#D6A83A] text-[#D6A83A]" />
-              <span>{activeSpace.rating}</span>
-              <span className="text-[10px] text-[#9A9A9A] font-normal">({activeSpace.reviewCount})</span>
-            </div>
-          </div>
-
-          <div className="p-4 space-y-2.5">
-            <div>
-              <div className="text-[10px] font-bold text-[#00C878] uppercase tracking-wider">
-                {activeSpace.neighborhood} • {activeSpace.address}
-              </div>
-              <h3 className="font-black text-white text-base leading-snug">
-                {activeSpace.name}
-              </h3>
-              <p className="text-xs text-[#9A9A9A] line-clamp-1 mt-0.5 font-normal">
-                {activeSpace.tagline}
-              </p>
-            </div>
-
-            {/* Workstation feature highlights */}
-            <div className="flex flex-wrap gap-1.5 text-[10px]">
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#202020] border border-[#2D2D2D] text-[#00C878] font-semibold">
-                <BatteryCharging className="w-3 h-3" /> 24/7 Solar Power
-              </span>
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#202020] border border-[#2D2D2D] text-sky-400 font-semibold">
-                <Wifi className="w-3 h-3" /> Starlink 500M
-              </span>
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#202020] border border-[#2D2D2D] text-[#D6A83A] font-semibold">
-                <Shield className="w-3 h-3" /> Keyless Entry
-              </span>
-            </div>
-
-            {/* Price and Action CTA */}
-            <div className="pt-2 border-t border-[#262626] flex items-center justify-between">
-              <div>
-                <span className="text-[10px] text-[#9A9A9A]">Daily Rate</span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-lg font-black text-[#00C878]">
-                    {formatPriceNaira(activeSpace.dailyRateNGN || Math.round(activeSpace.dailyRate * 1550))}
-                  </span>
-                  <span className="text-[10px] text-[#9A9A9A]">/day</span>
-                </div>
-              </div>
-
-              <button
-                id="map-view-floorplan-btn"
-                onClick={() => {
-                  setSelectedSpace(activeSpace);
-                  onSelectSpace(activeSpace);
-                }}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] font-black text-xs shadow-lg transition-all cursor-pointer"
-              >
-                <span>View Space & Book</span>
-                <ArrowRight className="w-3.5 h-3.5 text-[#0D0D0D]" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Floating Map Controls (Right Edge) */}
-      <div className="interactive-map-control absolute bottom-5 right-4 z-20 flex flex-col items-center gap-2 pointer-events-auto">
-        {/* Zoom Controls */}
-        <div className="bg-[#171717]/90 backdrop-blur-md rounded-2xl border border-[#282828] shadow-xl p-1 flex flex-col items-center divide-y divide-[#262626]">
-          <button
-            id="map-zoom-in-btn"
-            title="Zoom In"
-            onClick={() => handleZoom(0.5)}
-            className="p-2.5 rounded-xl text-[#9A9A9A] hover:text-white hover:bg-[#222222] transition-colors cursor-pointer"
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
-
-          <button
-            id="map-zoom-out-btn"
-            title="Zoom Out"
-            onClick={() => handleZoom(-0.5)}
-            className="p-2.5 rounded-xl text-[#9A9A9A] hover:text-white hover:bg-[#222222] transition-colors cursor-pointer"
-          >
-            <ZoomOut className="w-4 h-4" />
-          </button>
         </div>
 
-        {/* Fit All & Fullscreen Controls */}
-        <div className="bg-[#171717]/90 backdrop-blur-md rounded-2xl border border-[#282828] shadow-xl p-1 flex flex-col items-center gap-1">
-          <button
-            id="map-fit-all-btn"
-            title="Fit All Nigerian Hubs"
-            onClick={handleFitAll}
-            className="p-2.5 rounded-xl text-[#9A9A9A] hover:text-white hover:bg-[#222222] transition-colors cursor-pointer"
-          >
-            <Crosshair className="w-4 h-4" />
-          </button>
-
-          <button
-            id="map-toggle-density-btn"
-            title="Toggle Spatial Density Circles"
-            onClick={() => setShowDensityOverlay(!showDensityOverlay)}
-            className={`p-2.5 rounded-xl transition-colors cursor-pointer ${
-              showDensityOverlay
-                ? 'bg-[#063B2A] text-[#00C878]'
-                : 'text-[#9A9A9A] hover:bg-[#222222]'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-          </button>
-
-          <button
-            id="map-fullscreen-btn"
-            title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Map'}
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-2.5 rounded-xl text-[#9A9A9A] hover:text-white hover:bg-[#222222] transition-colors cursor-pointer"
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Map Legend (Bottom Left) */}
-      <div className="absolute bottom-3.5 left-4 z-10 flex items-center gap-2.5 text-[10px] text-[#9A9A9A] bg-[#171717]/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-[#282828] pointer-events-none">
-        <div className="flex items-center gap-1 font-mono font-bold text-[#00C878]">
-          <Compass className="w-3.5 h-3.5 text-[#00C878]" />
-          <span>
-            {center.lat.toFixed(2)}°N, {center.lng.toFixed(2)}°E
-          </span>
-        </div>
-        <span className="text-[#333333]">|</span>
-        <span>🇳🇬 OFIS Nigeria Spatial Cartography</span>
       </div>
     </div>
   );

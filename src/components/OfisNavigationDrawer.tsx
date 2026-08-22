@@ -1,389 +1,300 @@
 import React from 'react';
-import { motion } from 'motion/react';
-import {
-  X,
-  Building2,
-  Compass,
-  HelpCircle,
-  Mail,
-  ShieldCheck,
-  FileText,
-  Lock,
-  Clock,
-  Info,
+import { 
+  X, 
+  Compass, 
+  MapPin, 
+  Ticket, 
+  Building2, 
+  PlusCircle, 
+  Sparkles, 
+  Shield, 
+  HelpCircle, 
+  PhoneCall, 
+  Settings,
   ChevronRight,
-  Sun,
-  Moon,
-  Smartphone,
-  Check,
-  Settings
+  Globe
 } from 'lucide-react';
-import { OfisLogo } from './OfisLogo';
-import { InfoModalSection } from './OfisInfoModal';
 import { useApp } from '../context/AppContext';
-import { ThemeMode } from '../types';
+import ofisWordmark from '../assets/ofis-wordmark.png';
+import { POPULAR_CITIES, CATEGORY_METADATA } from '../mockData';
+import { SpaceCategory } from '../types';
 
-interface OfisNavigationDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onNavigate: (view: 'explore' | 'results' | 'passes' | 'host' | 'ops') => void;
-  onOpenListSpace: () => void;
-  onOpenInfoSection: (section: InfoModalSection) => void;
-}
+export const OfisNavigationDrawer: React.FC = () => {
+  const {
+    isNavDrawerOpen,
+    setIsNavDrawerOpen,
+    currentView,
+    setCurrentView,
+    activeCategory,
+    setActiveCategory,
+    updateFilter,
+    setIsListSpaceOpen,
+    setIsAiAssistantOpen,
+    setIsSettingsOpen,
+    setIsAuthModalOpen,
+    currentUser,
+    focusSearchInput,
+    currency,
+    setCurrency,
+    formatPrice,
+  } = useApp();
 
-/**
- * OFIS Information & Navigation Drawer (☰ Top Left Menu)
- * Strict, clear information architecture:
- * - About OFIS
- * - How It Works
- * - Why OFIS
- * - Explore Spaces
- * - List a Space
- * - How Hosting Works
- * - Help Centre
- * - Contact Us
- * - Terms & Conditions
- * - Privacy Policy
- */
-export const OfisNavigationDrawer: React.FC<OfisNavigationDrawerProps> = ({
-  isOpen,
-  onClose,
-  onNavigate,
-  onOpenListSpace,
-  onOpenInfoSection,
-}) => {
-  const { themeMode, effectiveTheme, setThemeMode, openSettingsModal } = useApp();
-
-  if (!isOpen) return null;
-
-  const handleAction = (cb: () => void) => {
-    onClose();
-    cb();
-  };
-
-  const isLight = effectiveTheme === 'light';
+  if (!isNavDrawerOpen) return null;
 
   return (
-    <div
-      id="ofis-nav-drawer-backdrop"
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm transition-opacity"
-      onClick={onClose}
-    >
-      <motion.div
-        id="ofis-nav-drawer-panel"
-        initial={{ x: '-100%' }}
-        animate={{ x: 0 }}
-        exit={{ x: '-100%' }}
-        transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-        onClick={(e) => e.stopPropagation()}
-        className={`fixed inset-y-0 left-0 w-full max-w-[340px] sm:max-w-sm ${
-          isLight ? 'bg-[#FFFFFF] border-r border-[#E5E7EB] text-[#111827]' : 'bg-[#0E0E0E] border-r border-[#222222] text-white'
-        } shadow-2xl flex flex-col z-50 overflow-hidden transition-colors duration-150`}
-      >
-        {/* Drawer Header */}
-        <div className={`p-5 sm:p-6 border-b ${isLight ? 'border-[#E5E7EB] bg-[#F9FAFB]' : 'border-[#222222] bg-[#121212]'} flex items-center justify-between shrink-0`}>
-          <div className="flex items-center">
-            <OfisLogo size="md" />
-          </div>
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+        onClick={() => setIsNavDrawerOpen(false)}
+      />
 
-          <button
-            type="button"
-            id="drawer-close-btn"
-            onClick={onClose}
-            className={`p-2 rounded-xl ${isLight ? 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100' : 'text-stone-400 hover:text-white hover:bg-[#202020]'} transition-colors cursor-pointer`}
-            aria-label="Close navigation drawer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Drawer Scrollable Links Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 text-sm">
+      <div className="fixed inset-y-0 left-0 max-w-full flex">
+        <div className="w-screen max-w-sm bg-[#121714] border-r border-[#1E2522] shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-left duration-200">
           
-          {/* THEME SELECTOR: Dark, Light, System Default */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[11px] font-black text-[#00C878] uppercase tracking-wider">
-                Appearance & Theme
-              </span>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                isLight ? 'bg-[#E8F8F0] text-[#00A865]' : 'bg-[#063B2A] text-[#00C878]'
-              }`}>
-                {themeMode === 'system' ? 'System Default' : themeMode === 'light' ? 'Light Mode' : 'Dark Mode'}
-              </span>
+          {/* Header */}
+          <div className="p-5 border-b border-[#1E2522] flex items-center justify-between">
+            <div>
+              <img
+                src={ofisWordmark}
+                alt="OFIS"
+                className="h-9 w-auto object-contain"
+              />
+              <p className="text-[9px] font-mono font-bold tracking-widest text-[#00C878] uppercase mt-1">
+                Nigeria's Physical Space Network
+              </p>
             </div>
+            <button
+              type="button"
+              onClick={() => setIsNavDrawerOpen(false)}
+              className="p-2 rounded-xl text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#1A231E] transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-            <div className={`p-1.5 rounded-2xl border ${isLight ? 'bg-[#F3F4F6] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} grid grid-cols-3 gap-1`}>
-              {/* Option 1: Dark Mode */}
+          {/* Body */}
+          <div className="flex-1 px-4 py-5 space-y-6">
+            
+            {/* Primary Explore Navigation */}
+            <div className="space-y-1">
+              <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#718079] mb-2">
+                Explore Spaces
+              </p>
+              
               <button
                 type="button"
-                id="theme-btn-dark"
-                onClick={() => setThemeMode('dark')}
-                className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  themeMode === 'dark'
-                    ? 'bg-[#00C878] text-[#0A0A0A] shadow-md shadow-[#00C878]/20 font-black'
-                    : isLight
-                    ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60'
-                    : 'text-stone-300 hover:text-white hover:bg-[#222222]'
+                onClick={() => {
+                  focusSearchInput();
+                }}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  currentView === 'explore'
+                    ? 'bg-[#00C878]/10 text-[#00C878] font-bold border border-[#00C878]/30'
+                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19]'
                 }`}
               >
-                <Moon className="w-4 h-4 mb-1" />
-                <span className="text-[11px]">Dark</span>
+                <div className="flex items-center space-x-3">
+                  <Compass className="w-4 h-4" />
+                  <span>Spaces (Search & Browse)</span>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-60" />
               </button>
 
-              {/* Option 2: Light Mode */}
               <button
                 type="button"
-                id="theme-btn-light"
-                onClick={() => setThemeMode('light')}
-                className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  themeMode === 'light'
-                    ? 'bg-[#00C878] text-[#0A0A0A] shadow-md shadow-[#00C878]/20 font-black'
-                    : isLight
-                    ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60'
-                    : 'text-stone-300 hover:text-white hover:bg-[#222222]'
+                onClick={() => {
+                  setCurrentView('map');
+                  setIsNavDrawerOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  currentView === 'map'
+                    ? 'bg-[#00C878]/10 text-[#00C878] font-bold border border-[#00C878]/30'
+                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19]'
                 }`}
               >
-                <Sun className="w-4 h-4 mb-1" />
-                <span className="text-[11px]">Light</span>
+                <div className="flex items-center space-x-3">
+                  <MapPin className="w-4 h-4 text-[#00C878]" />
+                  <span>Around Me (Map View)</span>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-60" />
               </button>
 
-              {/* Option 3: System Default */}
               <button
                 type="button"
-                id="theme-btn-system"
-                onClick={() => setThemeMode('system')}
-                className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  themeMode === 'system'
-                    ? 'bg-[#00C878] text-[#0A0A0A] shadow-md shadow-[#00C878]/20 font-black'
-                    : isLight
-                    ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60'
-                    : 'text-stone-300 hover:text-white hover:bg-[#222222]'
+                onClick={() => {
+                  setCurrentView('bookings');
+                  setIsNavDrawerOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  currentView === 'bookings'
+                    ? 'bg-[#00C878]/10 text-[#00C878] font-bold border border-[#00C878]/30'
+                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19]'
                 }`}
               >
-                <Smartphone className="w-4 h-4 mb-1" />
-                <span className="text-[11px]">System</span>
+                <div className="flex items-center space-x-3">
+                  <Ticket className="w-4 h-4" />
+                  <span>My Passes & Bookings</span>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-60" />
               </button>
             </div>
-          </div>
 
-          {/* Main Discover & Experience Section */}
-          <div className="space-y-1">
-            <div className="px-2.5 py-1 text-[11px] font-black text-[#00C878] uppercase tracking-wider">
-              Navigation & Guide
-            </div>
-
-            <div className={`${isLight ? 'bg-[#F9FAFB] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} border rounded-2xl p-1 space-y-0.5`}>
-              {/* 1. About OFIS */}
-              <button
-                type="button"
-                id="drawer-item-about"
-                onClick={() => handleAction(() => onOpenInfoSection('about'))}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
-                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
-                } transition-colors cursor-pointer group`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Info className="w-4 h-4 text-[#00C878]" />
-                  <span>About OFIS</span>
-                </div>
-                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
-              </button>
-
-              {/* 2. How It Works */}
-              <button
-                type="button"
-                id="drawer-item-how-it-works"
-                onClick={() => handleAction(() => onOpenInfoSection('how_it_works'))}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
-                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
-                } transition-colors cursor-pointer group`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Clock className="w-4 h-4 text-[#00C878]" />
-                  <span>How It Works</span>
-                </div>
-                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
-              </button>
-
-              {/* 3. Why OFIS */}
-              <button
-                type="button"
-                id="drawer-item-why-ofis"
-                onClick={() => handleAction(() => onOpenInfoSection('why_ofis'))}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
-                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
-                } transition-colors cursor-pointer group`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-[#00C878]" />
-                  <span>Why OFIS</span>
-                </div>
-                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
-              </button>
-
-              {/* 4. Explore Spaces */}
-              <button
-                type="button"
-                id="drawer-item-explore-spaces"
-                onClick={() => handleAction(() => onNavigate('explore'))}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-[#00C878] hover:bg-[#00C878]/10 transition-colors cursor-pointer group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Compass className="w-4 h-4 text-[#00C878]" />
-                  <span>Explore Spaces</span>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 text-[#00C878] transition-transform group-hover:translate-x-0.5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Space Owners Guide Section */}
-          <div className="space-y-1">
-            <div className="px-2.5 py-1 text-[11px] font-black text-[#00C878] uppercase tracking-wider">
-              Space Owners
-            </div>
-
-            <div className={`${isLight ? 'bg-[#F9FAFB] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} border rounded-2xl p-1`}>
-              {/* How Hosting Works */}
-              <button
-                type="button"
-                id="drawer-item-how-hosting-works"
-                onClick={() => handleAction(() => onOpenInfoSection('how_hosting_works'))}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
-                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
-                } transition-colors cursor-pointer group`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Building2 className="w-4 h-4 text-[#00C878]" />
-                  <span>How Hosting Works</span>
-                </div>
-                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
-              </button>
-            </div>
-          </div>
-
-          {/* Support Section */}
-          <div className="space-y-1">
-            <div className="px-2.5 py-1 text-[11px] font-black text-[#00C878] uppercase tracking-wider">
-              Help & Support
-            </div>
-
-            <div className={`${isLight ? 'bg-[#F9FAFB] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} border rounded-2xl p-1 space-y-0.5`}>
-              {/* 7. Help Centre */}
-              <button
-                type="button"
-                id="drawer-item-help-centre"
-                onClick={() => handleAction(() => onOpenInfoSection('help_centre'))}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
-                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
-                } transition-colors cursor-pointer group`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <HelpCircle className="w-4 h-4 text-[#00C878]" />
-                  <span>Help Centre</span>
-                </div>
-                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
-              </button>
-
-              {/* 8. Contact Us */}
-              <button
-                type="button"
-                id="drawer-item-contact-us"
-                onClick={() => handleAction(() => onOpenInfoSection('contact_us'))}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold ${
-                  isLight ? 'text-neutral-800 hover:text-neutral-950 hover:bg-neutral-100' : 'text-stone-200 hover:text-white hover:bg-[#202020]'
-                } transition-colors cursor-pointer group`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Mail className="w-4 h-4 text-[#00C878]" />
-                  <span>Contact Us</span>
-                </div>
-                <ChevronRight className={`w-3.5 h-3.5 ${isLight ? 'text-neutral-400 group-hover:text-neutral-600' : 'text-stone-500 group-hover:text-stone-300'} transition-transform group-hover:translate-x-0.5`} />
-              </button>
-            </div>
-          </div>
-
-          {/* Settings & System Preferences */}
-          <div className="space-y-1">
-            <div className="px-2.5 py-1 text-[11px] font-black text-[#00C878] uppercase tracking-wider">
-              Preferences & System
-            </div>
-
-            <div className={`${isLight ? 'bg-[#F9FAFB] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} border rounded-2xl p-1`}>
-              <button
-                type="button"
-                id="drawer-item-settings"
-                onClick={() => handleAction(() => openSettingsModal())}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold ${
-                  isLight ? 'text-neutral-900 hover:bg-[#E8F8F0] hover:text-[#00A865]' : 'text-stone-100 hover:bg-[#063B2A]/40 hover:text-[#00C878]'
-                } transition-colors cursor-pointer group`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Settings className="w-4 h-4 text-[#00C878]" />
-                  <span>Settings & Permissions</span>
-                </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                  isLight ? 'bg-neutral-200/80 text-neutral-700' : 'bg-[#222222] text-[#A3A3A3]'
-                }`}>
-                  v2.4.1
+            {/* Reposted Dedicated Host Menu */}
+            <div className="space-y-1.5 p-3 rounded-2xl bg-[#141A17] border border-[#1E2722]">
+              <div className="flex items-center justify-between px-1 mb-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#00C878]">
+                  Host Menu
+                </p>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#00C878]/15 text-[#00C878]">
+                  Host Earn ₦
                 </span>
-              </button>
-            </div>
-          </div>
+              </div>
 
-          {/* Legal Section */}
-          <div className="space-y-1">
-            <div className={`px-2.5 py-1 text-[11px] font-black ${isLight ? 'text-neutral-500' : 'text-stone-400'} uppercase tracking-wider`}>
-              Legal
-            </div>
-
-            <div className={`${isLight ? 'bg-[#F9FAFB] border-[#E5E7EB]' : 'bg-[#151515] border-[#242424]'} border rounded-2xl p-1 space-y-0.5`}>
-              {/* 9. Terms & Conditions */}
+              {/* Host a space option */}
               <button
                 type="button"
-                id="drawer-item-terms"
-                onClick={() => handleAction(() => onOpenInfoSection('terms'))}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs ${
-                  isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100' : 'text-stone-400 hover:text-stone-200 hover:bg-[#202020]'
-                } transition-colors cursor-pointer`}
+                onClick={() => {
+                  setIsListSpaceOpen(true);
+                  setIsNavDrawerOpen(false);
+                }}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-[#0D0D0D] bg-[#00C878] hover:bg-[#00E58B] transition-all shadow-md active:scale-[0.99]"
               >
-                <div className="flex items-center gap-2.5">
-                  <FileText className="w-3.5 h-3.5 text-stone-400" />
-                  <span>Terms & Conditions</span>
+                <div className="flex items-center space-x-2.5">
+                  <PlusCircle className="w-4 h-4" />
+                  <span>Host a Space</span>
                 </div>
-                <ChevronRight className="w-3 h-3 text-stone-400" />
+                <ChevronRight className="w-4 h-4" />
               </button>
 
-              {/* 10. Privacy Policy */}
+              {/* Host Portal & Management */}
               <button
                 type="button"
-                id="drawer-item-privacy"
-                onClick={() => handleAction(() => onOpenInfoSection('privacy'))}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs ${
-                  isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100' : 'text-stone-400 hover:text-stone-200 hover:bg-[#202020]'
-                } transition-colors cursor-pointer`}
+                onClick={() => {
+                  setCurrentView('host');
+                  setIsNavDrawerOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+                  currentView === 'host'
+                    ? 'bg-[#00C878]/10 text-[#00C878] font-bold border border-[#00C878]/30'
+                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#1A221E]'
+                }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <Lock className="w-3.5 h-3.5 text-stone-400" />
-                  <span>Privacy Policy</span>
+                <div className="flex items-center space-x-2.5">
+                  <Building2 className="w-4 h-4" />
+                  <span>Host Portal & Dashboard</span>
                 </div>
-                <ChevronRight className="w-3 h-3 text-stone-400" />
+                <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+              </button>
+            </div>
+
+            {/* Quick Cities */}
+            <div>
+              <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#718079] mb-2">
+                Filter by City
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {POPULAR_CITIES.map(city => (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => {
+                      updateFilter('city', city);
+                      setCurrentView('explore');
+                      setIsNavDrawerOpen(false);
+                    }}
+                    className="p-2 text-xs font-semibold text-left rounded-xl bg-[#161D19] hover:bg-[#1E2522] text-[#9EABA3] hover:text-[#00C878] transition-all border border-[#1E2522]"
+                  >
+                    📍 {city}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions & Tools */}
+            <div className="space-y-2 pt-2 border-t border-[#1E2522]">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAiAssistantOpen(true);
+                  setIsNavDrawerOpen(false);
+                }}
+                className="w-full flex items-center justify-center space-x-2 py-2.5 rounded-xl bg-[#161D19] border border-[#232D28] hover:border-[#00C878]/50 text-xs font-semibold text-[#00C878] transition-all"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Ask OFIS AI Concierge</span>
               </button>
             </div>
           </div>
-        </div>
 
-        {/* MENU FOOTER */}
-        <div className={`p-5 border-t ${isLight ? 'border-[#E5E7EB] bg-[#F9FAFB]' : 'border-[#222222] bg-[#121212]'} shrink-0 text-center`}>
-          <div className="flex justify-center mb-1.5">
-            <OfisLogo size="sm" />
+          {/* Footer Profile status */}
+          <div className="p-4 border-t border-[#1E2522] bg-[#0E1210] space-y-3">
+            {/* Quick Currency Selector */}
+            <div className="flex items-center justify-between p-2 rounded-xl bg-[#161D19] border border-[#232D28]">
+              <span className="text-[11px] text-[#9EABA3] flex items-center gap-1.5 font-medium">
+                <Globe className="w-3.5 h-3.5 text-[#00C878]" />
+                <span>Currency</span>
+              </span>
+              <div className="flex items-center bg-[#101412] p-0.5 rounded-lg border border-[#1E2522] text-[10px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setCurrency('NGN')}
+                  className={`px-2 py-0.5 rounded transition-all ${
+                    currency === 'NGN'
+                      ? 'bg-[#00C878] text-[#0D0D0D]'
+                      : 'text-[#9EABA3] hover:text-[#F2F2F2]'
+                  }`}
+                >
+                  ₦ NGN
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrency('USD')}
+                  className={`px-2 py-0.5 rounded transition-all ${
+                    currency === 'USD'
+                      ? 'bg-[#00C878] text-[#0D0D0D]'
+                      : 'text-[#9EABA3] hover:text-[#F2F2F2]'
+                  }`}
+                >
+                  $ USD
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                {currentUser.avatarUrl && (
+                  <img
+                    src={currentUser.avatarUrl}
+                    alt={currentUser.name}
+                    className="w-8 h-8 rounded-lg object-cover ring-1 ring-[#00C878]/30"
+                  />
+                )}
+                <div>
+                  <p className="text-xs font-bold text-[#F2F2F2]">{currentUser.name}</p>
+                  <p className="text-[10px] text-[#00C878] font-medium">{formatPrice(currentUser.walletBalance)} Wallet</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSettingsOpen(true);
+                  setIsNavDrawerOpen(false);
+                }}
+                className="p-2 rounded-lg text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19] transition-colors"
+                title="Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="pt-2 border-t border-[#1A231E] flex items-center justify-between text-[10px] text-[#718079]">
+              <span className="font-mono font-semibold text-[#9EABA3]">OFIS v2.1.1</span>
+              <span>Lagos • Abuja • Port Harcourt</span>
+            </div>
           </div>
-          <p className="text-[11px] text-[#00C878] font-bold">
-            Nigeria's Physical Space Network
-          </p>
+
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

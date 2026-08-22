@@ -1,1543 +1,480 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import {
-  Search,
-  MapPin,
-  Calendar,
-  Clock,
-  Users,
-  Filter,
+import React, { useState } from 'react';
+import { 
+  Search, 
+  MapPin, 
+  Zap, 
+  Wifi, 
+  VolumeX, 
+  Star, 
+  Heart, 
+  ShieldCheck, 
+  ChevronRight, 
   SlidersHorizontal,
-  Star,
-  CheckCircle2,
+  Clock,
   Sparkles,
-  Zap,
-  Wifi,
-  Wind,
-  ShieldCheck,
-  Video,
+  Users,
+  CheckCircle2,
+  Laptop,
   Camera,
   Mic,
   Briefcase,
-  Building2,
-  Tv,
-  Coffee,
-  Car,
-  Volume2,
-  Layers,
-  ArrowRight,
-  TrendingUp,
-  Heart,
-  RotateCcw,
-  Check,
-  LayoutGrid,
-  Columns,
-  ChevronDown,
-  X,
-  Lock,
-  Compass,
-  LocateFixed,
-  Navigation,
-  Map as MapIcon,
-  Maximize2,
-  Crosshair,
-  Loader2,
-  Radio,
-  ExternalLink
+  Compass
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Space, PrimaryCategory, CurrencyCode } from '../types';
-import { ExploreMapView } from './ExploreMapView';
-import { OfisLogo } from './OfisLogo';
-import { PriceRangeSlider, PriceRateType } from './PriceRangeSlider';
+import { POPULAR_CITIES, CATEGORY_METADATA } from '../mockData';
+import { SpaceCategory } from '../types';
 
-interface SpaceListProps {
-  onSelectSpace: (space: Space) => void;
-  onNavigateToResults?: () => void;
-}
-
-// Preset Vicinity Hubs across Nigeria with spatial coordinates
-interface VicinityHub {
-  id: string;
-  name: string;
-  shortName: string;
-  city: string;
-  lat: number;
-  lng: number;
-  badge: string;
-  popular?: boolean;
-}
-
-const NIGERIAN_VICINITIES: VicinityHub[] = [
-  { id: 'lekki', name: 'Lekki Phase 1 / Admiralty', shortName: 'Lekki Phase 1', city: 'Lekki', lat: 6.4474, lng: 3.4735, badge: 'Lagos Island', popular: true },
-  { id: 'vi', name: 'Victoria Island / Adeola Odeku', shortName: 'Victoria Island', city: 'Victoria Island', lat: 6.4281, lng: 3.4219, badge: 'Financial Core', popular: true },
-  { id: 'yaba', name: 'Yaba Tech Belt / Herbert Macaulay', shortName: 'Yaba Tech Hub', city: 'Yaba', lat: 6.5095, lng: 3.3711, badge: 'Tech Cluster', popular: true },
-  { id: 'ikeja', name: 'Ikeja GRA / Allen Avenue', shortName: 'Ikeja GRA', city: 'Ikeja', lat: 6.6018, lng: 3.3515, badge: 'Lagos Mainland', popular: true },
-  { id: 'ikoyi', name: 'Ikoyi / Osborne / Banana Island', shortName: 'Ikoyi', city: 'Ikoyi', lat: 6.4549, lng: 3.4358, badge: 'High End' },
-  { id: 'abuja', name: 'Abuja / Maitama & Wuse 2', shortName: 'Abuja Central', city: 'Abuja', lat: 9.0765, lng: 7.4934, badge: 'Federal Capital', popular: true },
-  { id: 'ph', name: 'Port Harcourt / GRA Phase 2', shortName: 'Port Harcourt', city: 'Port Harcourt', lat: 4.8156, lng: 7.0498, badge: 'Oil City' },
-  { id: 'ibadan', name: 'Ibadan / Bodija & Ring Road', shortName: 'Ibadan', city: 'Ibadan', lat: 7.4215, lng: 3.9056, badge: 'Oyo State' },
-];
-
-// Haversine distance calculator in Kilometers
-function getHaversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-export const SpaceList: React.FC<SpaceListProps> = ({ onSelectSpace, onNavigateToResults }) => {
+export const SpaceList: React.FC = () => {
   const {
     spaces,
     filters,
-    setFilters,
-    setCategoryFilter,
+    updateFilter,
     resetFilters,
-    currentCurrency,
+    activeCategory,
+    setActiveCategory,
+    setSelectedSpaceId,
+    setCurrentView,
+    savedSpaceIds,
+    toggleSaveSpace,
+    setCheckoutSpace,
+    setIsCheckoutOpen,
+    currency,
     formatPrice,
-    isFavorite,
-    toggleFavorite,
-    openAiModal,
-    bookingDraft,
-    setBookingDraft,
-    effectiveTheme,
   } = useApp();
 
-  const isLight = effectiveTheme === 'light';
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'granted' | 'denied'>('idle');
 
-  const [viewMode, setViewMode] = useState<'grid' | 'split' | 'map'>('grid');
-  const [showFilterDrawer, setShowFilterDrawer] = useState(false);
-  const [highlightedSpaceId, setHighlightedSpaceId] = useState<string | null>(null);
-
-  // Vicinity & Proximity state
-  const [activeVicinity, setActiveVicinity] = useState<VicinityHub | null>(null);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; label: string } | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
-  const [locationToast, setLocationToast] = useState<string | null>(null);
-  const [mapCategoryFilter, setMapCategoryFilter] = useState<string>('all');
-
-  // Search form local states
-  const [searchLocation, setSearchLocation] = useState(filters.city === 'all' ? '' : filters.city);
-  const [searchDate, setSearchDate] = useState(bookingDraft.startDate || new Date().toISOString().split('T')[0]);
-  const [searchStartTime, setSearchStartTime] = useState(bookingDraft.startTime || '09:00 AM');
-  const [searchEndTime, setSearchEndTime] = useState(bookingDraft.endTime || '01:00 PM');
-  const [searchSpaceType, setSearchSpaceType] = useState<string>('all');
-  const [searchCapacity, setSearchCapacity] = useState<string>('all');
-
-  // Quick filter tags
-  const [quickFilter, setQuickFilter] = useState<string | null>(null);
-
-  const nigerianCities = [
-    'all',
-    'Lekki',
-    'Victoria Island',
-    'Yaba',
-    'Ikeja',
-    'Ikoyi',
-    'Abuja',
-    'Port Harcourt',
-    'Ibadan',
-    'Benin City',
-  ];
-
-  // 8 High-demand Space Categories
-  const spaceCategories = [
-    { id: 'all', label: 'All Spaces', icon: Compass, categoryType: null, subcatMatch: null },
-    { id: 'coworking', label: 'Coworking Desks', icon: Users, categoryType: 'WORK', subcatMatch: 'coworking_desks' },
-    { id: 'office', label: 'Private Offices', icon: Briefcase, categoryType: 'WORK', subcatMatch: 'private_offices' },
-    { id: 'meeting', label: 'Meeting & Boardrooms', icon: Building2, categoryType: 'MEET', subcatMatch: 'meeting_rooms' },
-    { id: 'podcast', label: 'Podcast Studios', icon: Mic, categoryType: 'CREATE', subcatMatch: 'podcast_studios' },
-    { id: 'photo', label: 'Photo Studios', icon: Camera, categoryType: 'CREATE', subcatMatch: 'photography_studios' },
-    { id: 'video', label: 'Creator & Video Hubs', icon: Video, categoryType: 'CREATE', subcatMatch: 'video_studios' },
-    { id: 'event', label: 'Event & Training', icon: Layers, categoryType: 'HOST', subcatMatch: 'event_spaces' },
-  ];
-
-  // Compute distance for a space from currently selected vicinity or user GPS location
-  const getSpaceDistance = useCallback((space: Space): number | null => {
-    const originLat = userLocation?.lat ?? activeVicinity?.lat;
-    const originLng = userLocation?.lng ?? activeVicinity?.lng;
-    if (originLat === undefined || originLng === undefined || !space.coordinates) return null;
-    return getHaversineDistanceKm(originLat, originLng, space.coordinates.lat, space.coordinates.lng);
-  }, [userLocation, activeVicinity]);
-
-  // Handle GPS "Locate Near Me"
-  const handleLocateVicinity = () => {
-    setIsLocating(true);
-    setLocationToast(null);
-
+  const handleLocationRequest = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        pos => {
-          setIsLocating(false);
-          const coords = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            label: 'Your Current GPS Vicinity',
-          };
-          setUserLocation(coords);
-          setActiveVicinity(null);
-          setQuickFilter('near_me');
-          setLocationToast('📍 Found your location! Showing closest spaces first.');
-          setTimeout(() => setLocationToast(null), 4000);
+        () => {
+          setLocationStatus('granted');
+          updateFilter('city', 'Lagos');
+          updateFilter('searchQuery', 'Victoria Island');
         },
-        err => {
-          setIsLocating(false);
-          // Fallback to Lekki Phase 1 hub if permission denied or unavailable
-          const fallback = NIGERIAN_VICINITIES[0];
-          setActiveVicinity(fallback);
-          setUserLocation({
-            lat: fallback.lat,
-            lng: fallback.lng,
-            label: `${fallback.name} (Vicinity Preset)`,
-          });
-          setQuickFilter('near_me');
-          setLocationToast(`📍 Set vicinity to ${fallback.shortName}. Showing closest spaces.`);
-          setTimeout(() => setLocationToast(null), 4000);
-        },
-        { timeout: 8000 }
+        () => {
+          setLocationStatus('denied');
+          updateFilter('city', 'Lagos');
+        }
       );
     } else {
-      setIsLocating(false);
-      const fallback = NIGERIAN_VICINITIES[0];
-      setActiveVicinity(fallback);
-      setUserLocation({
-        lat: fallback.lat,
-        lng: fallback.lng,
-        label: `${fallback.name} (Vicinity Preset)`,
-      });
-      setQuickFilter('near_me');
-      setLocationToast(`📍 Set vicinity to ${fallback.shortName}.`);
-      setTimeout(() => setLocationToast(null), 4000);
+      setLocationStatus('denied');
     }
   };
-
-  const handleSelectVicinity = (vic: VicinityHub) => {
-    if (activeVicinity?.id === vic.id) {
-      setActiveVicinity(null);
-      setUserLocation(null);
-      setQuickFilter(null);
-    } else {
-      setActiveVicinity(vic);
-      setUserLocation({
-        lat: vic.lat,
-        lng: vic.lng,
-        label: vic.name,
-      });
-      setQuickFilter('near_me');
-      setLocationToast(`📍 Centered on ${vic.shortName}. Showing closest available desks.`);
-      setTimeout(() => setLocationToast(null), 4000);
-    }
-  };
-
-  // Filter logic
-  const filteredSpaces = useMemo(() => {
-    const list = spaces.filter(space => {
-      // 1. City / Location match
-      if (filters.city !== 'all') {
-        const queryCity = filters.city.toLowerCase();
-        const matchesCity =
-          (space.city || '').toLowerCase().includes(queryCity) ||
-          (space.neighborhood && space.neighborhood.toLowerCase().includes(queryCity)) ||
-          (space.address || '').toLowerCase().includes(queryCity);
-        if (!matchesCity) return false;
-      }
-
-      // 2. Search query match
-      if (filters.searchQuery.trim()) {
-        const q = filters.searchQuery.toLowerCase();
-        const matchesQuery =
-          (space.name || '').toLowerCase().includes(q) ||
-          (space.tagline || '').toLowerCase().includes(q) ||
-          (space.city || '').toLowerCase().includes(q) ||
-          (space.neighborhood && space.neighborhood.toLowerCase().includes(q)) ||
-          (space.primaryCategory || '').toLowerCase().includes(q) ||
-          (space.subcategory && space.subcategory.toLowerCase().includes(q)) ||
-          (space.amenities || []).some(a => (a || '').toLowerCase().includes(q));
-        if (!matchesQuery) return false;
-      }
-
-      // 3. Category match
-      if (filters.category !== 'all') {
-        if (space.primaryCategory !== filters.category) return false;
-      }
-
-      // 4. Amenities match
-      if (filters.amenities.length > 0) {
-        const hasAllAmenities = filters.amenities.every(amenity =>
-          (space.amenities || []).some(a => (a || '').toLowerCase().includes(amenity.toLowerCase()))
-        );
-        if (!hasAllAmenities) return false;
-      }
-
-      // 5. Price filter (Hourly vs Daily)
-      const isDaily = filters.priceRateType === 'daily';
-      if (isDaily) {
-        const spaceDailyNGN = space.dailyRateNGN || (space.dailyRate ? space.dailyRate * 1550 : ((space.hourlyRateNGN || space.hourlyRate * 1550) * 7));
-        const minDaily = filters.minDailyPriceNGN ?? 0;
-        const maxDaily = filters.maxDailyPriceNGN ?? 350000;
-        if (minDaily > 0 && spaceDailyNGN < minDaily) return false;
-        if (maxDaily < 350000 && spaceDailyNGN > maxDaily) return false;
-      } else {
-        const spaceHourlyNGN = space.hourlyRateNGN || (space.hourlyRate * 1550);
-        const minHourly = filters.minPriceNGN ?? 0;
-        const maxHourly = filters.maxPriceNGN ?? 75000;
-        if (minHourly > 0 && spaceHourlyNGN < minHourly) return false;
-        if (maxHourly < 75000 && spaceHourlyNGN > maxHourly) return false;
-      }
-
-      // 6. Quick filter rules
-      if (quickFilter === 'under_5k') {
-        if (space.hourlyRateNGN > 5000) return false;
-      } else if (quickFilter === 'power_247') {
-        if (!(space.amenities || []).some(a => a.includes('Power') || a.includes('Generator') || a.includes('Solar'))) return false;
-      } else if (quickFilter === 'starlink') {
-        if (!(space.amenities || []).some(a => a.includes('Starlink') || a.includes('Internet') || a.includes('Wi-Fi'))) return false;
-      } else if (quickFilter === 'creator') {
-        if (!['podcast_studio', 'photo_studio', 'video_studio'].includes(space.primaryCategory)) return false;
-      } else if (quickFilter === 'private') {
-        if (!['private_office', 'meeting_room'].includes(space.primaryCategory)) return false;
-      }
-
-      return true;
-    });
-
-    // If near_me is active or user location set, sort by distance ascending
-    if ((quickFilter === 'near_me' || userLocation || activeVicinity) && (userLocation || activeVicinity)) {
-      return [...list].sort((a, b) => {
-        const distA = getSpaceDistance(a) ?? 9999;
-        const distB = getSpaceDistance(b) ?? 9999;
-        return distA - distB;
-      });
-    }
-
-    return list;
-  }, [spaces, filters, quickFilter, userLocation, activeVicinity, getSpaceDistance]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setFilters(prev => ({
-      ...prev,
-      city: searchLocation ? searchLocation : 'all',
-      searchQuery: searchLocation ? searchLocation : '',
-      spaceType: searchSpaceType || 'all',
-      date: searchDate,
-      startTime: searchStartTime,
-    }));
-    setBookingDraft(prev => ({
-      ...prev,
-      startDate: searchDate,
-      startTime: searchStartTime,
-      endTime: searchEndTime,
-      durationUnits: 4,
-    }));
-    if (onNavigateToResults) {
-      onNavigateToResults();
-    }
-  };
-
-  const totalAvailableDesks = useMemo(() => {
-    return filteredSpaces.reduce((acc, s) => acc + (s.desks || []).filter(d => d.status === 'available').length, 0);
-  }, [filteredSpaces]);
 
   return (
-    <div className={`min-h-screen ${isLight ? 'bg-[#F9FAFB] text-neutral-900' : 'bg-[#0D0D0D] text-white'} relative pb-20 transition-colors duration-150`}>
-      {/* Toast notification for Vicinity */}
-      {locationToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#063B2A] text-[#00C878] border border-[#00C878]/50 px-4 py-2 rounded-2xl shadow-2xl text-xs font-black flex items-center gap-2 animate-in fade-in slide-in-from-top-3">
-          <LocateFixed className="w-4 h-4 animate-spin text-[#00C878]" />
-          <span>{locationToast}</span>
-        </div>
-      )}
+    <div className="min-h-screen bg-[#0D0D0D] pb-24">
+      
+      {/* ========================================================================= */}
+      {/* 1. HERO SECTION: BRANDING & HEADLINE WITH SEAMLESS EVOLVING TOP ARC       */}
+      {/* ========================================================================= */}
+      <section className="relative pt-10 sm:pt-14 pb-10 px-4 sm:px-6 lg:px-8 border-b border-[#1E2522] bg-gradient-to-b from-[#141A17] via-[#0E1310] to-[#0D0D0D] overflow-hidden">
+        
+        {/* Seamless Horizon Top Evolving Arc Beam */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[2px] seamless-horizon-arc pointer-events-none z-20" />
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-[600px] h-32 bg-[#00C878]/15 rounded-[100%] blur-3xl pointer-events-none -z-0 animate-ambient-pulse" />
 
-      {/* 1. HERO SECTION */}
-      <div className={`relative overflow-hidden ${
-        isLight
-          ? 'bg-radial from-[#E6F9F0]/80 via-[#F9FAFB] to-[#F9FAFB] border-b border-neutral-200'
-          : 'bg-radial from-[#063B2A]/40 via-[#0D0D0D] to-[#0D0D0D] border-b border-[#222222]'
-      } pt-8 sm:pt-12 pb-10 sm:pb-14 transition-colors duration-150`}>
-        {/* Subtle Ambient Grid glow */}
-        <div className={`absolute inset-0 ${
-          isLight
-            ? 'bg-[linear-gradient(to_right,#E5E7EB_1px,transparent_1px),linear-gradient(to_bottom,#E5E7EB_1px,transparent_1px)] opacity-60'
-            : 'bg-[linear-gradient(to_right,#141414_1px,transparent_1px),linear-gradient(to_bottom,#141414_1px,transparent_1px)] opacity-30'
-        } bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none`} />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          {/* Badge */}
-          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full ${
-            isLight ? 'bg-white border-neutral-200 shadow-sm' : 'bg-[#171717] border-[#282828]'
-          } border mb-4`}>
-            <span className="w-2 h-2 rounded-full bg-[#00C878] animate-pulse" />
-            <span className={`text-xs font-bold tracking-wider uppercase ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'}`}>
-              Nigeria's Physical Space Network
-            </span>
+        {/* Seamless Revolving Ambient Background Glow Orb */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] sm:w-[750px] sm:h-[750px] bg-[conic-gradient(from_0deg,#00C878_0deg,transparent_60deg,transparent_180deg,#00C878_240deg,transparent_300deg,#00C878_360deg)] opacity-15 blur-3xl animate-revolving-glow pointer-events-none -z-0" />
+        
+        <div className="relative z-10 max-w-6xl mx-auto text-center space-y-5">
+          
+          {/* Overline Positioning with Seamless Revolving Glow Border */}
+          <div className="inline-flex relative p-[1px] rounded-full overflow-hidden shadow-lg group">
+            {/* Seamless Revolving Border Beam */}
+            <div className="absolute inset-[-150%] seamless-top-arc pointer-events-none opacity-90" />
+            <div className="relative inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-5 py-1.5 rounded-full bg-[#141816] text-xs font-mono font-bold tracking-wider text-[#00C878] uppercase">
+              <span>Work. Meet. Create. Record</span>
+            </div>
           </div>
 
-          {/* Core Headline */}
-          <h1 className={`text-3xl sm:text-5xl lg:text-6xl font-black ${
-            isLight ? 'text-neutral-900' : 'text-white'
-          } tracking-tight leading-[1.1] max-w-4xl mx-auto`}>
-            Find the right space. <br />
-            <span className={isLight ? 'text-[#00A865]' : 'text-[#00C878]'}>Book it when you need it.</span>
+          {/* Core Hero Headline */}
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#F2F2F2] max-w-4xl mx-auto leading-[1.15]">
+            Find the right space. <br className="hidden sm:block" />
+            <span className="text-[#00C878]">Book it when you need it.</span>
           </h1>
 
-          {/* Subheading & Core Promise (High Contrast & Legibility) */}
-          <div className="mt-3 sm:mt-3.5 max-w-2xl mx-auto">
-            <p className={`text-base sm:text-lg font-bold ${isLight ? 'text-neutral-800' : 'text-[#F2F2F2]'} tracking-wide`}>
-              Work. Create. Meet. Record.
-            </p>
-            <p className={`text-xs sm:text-sm ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-1 font-normal leading-relaxed`}>
-              Book inspiring workspaces, studios, meeting rooms and creative spaces across Nigeria by the hour or day.
-            </p>
-          </div>
+          {/* Supporting Copy */}
+          <p className="max-w-2xl mx-auto text-sm sm:text-base text-[#9EABA3] font-normal leading-relaxed">
+            Book inspiring workspaces, studios, meeting rooms and creative spaces across Nigeria — by the hour or by the day.
+          </p>
 
-          {/* Enhanced Feature Pills (Verified, Clear Pricing, Instant Booking) */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs">
-            <div className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl ${
-              isLight
-                ? 'bg-white border-neutral-200 text-neutral-800 shadow-xs hover:border-[#00C878]/50'
-                : 'bg-[#171717] border-[#2A2A2A] text-stone-100 hover:border-[#00C878]/60 shadow-xs'
-            } border transition-all group`}>
-              <div className="w-5 h-5 rounded-lg bg-[#00C878]/15 flex items-center justify-center text-[#00C878] shrink-0">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#00C878]" />
-              </div>
-              <div className="text-left">
-                <span className="font-bold block leading-tight">Verified Spaces</span>
-                <span className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-stone-400'} font-normal`}>24/7 Power & Starlink</span>
-              </div>
+          {/* Trust Benefits Bar */}
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-y-2 gap-x-4 sm:gap-x-6 text-xs text-[#718079]">
+            <div className="flex items-center space-x-1.5">
+              <ShieldCheck className="w-4 h-4 text-[#00C878]" />
+              <span className="text-[#9EABA3]">Verified Spaces</span>
             </div>
-
-            <div className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl ${
-              isLight
-                ? 'bg-white border-neutral-200 text-neutral-800 shadow-xs hover:border-[#00C878]/50'
-                : 'bg-[#171717] border-[#2A2A2A] text-stone-100 hover:border-[#00C878]/60 shadow-xs'
-            } border transition-all group`}>
-              <div className="w-5 h-5 rounded-lg bg-[#00C878]/15 flex items-center justify-center text-[#00C878] font-mono font-black text-xs shrink-0">
-                ₦
-              </div>
-              <div className="text-left">
-                <span className="font-bold block leading-tight">Clear Pricing</span>
-                <span className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-stone-400'} font-normal`}>No Hidden Fees</span>
-              </div>
+            <span className="text-[#232D28] hidden sm:inline">•</span>
+            <div className="flex items-center space-x-1.5">
+              <Zap className="w-4 h-4 text-[#00C878]" />
+              <span className="text-[#9EABA3]">24/7 Power</span>
             </div>
-
-            <div className={`flex items-center gap-2 px-3.5 py-2 rounded-2xl ${
-              isLight
-                ? 'bg-white border-neutral-200 text-neutral-800 shadow-xs hover:border-[#00C878]/50'
-                : 'bg-[#171717] border-[#2A2A2A] text-stone-100 hover:border-[#00C878]/60 shadow-xs'
-            } border transition-all group`}>
-              <div className="w-5 h-5 rounded-lg bg-[#00C878]/15 flex items-center justify-center text-[#00C878] shrink-0">
-                <Calendar className="w-3.5 h-3.5 text-[#00C878]" />
-              </div>
-              <div className="text-left">
-                <span className="font-bold block leading-tight">Instant Booking</span>
-                <span className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-stone-400'} font-normal`}>Hourly & Daily Passes</span>
-              </div>
+            <span className="text-[#232D28] hidden sm:inline">•</span>
+            <div className="flex items-center space-x-1.5">
+              <Wifi className="w-4 h-4 text-[#00C878]" />
+              <span className="text-[#9EABA3]">Fast Internet</span>
             </div>
-          </div>
-
-          {/* 2. SEARCH & BOOKING MODULE (Exact 6-Box Grid) */}
-          <div className={`mt-6 sm:mt-7 max-w-5xl mx-auto ${
-            isLight ? 'bg-white text-neutral-900 border-neutral-200 shadow-xl' : 'bg-[#171717]/95 text-white border-[#2A2A2A] shadow-2xl'
-          } backdrop-blur-md rounded-3xl p-4 sm:p-6 border text-left transition-colors duration-150`}>
-            <div className={`px-1 pb-3 text-xs font-black ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} uppercase tracking-wider flex items-center justify-between`}>
-              <div className="flex items-center gap-2">
-                <Compass className="w-4 h-4" />
-                <span>WHAT SPACE ARE YOU LOOKING FOR?</span>
-              </div>
-              <button
-                type="button"
-                onClick={handleLocateVicinity}
-                disabled={isLocating}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl ${
-                  isLight ? 'bg-[#E8F8F0] hover:bg-[#D4F4E4] text-[#00A865] border border-[#00C878]/30' : 'bg-[#063B2A] hover:bg-[#084c36] text-[#00C878] border border-[#00C878]/40'
-                } text-xs font-black transition-all cursor-pointer shadow-xs active:scale-95`}
-              >
-                {isLocating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LocateFixed className="w-3.5 h-3.5" />}
-                <span>{isLocating ? 'Locating...' : 'Locate in My Vicinity'}</span>
-              </button>
-            </div>
-
-            <form onSubmit={handleSearchSubmit} className="space-y-3">
-              {/* 6 Input Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                {/* 1. Location Input */}
-                <div className={`${
-                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
-                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
-                  <MapPin className="w-4 h-4 text-[#00C878] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
-                      Location
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Lekki, VI, Yaba, Abuja..."
-                      value={searchLocation}
-                      onChange={e => setSearchLocation(e.target.value)}
-                      className={`w-full bg-transparent text-xs font-semibold ${
-                        isLight ? 'text-neutral-900 placeholder:text-neutral-400' : 'text-white placeholder:text-[#666666]'
-                      } focus:outline-none`}
-                    />
-                  </div>
-                </div>
-
-                {/* 2. Date Input */}
-                <div className={`${
-                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
-                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
-                  <Calendar className="w-4 h-4 text-[#00C878] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      value={searchDate}
-                      onChange={e => setSearchDate(e.target.value)}
-                      className={`w-full bg-transparent text-xs font-semibold ${
-                        isLight ? 'text-neutral-900 [color-scheme:light]' : 'text-white [color-scheme:dark]'
-                      } focus:outline-none`}
-                    />
-                  </div>
-                </div>
-
-                {/* 3. Start Time */}
-                <div className={`${
-                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
-                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
-                  <Clock className="w-4 h-4 text-[#00C878] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
-                      Start time
-                    </label>
-                    <select
-                      value={searchStartTime}
-                      onChange={e => setSearchStartTime(e.target.value)}
-                      className={`w-full bg-transparent text-xs font-semibold ${
-                        isLight ? 'text-neutral-900' : 'text-white'
-                      } focus:outline-none cursor-pointer`}
-                    >
-                      <option value="08:00 AM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>08:00 AM</option>
-                      <option value="09:00 AM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>09:00 AM</option>
-                      <option value="10:00 AM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>10:00 AM</option>
-                      <option value="11:00 AM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>11:00 AM</option>
-                      <option value="01:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>01:00 PM</option>
-                      <option value="04:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>04:00 PM</option>
-                      <option value="07:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>07:00 PM</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* 4. End Time */}
-                <div className={`${
-                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
-                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
-                  <Clock className="w-4 h-4 text-[#00C878] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
-                      End time
-                    </label>
-                    <select
-                      value={searchEndTime}
-                      onChange={e => setSearchEndTime(e.target.value)}
-                      className={`w-full bg-transparent text-xs font-semibold ${
-                        isLight ? 'text-neutral-900' : 'text-white'
-                      } focus:outline-none cursor-pointer`}
-                    >
-                      <option value="01:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>01:00 PM</option>
-                      <option value="02:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>02:00 PM</option>
-                      <option value="04:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>04:00 PM</option>
-                      <option value="06:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>06:00 PM</option>
-                      <option value="08:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>08:00 PM</option>
-                      <option value="10:00 PM" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>10:00 PM</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* 5. Space Type */}
-                <div className={`${
-                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
-                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
-                  <Layers className="w-4 h-4 text-[#00C878] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
-                      Space type
-                    </label>
-                    <select
-                      value={searchSpaceType}
-                      onChange={e => setSearchSpaceType(e.target.value)}
-                      className={`w-full bg-transparent text-xs font-semibold ${
-                        isLight ? 'text-neutral-900' : 'text-white'
-                      } focus:outline-none cursor-pointer`}
-                    >
-                      <option value="all" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Coworking, Studio, ...</option>
-                      <option value="coworking" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Coworking Desk</option>
-                      <option value="office" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Private Office</option>
-                      <option value="meeting" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Meeting Room</option>
-                      <option value="podcast" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Podcast Studio</option>
-                      <option value="photo" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Photography Studio</option>
-                      <option value="video" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Creator / Video Studio</option>
-                      <option value="event" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>Event / Training Space</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* 6. People / Capacity */}
-                <div className={`${
-                  isLight ? 'bg-neutral-50 border-neutral-200 focus-within:bg-white focus-within:border-[#00C878]' : 'bg-[#202020] border-[#2D2D2D] focus-within:border-[#00C878]'
-                } border rounded-2xl px-3.5 py-2.5 flex items-center gap-3 transition-colors`}>
-                  <Users className="w-4 h-4 text-[#00C878] shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <label className={`block text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
-                      People
-                    </label>
-                    <select
-                      value={searchCapacity}
-                      onChange={e => setSearchCapacity(e.target.value)}
-                      className={`w-full bg-transparent text-xs font-semibold ${
-                        isLight ? 'text-neutral-900' : 'text-white'
-                      } focus:outline-none cursor-pointer`}
-                    >
-                      <option value="all" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>1 – 10+</option>
-                      <option value="1" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>1 Person</option>
-                      <option value="2-4" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>2 – 4 People</option>
-                      <option value="5-10" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>5 – 10 People</option>
-                      <option value="10+" className={isLight ? 'bg-white text-neutral-900' : 'bg-[#171717] text-white'}>10+ Team</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Full Width Primary CTA Button: "Find Spaces" */}
-              <button
-                type="submit"
-                id="search-find-space-btn"
-                className="w-full py-3.5 bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] font-black text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-[#00C878]/30 cursor-pointer active:scale-98"
-              >
-                <Search className="w-4 h-4 text-[#0D0D0D]" />
-                <span>Find Spaces</span>
-              </button>
-            </form>
-
-            {/* Quick Filters Pill Bar */}
-            <div className={`mt-4 pt-3 border-t ${isLight ? 'border-neutral-200' : 'border-[#262626]'} flex flex-wrap items-center gap-2 text-xs`}>
-              <span className={`text-[11px] ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} font-bold uppercase tracking-wider mr-1`}>
-                QUICK FILTERS:
+            <span className="text-[#232D28] hidden sm:inline">•</span>
+            <div className="flex items-center space-x-1.5">
+              <span className="w-4 h-4 rounded-full bg-[#00C878]/15 text-[#00C878] font-bold text-xs flex items-center justify-center leading-none">
+                {currency === 'USD' ? '$' : '₦'}
               </span>
-              <button
-                type="button"
-                id="quick-price-filter-btn"
-                onClick={() => setShowFilterDrawer(true)}
-                className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
-                  (filters.priceRateType === 'hourly' && (filters.minPriceNGN > 0 || (filters.maxPriceNGN || 75000) < 75000)) ||
-                  (filters.priceRateType === 'daily' && ((filters.minDailyPriceNGN || 0) > 0 || (filters.maxDailyPriceNGN || 350000) < 350000))
-                    ? 'bg-[#063B2A] border-[#00C878] text-[#00C878]'
-                    : isLight
-                    ? 'bg-neutral-100 border-neutral-300 text-neutral-800 hover:border-[#00C878]'
-                    : 'bg-[#202020] border-[#2C2C2C] text-[#F2F2F2] hover:border-[#00C878]/50'
-                }`}
-              >
-                <SlidersHorizontal className="w-3 h-3 text-[#00C878]" />
-                <span>
-                  {(filters.priceRateType === 'hourly' && (filters.minPriceNGN > 0 || (filters.maxPriceNGN || 75000) < 75000))
-                    ? `Price: ₦${filters.minPriceNGN.toLocaleString()} – ₦${filters.maxPriceNGN?.toLocaleString()}/hr`
-                    : (filters.priceRateType === 'daily' && ((filters.minDailyPriceNGN || 0) > 0 || (filters.maxDailyPriceNGN || 350000) < 350000))
-                    ? `Price: ₦${filters.minDailyPriceNGN?.toLocaleString()} – ₦${filters.maxDailyPriceNGN?.toLocaleString()}/day`
-                    : '₦ Price Filter'}
-                </span>
-              </button>
-              {[
-                { id: 'near_me', label: '📍 Near me / Vicinity', onClick: handleLocateVicinity },
-                { id: 'under_5k', label: '₦ Under ₦5,000/hr' },
-                { id: 'power_247', label: '⚡ 24/7 Power' },
-                { id: 'starlink', label: '🌐 Starlink / Fast Wi-Fi' },
-                { id: 'creator', label: '🎙️ Creator-ready' },
-                { id: 'private', label: '🔒 Private' },
-              ].map(qf => {
-                const isActive = quickFilter === qf.id;
-                return (
+              <span className="text-[#9EABA3]">Clear Pricing</span>
+            </div>
+            <span className="text-[#232D28] hidden sm:inline">•</span>
+            <div className="flex items-center space-x-1.5">
+              <Clock className="w-4 h-4 text-[#00C878]" />
+              <span className="text-[#9EABA3]">Instant Booking Hourly & Daily Pass</span>
+            </div>
+          </div>
+
+          {/* ========================================================================= */}
+          {/* SEARCH & DISCOVERY BAR - PROMINENTLY VISIBLE IMMEDIATELY ON APP LAUNCH    */}
+          {/* ========================================================================= */}
+          <div id="spaces-discovery-section" className="pt-6 max-w-5xl mx-auto text-left">
+            <div className="relative p-[1px] rounded-2xl overflow-hidden shadow-2xl group">
+              {/* Ambient Revolving Glow Beam */}
+              <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0_320deg,rgba(0,200,120,0.6)_360deg)] animate-revolving-glow pointer-events-none opacity-70 group-hover:opacity-100 transition-opacity" />
+              
+              <div className="relative bg-[#141816] p-3.5 sm:p-5 rounded-2xl border border-[#232D28]">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                
+                {/* Query Input */}
+                <div className="md:col-span-5 relative flex items-center">
+                  <Search className="w-4 h-4 absolute left-3.5 text-[#9EABA3]" />
+                  <input
+                    id="main-search-input"
+                    type="text"
+                    value={filters.searchQuery}
+                    onChange={(e) => updateFilter('searchQuery', e.target.value)}
+                    placeholder="Search spaces, areas or cities"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#1A201D] rounded-xl text-xs sm:text-sm text-[#F2F2F2] placeholder-[#718079] border border-transparent focus:border-[#00C878] focus:outline-none transition-all"
+                  />
+                </div>
+
+                {/* City Selector */}
+                <div className="md:col-span-3 relative flex items-center">
+                  <MapPin className="w-4 h-4 absolute left-3.5 text-[#00C878]" />
+                  <select
+                    value={filters.city}
+                    onChange={(e) => updateFilter('city', e.target.value)}
+                    className="w-full pl-10 pr-8 py-2.5 bg-[#1A201D] rounded-xl text-xs sm:text-sm text-[#F2F2F2] border border-transparent focus:border-[#00C878] focus:outline-none appearance-none cursor-pointer"
+                  >
+                    <option value="All Cities">All African Cities</option>
+                    {POPULAR_CITIES.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Power & Internet Filter Toggles */}
+                <div className="md:col-span-4 flex items-center space-x-2">
                   <button
-                    key={qf.id}
                     type="button"
-                    onClick={() => {
-                      if (qf.onClick) {
-                        qf.onClick();
-                      } else {
-                        setQuickFilter(isActive ? null : qf.id);
-                      }
-                    }}
-                    className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-[#063B2A] border-[#00C878] text-[#00C878]'
-                        : isLight
-                        ? 'bg-neutral-100 border-neutral-300 text-neutral-800 hover:border-[#00C878]'
-                        : 'bg-[#202020] border-[#2C2C2C] text-[#F2F2F2] hover:border-[#00C878]/50'
+                    onClick={() => updateFilter('needsBackupPower', !filters.needsBackupPower)}
+                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all border ${
+                      filters.needsBackupPower
+                        ? 'bg-[#00C878]/15 border-[#00C878] text-[#00C878]'
+                        : 'bg-[#1A201D] border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2]'
                     }`}
                   >
-                    {qf.label}
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>24/7 Power</span>
                   </button>
-                );
-              })}
 
-              {quickFilter && (
+                  <button
+                    type="button"
+                    onClick={() => updateFilter('needsHighSpeedInternet', !filters.needsHighSpeedInternet)}
+                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all border ${
+                      filters.needsHighSpeedInternet
+                        ? 'bg-[#00C878]/15 border-[#00C878] text-[#00C878]'
+                        : 'bg-[#1A201D] border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2]'
+                    }`}
+                  >
+                    <Wifi className="w-3.5 h-3.5" />
+                    <span>Fast Internet</span>
+                  </button>
+                </div>
+
+              </div>
+
+              {/* Quick Geolocation & Popular Area Shortlinks */}
+              <div className="mt-3 pt-3 border-t border-[#1E2522] flex flex-wrap items-center justify-between gap-2 text-xs text-[#9EABA3]">
                 <button
                   type="button"
-                  onClick={() => {
-                    setQuickFilter(null);
-                    setActiveVicinity(null);
-                    setUserLocation(null);
-                  }}
-                  className="text-[11px] text-[#00C878] hover:underline font-bold ml-2 cursor-pointer"
+                  onClick={handleLocationRequest}
+                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#1A201D] hover:bg-[#202723] text-[#00C878] border border-[#232D28] hover:border-[#00C878]/40 transition-all font-semibold"
                 >
-                  Clear filter
+                  <MapPin className="w-3.5 h-3.5 text-[#00C878]" />
+                  <span>
+                    {locationStatus === 'granted'
+                      ? 'Spaces Near You'
+                      : locationStatus === 'denied'
+                      ? 'Choose Your Location'
+                      : 'Find Spaces Near Me'}
+                  </span>
                 </button>
-              )}
+
+                <div className="flex items-center space-x-2 flex-wrap">
+                  <span className="text-[#718079]">Key African Hubs:</span>
+                  {['Lagos', 'Nairobi', 'Sandton', 'Accra', 'Cape Town', 'Cairo', 'Kigali'].map((area) => (
+                    <button
+                      key={area}
+                      type="button"
+                      onClick={() => updateFilter('searchQuery', area)}
+                      className="hover:text-[#00C878] underline-offset-2 hover:underline transition-colors"
+                    >
+                      {area}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* 3. VICINITY & REGIONAL HUBS QUICK BAR */}
-      <div className={`${isLight ? 'bg-[#F3F4F6] border-b border-neutral-200' : 'bg-[#141414] border-b border-[#222222]'} py-3.5 transition-colors duration-150`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-2 shrink-0">
-              <span className={`text-[11px] font-black uppercase tracking-wider ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} flex items-center gap-1.5`}>
-                <Navigation className="w-3.5 h-3.5" />
-                <span>Jump Vicinity:</span>
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-              {NIGERIAN_VICINITIES.map(vic => {
-                const isSelected = activeVicinity?.id === vic.id;
-                const spaceCount = spaces.filter(s =>
-                  (s.neighborhood || '').toLowerCase().includes(vic.shortName.toLowerCase()) ||
-                  (s.city || '').toLowerCase().includes(vic.city.toLowerCase())
-                ).length;
-
-                return (
-                  <button
-                    key={vic.id}
-                    onClick={() => handleSelectVicinity(vic)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-[#00C878] text-[#0D0D0D] font-black shadow-sm ring-2 ring-[#00C878]/40'
-                        : isLight
-                        ? 'bg-white hover:bg-neutral-100 text-neutral-700 hover:text-neutral-900 border border-neutral-200'
-                        : 'bg-[#1E1E1E] hover:bg-[#282828] text-[#D4D4D4] hover:text-white border border-[#282828]'
-                    }`}
-                  >
-                    <span>📍 {vic.shortName}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                      isSelected
-                        ? 'bg-[#0D0D0D] text-[#00C878]'
-                        : isLight
-                        ? 'bg-neutral-200 text-neutral-700'
-                        : 'bg-[#2A2A2A] text-[#D4D4D4]'
-                    }`}>
-                      {spaceCount}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <button
-              onClick={() => setViewMode(prev => (prev === 'map' ? 'grid' : 'map'))}
-              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${
-                isLight ? 'bg-[#E8F8F0] text-[#00A865] hover:bg-[#D4F4E4] border border-[#00C878]/30' : 'bg-[#063B2A] text-[#00C878] hover:bg-[#084c36] border border-[#00C878]/40'
-              } text-xs font-black shrink-0 transition-colors cursor-pointer`}
-            >
-              <MapIcon className="w-3.5 h-3.5" />
-              <span>{viewMode === 'map' ? 'Back to Cards' : 'View on Map'}</span>
-            </button>
-          </div>
         </div>
-      </div>
+      </section>
 
-      {/* 4. CATEGORIES ROW */}
-      <div className={`border-b ${isLight ? 'border-neutral-200 bg-white' : 'border-[#222222] bg-[#121212]'} py-5 transition-colors duration-150`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-3.5">
-            <h2 className={`text-xs font-black ${isLight ? 'text-neutral-600' : 'text-[#A3A3A3]'} uppercase tracking-wider flex items-center gap-2`}>
-              <Layers className="w-3.5 h-3.5 text-[#00C878]" />
-              <span>Explore by Space Type</span>
-            </h2>
-            <button
-              onClick={() => {
-                setCategoryFilter('all');
-                resetFilters();
-                if (onNavigateToResults) onNavigateToResults();
-              }}
-              className="text-xs text-[#00C878] hover:underline font-bold"
-            >
-              View All ({spaces.length})
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-            {spaceCategories.map(cat => {
-              const Icon = cat.icon;
-              const isSelected =
-                (cat.id === 'all' && filters.category === 'all' && !filters.searchQuery) ||
-                (cat.categoryType && filters.category === cat.categoryType);
-
+      {/* ========================================================================= */}
+      {/* 4. CATEGORY FILTER TABS                                                   */}
+      {/* ========================================================================= */}
+      <section className="sticky top-16 sm:top-[68px] z-30 bg-[#0D0D0D]/90 backdrop-blur-md border-y border-[#1E2522] py-3 px-4 sm:px-6 lg:px-8 overflow-x-auto no-scrollbar">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto no-scrollbar">
+            {CATEGORY_METADATA.map((cat) => {
+              const isActive = activeCategory === cat.id;
               return (
                 <button
                   key={cat.id}
-                  id={`cat-card-${cat.id}`}
-                  onClick={() => {
-                    if (cat.categoryType) {
-                      setCategoryFilter(cat.categoryType);
-                    } else {
-                      setCategoryFilter('all');
-                      setFilters(prev => ({ ...prev, searchQuery: '' }));
-                    }
-                    if (cat.subcatMatch) {
-                      setFilters(prev => ({ ...prev, spaceType: cat.id }));
-                    }
-                    if (onNavigateToResults) onNavigateToResults();
-                  }}
-                  className={`flex flex-col items-center text-center p-3 rounded-2xl border transition-all cursor-pointer group ${
-                    isSelected
-                      ? isLight
-                        ? 'bg-[#E8F8F0] border-[#00C878] text-[#00A865] shadow-sm'
-                        : 'bg-[#063B2A] border-[#00C878] text-[#00C878] shadow-md shadow-[#00C878]/10'
-                      : isLight
-                      ? 'bg-neutral-50 border-neutral-200 hover:border-[#00C878]/50 hover:bg-neutral-100 text-neutral-800'
-                      : 'bg-[#171717] border-[#262626] hover:border-[#383838] hover:bg-[#1E1E1E] text-[#F2F2F2]'
+                  type="button"
+                  onClick={() => setActiveCategory(cat.id as SpaceCategory | 'all')}
+                  className={`whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 border ${
+                    isActive
+                      ? 'bg-[#00C878] text-[#0D0D0D] border-[#00C878] shadow-[0_2px_12px_rgba(0,200,120,0.3)]'
+                      : 'bg-[#141816] text-[#9EABA3] hover:text-[#F2F2F2] border-[#1E2522] hover:border-[#35433C]'
                   }`}
                 >
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center mb-1.5 transition-transform group-hover:scale-110 ${
-                      isSelected
-                        ? 'bg-[#00C878] text-[#0D0D0D]'
-                        : isLight
-                        ? 'bg-neutral-200 text-[#00A865]'
-                        : 'bg-[#222222] text-[#00C878]'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <span className="text-[11px] font-bold leading-tight line-clamp-1">{cat.label}</span>
+                  <span>{cat.label}</span>
                 </button>
               );
             })}
           </div>
-        </div>
-      </div>
 
-      {/* 5. MAIN CONTENT AREA: RESULTS, FILTERS, SPACES & MAP */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Top Control Bar: Results count, Smart Filter chips, View modes */}
-        <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b ${
-          isLight ? 'border-neutral-200' : 'border-[#222222]'
-        }`}>
+          <button
+            type="button"
+            onClick={() => setCurrentView('map')}
+            className="hidden md:flex items-center space-x-1.5 text-xs font-bold text-[#00C878] hover:text-[#00E58B] shrink-0"
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>Around Me</span>
+          </button>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 5. MAIN SPACES GRID (DISCOVER → COMPARE → BOOK)                           */}
+      {/* ========================================================================= */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        
+        {/* Results Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <div className="flex items-center gap-3">
-              <h3 className={`text-lg font-black ${isLight ? 'text-neutral-900' : 'text-white'}`}>
-                {activeVicinity
-                  ? `Spaces in ${activeVicinity.shortName}`
-                  : filters.city === 'all'
-                  ? 'Spaces across Nigeria'
-                  : `Spaces in ${filters.city}`}
-              </h3>
-              <span className={`px-2.5 py-0.5 rounded-full ${
-                isLight ? 'bg-white border-neutral-200 text-[#00A865] shadow-xs' : 'bg-[#171717] border-[#282828] text-[#00C878]'
-              } border text-xs font-bold`}>
-                {filteredSpaces.length} Available
+            <h2 className="text-lg font-bold text-[#F2F2F2] flex items-center space-x-2">
+              <span>Available Spaces</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-[#1A231E] border border-[#232D28] text-[#00C878] font-mono">
+                {spaces.length} verified
               </span>
-              <span className={`hidden sm:inline-block text-xs ${isLight ? 'text-neutral-500' : 'text-[#D4D4D4]'} font-medium`}>
-                • {totalAvailableDesks} Open Desks
-              </span>
-            </div>
-            {userLocation && (
-              <div className={`mt-1 flex items-center gap-1.5 text-xs ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} font-bold`}>
-                <LocateFixed className="w-3.5 h-3.5" />
-                <span>Proximity sorted: closest to {userLocation.label}</span>
-              </div>
-            )}
+            </h2>
+            <p className="text-xs text-[#9EABA3] mt-0.5">Explore physical spaces across Nigeria by the hour or day</p>
           </div>
 
-          {/* View Mode Toggle & All Filters Drawer */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowFilterDrawer(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${
-                isLight
-                  ? 'bg-white border-neutral-200 hover:border-neutral-300 text-neutral-800 shadow-xs'
-                  : 'bg-[#171717] border-[#282828] hover:border-[#3A3A3A] text-[#F2F2F2]'
-              } border text-xs font-bold transition-colors cursor-pointer`}
+          <div className="flex items-center space-x-3">
+            <select
+              value={filters.sortBy}
+              onChange={(e) => updateFilter('sortBy', e.target.value as any)}
+              className="bg-[#141816] border border-[#232D28] text-xs text-[#9EABA3] rounded-xl px-3 py-2 focus:outline-none focus:border-[#00C878]"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#D6A83A]" />
-              <span>All Filters</span>
-            </button>
-
-            {/* 3-Way Mode Switcher: Grid, Split, Full Map */}
-            <div className={`flex items-center ${isLight ? 'bg-neutral-100 border-neutral-200' : 'bg-[#171717] border-[#282828]'} p-1 rounded-xl border`}>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                  viewMode === 'grid'
-                    ? isLight ? 'bg-white text-[#00A865] shadow-xs' : 'bg-[#222222] text-[#00C878]'
-                    : isLight ? 'text-neutral-600 hover:text-neutral-900' : 'text-[#A3A3A3] hover:text-white'
-                }`}
-                title="Grid View"
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Grid</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('split')}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                  viewMode === 'split'
-                    ? isLight ? 'bg-white text-[#00A865] shadow-xs' : 'bg-[#222222] text-[#00C878]'
-                    : isLight ? 'text-neutral-600 hover:text-neutral-900' : 'text-[#A3A3A3] hover:text-white'
-                }`}
-                title="Split Map + List"
-              >
-                <Columns className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Split</span>
-              </button>
-
-              <button
-                onClick={() => setViewMode('map')}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                  viewMode === 'map'
-                    ? isLight ? 'bg-white text-[#00A865] shadow-xs' : 'bg-[#222222] text-[#00C878]'
-                    : isLight ? 'text-neutral-600 hover:text-neutral-900' : 'text-[#A3A3A3] hover:text-white'
-                }`}
-                title="Full Interactive Map"
-              >
-                <MapIcon className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Map</span>
-              </button>
-            </div>
+              <option value="recommended">Sort: Recommended</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="rating">Highest Rated</option>
+              <option value="popular">Most Popular</option>
+            </select>
           </div>
         </div>
 
-        {/* 6. OFIS AI MATCH PROMPT BANNER */}
-        <div className={`my-6 p-4 sm:p-5 rounded-3xl ${
-          isLight ? 'bg-white border-neutral-200 shadow-md' : 'bg-[#171717] border-[#2A2A2A]'
-        } border relative overflow-hidden transition-colors duration-150`}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-[#063B2A] border border-[#00C878]/40 flex items-center justify-center shrink-0">
-                <Sparkles className="w-5 h-5 text-[#D6A83A]" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h4 className={`text-sm font-black ${isLight ? 'text-neutral-900' : 'text-white'}`}>OFIS AI Match</h4>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-black bg-[#D6A83A]/20 text-[#D6A83A] border border-[#D6A83A]/40">
-                    SMART SPATIAL ADVISOR
-                  </span>
-                </div>
-                <p className={`text-xs ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-0.5`}>
-                  "Tell us what you need. We'll find the space." e.g. <span className={`${isLight ? 'text-neutral-900 font-semibold' : 'text-[#F2F2F2]'} italic`}>"I need a quiet desk in Lekki with 24/7 power & Starlink for a 4-hour Zoom sprint."</span>
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => openAiModal('match')}
-              className="px-4 py-2.5 rounded-xl bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] text-xs font-black flex items-center gap-2 transition-all shadow-md shrink-0 cursor-pointer"
-            >
-              <span>Try OFIS AI Match</span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#0D0D0D]" />
-            </button>
-          </div>
-        </div>
-
-        {/* 7. VIEW MODE RENDERING: GRID, SPLIT, OR FULL INTERACTIVE MAP */}
-        {viewMode === 'map' ? (
-          /* FULL MAP VIEW */
-          <div className="mt-6 space-y-4">
-            {/* Top Interactive Map Info Header */}
-            <div className={`p-4 rounded-2xl ${
-              isLight ? 'bg-white border-neutral-200 text-neutral-900 shadow-sm' : 'bg-[#171717] border-[#282828] text-white'
-            } border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3`}>
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-[#063B2A] text-[#00C878] flex items-center justify-center">
-                  <Navigation className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className={`text-sm font-black ${isLight ? 'text-neutral-900' : 'text-white'} flex items-center gap-2`}>
-                    <span>Interactive Nigerian Spatial Cartography</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#00C878] text-[#0D0D0D] font-bold">
-                      LIVE RADAR
-                    </span>
-                  </h4>
-                  <p className={`text-xs ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'}`}>
-                    Click markers to explore hourly rates, Starlink speeds, and available desks. Drag & zoom to pan Nigeria.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleLocateVicinity}
-                  className={`px-3 py-1.5 rounded-xl ${
-                    isLight ? 'bg-neutral-100 hover:bg-neutral-200 text-[#00A865] border-neutral-200' : 'bg-[#222222] hover:bg-[#2D2D2D] text-[#00C878] border-[#333333]'
-                  } text-xs font-bold flex items-center gap-1.5 border transition-colors cursor-pointer`}
+        {/* Spaces Grid */}
+        {spaces.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {spaces.map((space) => {
+              const isSaved = savedSpaceIds.includes(space.id);
+              return (
+                <div
+                  key={space.id}
+                  id={`space-card-${space.id}`}
+                  className="group bg-[#141816] rounded-2xl border border-[#1E2522] hover:border-[#00C878]/50 overflow-hidden shadow-lg transition-all duration-200 flex flex-col justify-between"
                 >
-                  <LocateFixed className="w-3.5 h-3.5" />
-                  <span>Locate Me</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className="px-3 py-1.5 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-black hover:bg-[#00b06a] transition-colors cursor-pointer"
-                >
-                  List View
-                </button>
-              </div>
-            </div>
+                  {/* Card Image */}
+                  <div 
+                    className="relative aspect-[16/10] overflow-hidden bg-[#1A201D] cursor-pointer" 
+                    onClick={() => {
+                      setSelectedSpaceId(space.id);
+                      setCurrentView('details');
+                    }}
+                  >
+                    <img
+                      src={space.featuredImage}
+                      alt={space.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
 
-            {/* Expansive Interactive Map */}
-            <div className={`rounded-3xl overflow-hidden border ${isLight ? 'border-neutral-200 shadow-xl' : 'border-[#282828] shadow-2xl'}`}>
-              <ExploreMapView
-                spaces={filteredSpaces || []}
-                selectedSpaceId={highlightedSpaceId}
-                onSelectSpace={s => onSelectSpace(s)}
-                height="680px"
-                isFullWidth={true}
-              />
-            </div>
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#141816] via-transparent to-black/30" />
 
-            {/* Bottom Horizontal Quick-Scroll Space Cards */}
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-2 px-1">
-                <span className={`text-xs font-bold ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} uppercase tracking-wider`}>
-                  Available in this View ({filteredSpaces.length})
-                </span>
-                <span className={`text-xs ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} font-semibold`}>
-                  Click any card to center marker
-                </span>
-              </div>
+                    {/* Top Badges */}
+                    <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+                      <span className="px-2.5 py-1 rounded-lg bg-[#0D0D0D]/80 backdrop-blur-md border border-[#232D28] text-[11px] font-bold text-[#00C878] flex items-center space-x-1">
+                        <Zap className="w-3 h-3 text-[#00C878]" />
+                        <span>{space.backupPowerType.split(' ')[0]} Power</span>
+                      </span>
+                      {space.isSuperhost && (
+                        <span className="px-2 py-1 rounded-lg bg-[#00C878] text-[#0D0D0D] text-[10px] font-black uppercase tracking-wider">
+                          Superhost
+                        </span>
+                      )}
+                    </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {(filteredSpaces.slice(0, 8) || []).map(space => {
-                  const dist = getSpaceDistance(space);
-                  return (
-                    <div
-                      key={space.id}
-                      onClick={() => {
-                        setHighlightedSpaceId(space.id);
-                        onSelectSpace(space);
+                    {/* Favorite Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSaveSpace(space.id);
                       }}
-                      onMouseEnter={() => setHighlightedSpaceId(space.id)}
-                      className={`p-3.5 rounded-2xl ${
-                        isLight ? 'bg-white border-neutral-200 hover:border-[#00C878] shadow-xs' : 'bg-[#171717] border-[#282828] hover:border-[#00C878]'
-                      } border transition-all cursor-pointer group flex flex-col justify-between`}
+                      className="absolute top-3 right-3 p-2 rounded-xl bg-[#0D0D0D]/80 backdrop-blur-md border border-[#232D28] text-[#F2F2F2] hover:text-[#00C878] transition-all"
+                      aria-label="Save to favorites"
                     >
-                      <div className="flex items-start gap-3">
-                        <img
-                          src={space.images?.[0] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80'}
-                          alt={space.name}
-                          className="w-16 h-16 rounded-xl object-cover shrink-0 group-hover:scale-105 transition-transform"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className={`flex items-center justify-between text-[10px] ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'}`}>
-                            <span>{space.city}</span>
-                            {dist !== null && (
-                              <span className={`font-bold ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'}`}>
-                                {dist < 1 ? `${Math.round(dist * 1000)}m` : `${dist.toFixed(1)}km`}
-                              </span>
-                            )}
-                          </div>
-                          <h5 className={`font-bold text-xs ${isLight ? 'text-neutral-900 group-hover:text-[#00A865]' : 'text-white group-hover:text-[#00C878]'} transition-colors truncate mt-0.5`}>
-                            {space.name}
-                          </h5>
-                          <div className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} truncate`}>
-                            {space.neighborhood}
-                          </div>
-                          <div className={`text-xs font-black ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} mt-1 font-mono`}>
-                            ₦{space.hourlyRateNGN.toLocaleString()}/hr
-                          </div>
+                      <Heart className={`w-4 h-4 ${isSaved ? 'fill-[#00C878] text-[#00C878]' : ''}`} />
+                    </button>
+
+                    {/* Location Pill */}
+                    <div className="absolute bottom-3 left-3 flex items-center space-x-1 text-xs text-[#F2F2F2] bg-[#0D0D0D]/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-[#232D28]">
+                      <MapPin className="w-3.5 h-3.5 text-[#00C878]" />
+                      <span className="font-semibold">{space.neighborhood}, {space.city}</span>
+                    </div>
+                  </div>
+
+                  {/* Card Content */}
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                      {/* Rating & Capacity */}
+                      <div className="flex items-center justify-between text-xs text-[#9EABA3] mb-1.5">
+                        <div className="flex items-center space-x-1 text-[#F2F2F2]">
+                          <Star className="w-3.5 h-3.5 fill-[#00C878] text-[#00C878]" />
+                          <span className="font-bold">{space.rating}</span>
+                          <span className="text-[#718079]">({space.reviewsCount})</span>
+                        </div>
+                        <div className="flex items-center space-x-1 text-[#9EABA3]">
+                          <Users className="w-3.5 h-3.5" />
+                          <span>Up to {space.capacity} people</span>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        ) : viewMode === 'split' ? (
-          /* SPLIT LIST & MAP VIEW */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
-            {/* List side */}
-            <div className="lg:col-span-7 space-y-4">
-              {(filteredSpaces || []).map(space => {
-                const dist = getSpaceDistance(space);
-                return (
-                  <div
-                    key={space.id}
-                    onMouseEnter={() => setHighlightedSpaceId(space.id)}
-                    onMouseLeave={() => setHighlightedSpaceId(null)}
-                  >
-                    <SpaceCard
-                      space={space}
-                      currentCurrency={currentCurrency}
-                      formatPrice={formatPrice}
-                      isFavorite={isFavorite(space.id)}
-                      onToggleFavorite={e => {
-                        e.stopPropagation();
-                        toggleFavorite(space.id);
-                      }}
-                      onSelect={() => onSelectSpace(space)}
-                      distanceKm={dist}
-                      isHighlighted={highlightedSpaceId === space.id}
-                      isLight={isLight}
-                    />
-                  </div>
-                );
-              })}
-            </div>
 
-            {/* Map side (Sticky) */}
-            <div className={`lg:col-span-5 h-[720px] sticky top-24 rounded-3xl overflow-hidden border ${
-              isLight ? 'border-neutral-200 shadow-xl' : 'border-[#282828] shadow-2xl'
-            }`}>
-              <ExploreMapView
-                spaces={filteredSpaces || []}
-                selectedSpaceId={highlightedSpaceId}
-                onSelectSpace={s => onSelectSpace(s)}
-                height="100%"
-              />
-            </div>
+                      {/* Title */}
+                      <h3
+                        onClick={() => {
+                          setSelectedSpaceId(space.id);
+                          setCurrentView('details');
+                        }}
+                        className="text-base font-bold text-[#F2F2F2] hover:text-[#00C878] cursor-pointer transition-colors line-clamp-1"
+                      >
+                        {space.title}
+                      </h3>
+
+                      <p className="text-xs text-[#9EABA3] line-clamp-2 mt-1 font-normal leading-relaxed">
+                        {space.tagline}
+                      </p>
+                    </div>
+
+                    {/* Amenities tags */}
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {space.amenities.slice(0, 3).map((a, i) => (
+                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-md bg-[#1A201D] text-[#9EABA3] border border-[#1E2522]">
+                          {a}
+                        </span>
+                      ))}
+                      {space.amenities.length > 3 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#1A201D] text-[#718079]">
+                          +{space.amenities.length - 3}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Price & Booking Button */}
+                    <div className="pt-3 border-t border-[#1E2522] flex items-center justify-between">
+                      <div>
+                        <div className="text-[11px] text-[#718079] font-medium">Rate</div>
+                        <div className="flex items-baseline space-x-1">
+                          <span className="text-base font-black text-[#00C878] font-mono">
+                            {formatPrice(space.pricePerHour)}
+                          </span>
+                          <span className="text-xs text-[#9EABA3]">/ hr</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedSpaceId(space.id);
+                            setCurrentView('details');
+                          }}
+                          className="px-3 py-2 rounded-xl text-xs font-semibold text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#1A201D] border border-[#232D28] transition-all"
+                        >
+                          Details
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCheckoutSpace(space);
+                            setIsCheckoutOpen(true);
+                          }}
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-[#0D0D0D] bg-[#00C878] hover:bg-[#00E58B] transition-all shadow-md active:scale-95 flex items-center space-x-1"
+                        >
+                          <span>Book Space</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
-          /* GRID VIEW WITH INTERACTIVE VICINITY MAP PREVIEW BANNER */
-          <div className="space-y-6 mt-6">
-            {/* Vicinity Map Quick Discovery Strip */}
-            <div className={`p-4 rounded-3xl ${
-              isLight ? 'bg-white border-neutral-200 shadow-sm' : 'bg-gradient-to-r from-[#171717] to-[#121212] border-[#2A2A2A]'
-            } border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#063B2A] border border-[#00C878]/40 flex items-center justify-center text-[#00C878] shrink-0">
-                  <MapIcon className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className={`text-sm font-black ${isLight ? 'text-neutral-900' : 'text-white'}`}>Visual Vicinity Map</h4>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                      isLight ? 'bg-[#E8F8F0] text-[#00A865] border border-[#00C878]/30' : 'bg-[#00C878]/20 text-[#00C878] border border-[#00C878]/30'
-                    }`}>
-                      {filteredSpaces.length} Hubs Mapped
-                    </span>
-                  </div>
-                  <p className={`text-xs ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-0.5`}>
-                    Explore physical workspace clusters across Lagos, Abuja, Port Harcourt and Ibadan on the live cartography map.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setViewMode('split')}
-                  className={`px-3.5 py-2 rounded-xl ${
-                    isLight ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800' : 'bg-[#222222] hover:bg-[#2A2A2A] text-white'
-                  } text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5`}
-                >
-                  <Columns className="w-3.5 h-3.5 text-[#D6A83A]" />
-                  <span>Split View</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('map')}
-                  className="px-4 py-2 rounded-xl bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] text-xs font-black transition-all shadow-md cursor-pointer flex items-center gap-1.5"
-                >
-                  <MapIcon className="w-3.5 h-3.5 text-[#0D0D0D]" />
-                  <span>Open Full Map</span>
-                </button>
-              </div>
-            </div>
-
-            {/* 3-Column Spaces Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(filteredSpaces || []).map(space => {
-                const dist = getSpaceDistance(space);
-                return (
-                  <SpaceCard
-                    key={space.id}
-                    space={space}
-                    currentCurrency={currentCurrency}
-                    formatPrice={formatPrice}
-                    isFavorite={isFavorite(space.id)}
-                    onToggleFavorite={e => {
-                      e.stopPropagation();
-                      toggleFavorite(space.id);
-                    }}
-                    onSelect={() => onSelectSpace(space)}
-                    distanceKm={dist}
-                    isLight={isLight}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {(!filteredSpaces || filteredSpaces.length === 0) && (
-          <div className={`text-center py-16 ${isLight ? 'bg-white border-neutral-200' : 'bg-[#171717] border-[#282828]'} rounded-3xl border my-8`}>
-            <Building2 className={`w-12 h-12 ${isLight ? 'text-neutral-400' : 'text-[#9A9A9A]'} mx-auto mb-3`} />
-            <h3 className={`text-base font-bold ${isLight ? 'text-neutral-900' : 'text-white'}`}>No spaces matched your exact search</h3>
-            <p className={`text-xs ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-1 max-w-md mx-auto`}>
-              Try adjusting your city filter or search query, or use OFIS AI Match to discover available spaces.
+          <div className="py-20 text-center bg-[#141816] rounded-2xl border border-[#1E2522] p-8 space-y-4">
+            <Search className="w-12 h-12 text-[#718079] mx-auto opacity-50" />
+            <h3 className="text-lg font-bold text-[#F2F2F2]">No spaces found here</h3>
+            <p className="text-xs text-[#9EABA3] max-w-sm mx-auto">
+              Try another area or clear your filters.
             </p>
             <button
-              onClick={() => {
-                resetFilters();
-                setActiveVicinity(null);
-                setUserLocation(null);
-                setQuickFilter(null);
-              }}
-              className="mt-4 px-4 py-2 rounded-xl bg-[#00C878] text-[#0D0D0D] font-bold text-xs cursor-pointer"
+              type="button"
+              onClick={resetFilters}
+              className="px-5 py-2.5 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-bold hover:bg-[#00E58B] transition-all"
             >
               Reset All Filters
             </button>
           </div>
         )}
-      </div>
 
-      {/* Floating Map/List View Toggle (Mobile & Desktop) */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-        <button
-          id="toggle-view-fab"
-          onClick={() => setViewMode(prev => (prev === 'map' ? 'grid' : 'map'))}
-          className={`flex items-center gap-2 px-5 py-3 rounded-full ${
-            isLight
-              ? 'bg-white/95 hover:bg-neutral-50 text-neutral-900 border-neutral-300 hover:border-[#00C878] shadow-xl'
-              : 'bg-[#171717]/95 hover:bg-[#222222] text-white border-[#2F2F2F] hover:border-[#00C878] shadow-2xl'
-          } backdrop-blur-md font-black text-xs transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer border`}
-        >
-          {viewMode === 'map' ? (
-            <>
-              <LayoutGrid className={`w-4 h-4 ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'}`} />
-              <span>Show List View ({filteredSpaces.length})</span>
-            </>
-          ) : (
-            <>
-              <MapIcon className={`w-4 h-4 ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'}`} />
-              <span>View Interactive Map ({filteredSpaces.length})</span>
-            </>
-          )}
-        </button>
-      </div>
+      </main>
 
-      {/* 8. ALL FILTERS DRAWER */}
-      {showFilterDrawer && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
-          <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-xs transition-opacity"
-            onClick={() => setShowFilterDrawer(false)}
-          />
-          <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-            <div className={`w-screen max-w-md ${
-              isLight ? 'bg-white border-neutral-200 text-neutral-900' : 'bg-[#141414] border-[#282828] text-white'
-            } border-l p-6 shadow-2xl overflow-y-auto`}>
-              <div className={`flex items-center justify-between pb-4 border-b ${isLight ? 'border-neutral-200' : 'border-[#282828]'}`}>
-                <div className="flex items-center gap-2">
-                  <SlidersHorizontal className={`w-4 h-4 ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'}`} />
-                  <span className={`font-black text-base ${isLight ? 'text-neutral-900' : 'text-white'}`}>Filters</span>
-                </div>
-                <button
-                  onClick={() => setShowFilterDrawer(false)}
-                  className={`p-1.5 rounded-lg ${isLight ? 'hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900' : 'hover:bg-[#222222] text-[#9A9A9A] hover:text-white'} cursor-pointer`}
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Price Range Slider in Drawer */}
-              <div className="mt-6">
-                <PriceRangeSlider
-                  rateType={filters.priceRateType || 'hourly'}
-                  minPrice={filters.priceRateType === 'daily' ? (filters.minDailyPriceNGN ?? 0) : (filters.minPriceNGN ?? 0)}
-                  maxPrice={filters.priceRateType === 'daily' ? (filters.maxDailyPriceNGN ?? 350000) : (filters.maxPriceNGN ?? 75000)}
-                  onChange={(min, max, rate) => {
-                    setFilters(prev => ({
-                      ...prev,
-                      priceRateType: rate,
-                      minPriceNGN: rate === 'hourly' ? min : (prev.minPriceNGN ?? 0),
-                      maxPriceNGN: rate === 'hourly' ? max : (prev.maxPriceNGN ?? 75000),
-                      minDailyPriceNGN: rate === 'daily' ? min : (prev.minDailyPriceNGN ?? 0),
-                      maxDailyPriceNGN: rate === 'daily' ? max : (prev.maxDailyPriceNGN ?? 350000),
-                    }));
-                  }}
-                  onRateTypeChange={rate => {
-                    setFilters(prev => ({ ...prev, priceRateType: rate }));
-                  }}
-                />
-              </div>
-
-              {/* City Selection */}
-              <div className="mt-6">
-                <label className={`block text-xs font-bold ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} uppercase tracking-wider mb-2`}>
-                  City / Region
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {nigerianCities.map(c => (
-                    <button
-                      key={c}
-                      onClick={() => setFilters(prev => ({ ...prev, city: c }))}
-                      className={`px-3 py-2 rounded-xl text-xs font-bold text-left transition-colors cursor-pointer border ${
-                        filters.city.toLowerCase() === c.toLowerCase()
-                          ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border-[#00C878]' : 'bg-[#063B2A] text-[#00C878] border-[#00C878]'
-                          : isLight ? 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:text-neutral-900' : 'bg-[#1C1C1C] text-[#D4D4D4] border-[#282828] hover:text-white'
-                      }`}
-                    >
-                      {c === 'all' ? 'All Nigeria' : c}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Power & Infrastructure Assurance */}
-              <div className="mt-6">
-                <label className={`block text-xs font-bold ${isLight ? 'text-[#00A865]' : 'text-[#00C878]'} uppercase tracking-wider mb-2`}>
-                  Power & Connectivity
-                </label>
-                <div className="space-y-2">
-                  {[
-                    '24/7 Power (Dual Generators + Solar)',
-                    'Starlink 350Mbps Internet',
-                    'Acoustic Soundproofing',
-                    'Dedicated Parking',
-                    'Air Conditioning',
-                    'Executive Coffee & Refreshments',
-                  ].map(amenity => {
-                    const isChecked = filters.amenities.includes(amenity);
-                    return (
-                      <button
-                        key={amenity}
-                        onClick={() => {
-                          setFilters(prev => ({
-                            ...prev,
-                            amenities: isChecked
-                              ? prev.amenities.filter(a => a !== amenity)
-                              : [...prev.amenities, amenity],
-                          }));
-                        }}
-                        className={`w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-left transition-colors cursor-pointer border ${
-                          isChecked
-                            ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border-[#00C878]' : 'bg-[#063B2A] text-[#00C878] border-[#00C878]/40'
-                            : isLight ? 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:text-neutral-900' : 'bg-[#1C1C1C] text-[#D4D4D4] border-[#282828] hover:text-white'
-                        }`}
-                      >
-                        <span>{amenity}</span>
-                        {isChecked && <Check className="w-4 h-4 text-[#00C878]" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className={`mt-8 pt-4 border-t ${isLight ? 'border-neutral-200' : 'border-[#282828]'} flex items-center gap-3`}>
-                <button
-                  onClick={resetFilters}
-                  className={`flex-1 py-2.5 rounded-xl ${
-                    isLight ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800' : 'bg-[#222222] hover:bg-[#2A2A2A] text-white'
-                  } text-xs font-bold cursor-pointer transition-colors`}
-                >
-                  Reset
-                </button>
-                <button
-                  onClick={() => setShowFilterDrawer(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] text-xs font-black cursor-pointer shadow-md transition-colors"
-                >
-                  Show Spaces
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-// ==========================================
-// PREMIUM LISTING CARD COMPONENT WITH VICINITY DISTANCE
-// ==========================================
-interface SpaceCardProps {
-  space: Space;
-  currentCurrency: any;
-  formatPrice: (amount: number) => string;
-  isFavorite: boolean;
-  onToggleFavorite: (e: React.MouseEvent) => void;
-  onSelect: () => void;
-  distanceKm?: number | null;
-  isHighlighted?: boolean;
-  isLight?: boolean;
-}
-
-const SpaceCard: React.FC<SpaceCardProps> = ({
-  space,
-  currentCurrency,
-  formatPrice,
-  isFavorite,
-  onToggleFavorite,
-  onSelect,
-  distanceKm,
-  isHighlighted = false,
-  isLight = false,
-}) => {
-  return (
-    <div
-      onClick={onSelect}
-      id={`space-card-${space.id}`}
-      className={`group rounded-3xl border transition-all duration-300 overflow-hidden cursor-pointer flex flex-col ${
-        isLight
-          ? isHighlighted
-            ? 'bg-white border-[#00C878] ring-2 ring-[#00C878]/30 shadow-xl -translate-y-1'
-            : 'bg-white border-neutral-200 hover:border-[#00C878]/60 hover:shadow-xl'
-          : isHighlighted
-          ? 'bg-[#171717] border-[#00C878] ring-2 ring-[#00C878]/30 shadow-2xl shadow-[#00C878]/20 -translate-y-1'
-          : 'bg-[#171717] border-[#262626] hover:border-[#00C878]/50 hover:shadow-2xl hover:shadow-[#00C878]/10'
-      }`}
-    >
-      {/* Large Space Image with Hover Zoom */}
-      <div className={`relative aspect-[16/10] overflow-hidden ${isLight ? 'bg-neutral-100' : 'bg-[#111111]'}`}>
-        <img
-          src={space.images?.[0] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80'}
-          alt={space.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-
-        {/* Gradient Shadow Overlay */}
-        <div className={`absolute inset-0 ${isLight ? 'bg-gradient-to-t from-black/60 via-transparent to-black/20' : 'bg-gradient-to-t from-[#171717] via-transparent to-black/40'}`} />
-
-        {/* Top Badges */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-          {/* Space Type Badge */}
-          <span className="px-2.5 py-1 rounded-xl bg-[#0D0D0D]/90 backdrop-blur-xs text-white text-[10px] font-black border border-white/10 uppercase tracking-wider">
-            {space.subcategory ? space.subcategory.replace(/_/g, ' ') : space.category ? space.category.replace(/_/g, ' ') : 'Workspace'}
-          </span>
-
-          {/* Favorite Heart Button */}
-          <button
-            onClick={onToggleFavorite}
-            className="w-8 h-8 rounded-full bg-[#0D0D0D]/80 backdrop-blur-xs flex items-center justify-center text-white hover:text-[#00C878] transition-colors border border-white/10 cursor-pointer"
-            title="Save to favorites"
-          >
-            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-[#00C878] text-[#00C878]' : ''}`} />
-          </button>
-        </div>
-
-        {/* Bottom Image Overlay: "Available Today" status & Distance badge */}
-        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#063B2A]/90 backdrop-blur-xs border border-[#00C878]/40 text-[#00C878] text-[10px] font-black">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00C878] animate-ping" />
-              <span>Available Today</span>
-            </span>
-
-            {space.isSuperhost && (
-              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#D6A83A]/20 backdrop-blur-xs border border-[#D6A83A]/50 text-[#D6A83A] text-[10px] font-black">
-                <ShieldCheck className="w-3 h-3 text-[#D6A83A]" />
-                <span>Verified</span>
-              </span>
-            )}
-          </div>
-
-          {/* Proximity Distance Badge */}
-          {distanceKm !== null && distanceKm !== undefined && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#121212]/90 backdrop-blur-xs border border-[#00C878]/50 text-[#00C878] text-[10px] font-black">
-              <Navigation className="w-3 h-3 text-[#00C878]" />
-              <span>{distanceKm < 1 ? `${Math.round(distanceKm * 1000)}m away` : `${distanceKm.toFixed(1)} km away`}</span>
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Space Details */}
-      <div className="p-5 flex-1 flex flex-col justify-between">
-        <div>
-          {/* Location & Rating */}
-          <div className="flex items-center justify-between gap-2 text-xs mb-1.5">
-            <span className={`${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} font-semibold flex items-center gap-1 truncate`}>
-              <MapPin className="w-3.5 h-3.5 text-[#00C878] shrink-0" />
-              <span>{space.neighborhood || `${space.city}, Nigeria`}</span>
-            </span>
-            <div className={`flex items-center gap-1 shrink-0 font-bold ${isLight ? 'text-neutral-900' : 'text-white'}`}>
-              <Star className="w-3.5 h-3.5 text-[#D6A83A] fill-[#D6A83A]" />
-              <span>{(space.rating || 4.8).toFixed(1)}</span>
-              <span className={`${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} font-normal text-[11px]`}>({space.reviewCount || 12})</span>
-            </div>
-          </div>
-
-          {/* Space Name */}
-          <h3 className={`text-base font-black ${isLight ? 'text-neutral-900 group-hover:text-[#00A865]' : 'text-white group-hover:text-[#00C878]'} transition-colors line-clamp-1`}>
-            {space.name}
-          </h3>
-
-          {/* Tagline */}
-          <p className={`text-xs ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-1 line-clamp-2 leading-relaxed font-normal`}>
-            {space.tagline}
-          </p>
-
-          {/* Key Amenities Highlights */}
-          <div className="flex flex-wrap items-center gap-1.5 mt-3">
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg ${
-              isLight ? 'bg-neutral-100 text-neutral-700 border-neutral-200' : 'bg-[#222222] text-[#F2F2F2] border-[#2D2D2D]'
-            } border flex items-center gap-1`}>
-              <Zap className="w-2.5 h-2.5 text-[#00C878]" />
-              <span>24/7 Power</span>
-            </span>
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg ${
-              isLight ? 'bg-neutral-100 text-neutral-700 border-neutral-200' : 'bg-[#222222] text-[#F2F2F2] border-[#2D2D2D]'
-            } border flex items-center gap-1`}>
-              <Wifi className="w-2.5 h-2.5 text-[#00C878]" />
-              <span>Starlink</span>
-            </span>
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg ${
-              isLight ? 'bg-neutral-100 text-neutral-700 border-neutral-200' : 'bg-[#222222] text-[#F2F2F2] border-[#2D2D2D]'
-            } border flex items-center gap-1`}>
-              <Wind className="w-2.5 h-2.5 text-[#00C878]" />
-              <span>AC</span>
-            </span>
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg ${
-              isLight ? 'bg-neutral-100 text-neutral-600 border-neutral-200' : 'bg-[#222222] text-[#D4D4D4] border-[#2D2D2D]'
-            } border`}>
-              Cap: {space.capacity}
-            </span>
-          </div>
-        </div>
-
-        {/* Pricing & Booking CTA */}
-        <div className={`mt-5 pt-3.5 border-t ${isLight ? 'border-neutral-200' : 'border-[#262626]'} flex items-center justify-between gap-3`}>
-          <div>
-            <div className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} font-bold uppercase tracking-wider`}>From</div>
-            <div className={`text-base font-black ${isLight ? 'text-neutral-900' : 'text-white'} font-mono`}>
-              <span className={isLight ? 'text-[#00A865]' : 'text-[#00C878]'}>₦{(space.hourlyRateNGN || Math.round(space.hourlyRate * 1550)).toLocaleString()}</span>
-              <span className={`text-xs font-normal ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'}`}>/hr</span>
-            </div>
-            <div className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-[#A3A3A3]'} font-mono`}>
-              ₦{(space.dailyRateNGN || Math.round(space.dailyRate * 1550)).toLocaleString()}/day
-            </div>
-          </div>
-
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              onSelect();
-            }}
-            className="px-4 py-2 rounded-xl bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] font-black text-xs transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1"
-          >
-            <span>View Space</span>
-            <ArrowRight className="w-3 h-3 text-[#0D0D0D]" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};

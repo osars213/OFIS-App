@@ -1,587 +1,554 @@
-import React, { useState } from 'react';
-import {
-  Menu,
-  Bell,
-  User,
-  LogOut,
-  ChevronDown,
-  LayoutDashboard,
-  ShieldCheck,
-  PlusCircle,
-  Sparkles,
-  Ticket,
-  Bookmark,
-  Check,
-  Camera,
-  MessageSquare,
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  Menu, 
+  MapPin, 
+  Compass, 
+  Ticket, 
+  Building2, 
+  Bell, 
+  User, 
+  ChevronDown, 
+  Sparkles, 
+  PlusCircle, 
+  ShieldCheck, 
   Settings,
-  LogIn,
-  UserPlus,
-  MapPin,
-  Compass,
+  CheckCircle2,
+  Zap,
+  Search,
+  X,
+  CreditCard,
+  QrCode,
+  CheckCheck,
+  AlertCircle,
+  Inbox
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { DEMO_USERS } from '../mockData';
-import { OfisLogo } from './OfisLogo';
+import ofisWordmark from '../assets/ofis-wordmark.png';
 
-interface NavbarProps {
-  currentView: 'explore' | 'results' | 'passes' | 'host' | 'ops';
-  setCurrentView: (view: 'explore' | 'results' | 'passes' | 'host' | 'ops') => void;
-  onOpenNavDrawer: () => void;
-}
-
-export const Navbar: React.FC<NavbarProps> = ({
-  currentView,
-  setCurrentView,
-  onOpenNavDrawer,
-}) => {
+export const Navbar: React.FC = () => {
   const {
     currentUser,
-    isAuthenticated,
-    signOut,
-    switchDemoUser,
-    setCategoryFilter,
-    setIsListSpaceModalOpen,
-    openAiModal,
-    openAuthModal,
-    openAvatarModal,
-    showToast,
-    bookings,
-    favorites,
-    themeMode,
-    effectiveTheme,
-    setThemeMode,
-    openSettingsModal,
+    switchUser,
+    currentView,
+    setCurrentView,
+    filters,
+    updateFilter,
+    setIsNavDrawerOpen,
+    setIsAuthModalOpen,
+    setIsListSpaceOpen,
+    setIsAiAssistantOpen,
+    setIsSettingsOpen,
+    userBookings,
+    setActivePassBooking,
+    setSelectedBookingDetails,
+    notifications,
+    unreadNotificationsCount,
+    markNotificationAsRead,
+    markAllNotificationsAsRead,
+    focusSearchInput,
+    currency,
+    setCurrency,
+    formatPrice,
   } = useApp();
 
-  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  
+  const profileRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const isLight = effectiveTheme === 'light';
+  // Global hotkey to focus search (CMD+K or /)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (e.key === '/' && document.activeElement !== searchInputRef.current && document.activeElement?.tagName !== 'INPUT') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
-  // Active bookings count
-  const activeBookingsCount = currentUser
-    ? bookings.filter(
-        b => b.coworkerId === currentUser.id && (b.status === 'confirmed' || b.status === 'checked_in')
-      ).length
-    : 0;
+  // Close dropdowns on outside click or ESC key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+    };
 
-  const closeAllDropdowns = () => {
-    setIsProfileDropdownOpen(false);
-    setIsNotificationOpen(false);
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsProfileOpen(false);
+        setIsNotificationsOpen(false);
+        searchInputRef.current?.blur();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEsc);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEsc);
+    };
+  }, []);
+
+  const activeBooking = userBookings.find(b => b.bookingStatus === 'confirmed');
+  const activePassesCount = userBookings.filter(b => b.bookingStatus === 'confirmed').length;
+
+  const handleNavClick = (view: 'explore' | 'map' | 'bookings' | 'host') => {
+    if (view === 'explore') {
+      focusSearchInput();
+    } else {
+      setCurrentView(view);
+    }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateFilter('searchQuery', e.target.value);
+    if (currentView !== 'explore' && e.target.value.trim().length > 0) {
+      setCurrentView('explore');
+    }
   };
 
   return (
-    <header className={`sticky top-0 z-40 ${
-      isLight ? 'bg-white/95 text-neutral-900 border-b border-neutral-200 shadow-sm' : 'bg-[#0D0D0D]/95 text-white border-b border-[#222222] shadow-xl'
-    } backdrop-blur-md transition-colors duration-150`}>
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        {/* Main Header Bar: TOP LEFT (☰) | HEADER CENTRE (OFIS LOGO) | TOP RIGHT (Currency, Notifications, Avatar) */}
-        <div className="flex items-center justify-between h-16 sm:h-20">
+    <header className="sticky top-0 z-40 w-full bg-[#0D0D0D]/90 backdrop-blur-md border-b border-[#1E2522] transition-colors">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-[68px] gap-2 sm:gap-4">
           
-          {/* TOP LEFT: Compact Hamburger Menu ☰ (Opens Navigation & Information Drawer) */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* ========================================================================= */}
+          {/* LEFT: Logo & Desktop Navigation Links                                     */}
+          {/* ========================================================================= */}
+          <div className="flex items-center gap-4 sm:gap-6 lg:gap-8 min-w-0">
+            
+            {/* Logo: First Element with Transparent Background & Precise 38-42px Height */}
             <button
-              id="header-hamburger-drawer-btn"
+              id="nav-brand-logo-btn"
               type="button"
-              onClick={() => {
-                closeAllDropdowns();
-                onOpenNavDrawer();
-              }}
-              className={`p-1.5 sm:p-2 rounded-xl border ${
-                isLight
-                  ? 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-neutral-700 hover:text-neutral-950'
-                  : 'border-[#262626] bg-[#141414] hover:bg-[#1E1E1E] text-stone-300 hover:text-white'
-              } transition-all cursor-pointer flex items-center justify-center shadow-xs active:scale-95`}
-              aria-label="Open navigation menu drawer"
+              onClick={() => handleNavClick('explore')}
+              className="flex items-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C878]/50 rounded-lg p-0.5 transition-opacity duration-200 hover:opacity-90"
+              aria-label="OFIS Home"
             >
-              <Menu className="w-4 h-4 sm:w-4.5 sm:h-4.5 hover:text-[#00C878] transition-colors" />
+              <img
+                src={ofisWordmark}
+                alt="OFIS"
+                className="h-[38px] sm:h-[40px] w-auto object-contain select-none block"
+              />
             </button>
 
-            {/* Desktop Quick Nav (Hotels.ng simplicity) */}
-            <nav className={`hidden md:flex items-center gap-1 ${
-              isLight ? 'bg-[#F3F4F6] border-neutral-200' : 'bg-[#171717] border-[#262626]'
-            } p-1 rounded-2xl border`}>
+            {/* Desktop Navigation Links */}
+            <nav className="hidden lg:flex items-center gap-1" aria-label="Primary Navigation">
+              
               <button
+                id="nav-link-spaces"
                 type="button"
-                id="nav-explore-btn"
-                onClick={() => {
-                  setCurrentView('explore');
-                  closeAllDropdowns();
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                onClick={() => handleNavClick('explore')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-out ${
                   currentView === 'explore'
-                    ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border border-[#00C878]/30 font-black' : 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
-                    : isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60' : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
+                    ? 'text-[#00C878] bg-[#00C878]/10 font-semibold'
+                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19]'
                 }`}
               >
-                <Compass className="w-3.5 h-3.5" />
-                <span>Explore Spaces</span>
+                <Compass className="w-4 h-4 shrink-0" />
+                <span>Spaces</span>
               </button>
 
               <button
+                id="nav-link-map"
                 type="button"
-                id="nav-map-results-btn"
-                onClick={() => {
-                  setCurrentView('results');
-                  closeAllDropdowns();
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  currentView === 'results'
-                    ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border border-[#00C878]/30 font-black' : 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
-                    : isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60' : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
+                onClick={() => handleNavClick('map')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-out ${
+                  currentView === 'map'
+                    ? 'text-[#00C878] bg-[#00C878]/10 font-semibold'
+                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19]'
                 }`}
               >
-                <MapPin className="w-3.5 h-3.5" />
-                <span>Map View</span>
+                <MapPin className="w-4 h-4 shrink-0 text-[#00C878]" />
+                <span>Around Me</span>
               </button>
 
               <button
+                id="nav-link-passes"
                 type="button"
-                id="nav-passes-btn"
-                onClick={() => {
-                  setCurrentView('passes');
-                  closeAllDropdowns();
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  currentView === 'passes'
-                    ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border border-[#00C878]/30 font-black' : 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
-                    : isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60' : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
+                onClick={() => handleNavClick('bookings')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-out relative ${
+                  currentView === 'bookings'
+                    ? 'text-[#00C878] bg-[#00C878]/10 font-semibold'
+                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19]'
                 }`}
               >
-                <Ticket className="w-3.5 h-3.5" />
-                <span>Passes</span>
-                {activeBookingsCount > 0 && (
-                  <span className="px-1.5 py-0.2 text-[10px] font-black rounded-full bg-[#00C878] text-[#0D0D0D]">
-                    {activeBookingsCount}
+                <Ticket className="w-4 h-4 shrink-0" />
+                <span>Access Passes</span>
+                {activePassesCount > 0 && (
+                  <span className="inline-flex items-center justify-center px-1.5 py-0.2 text-[11px] font-bold bg-[#00C878] text-[#0D0D0D] rounded-full min-w-[18px] h-[18px]">
+                    {activePassesCount}
                   </span>
                 )}
               </button>
 
               <button
+                id="nav-link-host"
                 type="button"
-                id="nav-host-hub-btn"
-                onClick={() => {
-                  setCurrentView('host');
-                  closeAllDropdowns();
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                onClick={() => handleNavClick('host')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ease-out ${
                   currentView === 'host'
-                    ? isLight ? 'bg-[#E8F8F0] text-[#00A865] border border-[#00C878]/30 font-black' : 'bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 font-black'
-                    : isLight ? 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60' : 'text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
+                    ? 'text-[#00C878] bg-[#00C878]/10 font-semibold'
+                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19]'
                 }`}
               >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>Host Hub</span>
+                <Building2 className="w-4 h-4 shrink-0" />
+                <span>Host Portal</span>
               </button>
             </nav>
+
           </div>
 
-          {/* HEADER CENTRE: Exact Locked OFIS Logo Asset */}
-          <div className="flex items-center justify-center">
-            <button
-              id="brand-logo-btn"
-              type="button"
-              onClick={() => {
-                setCategoryFilter('all');
-                setCurrentView('explore');
-                closeAllDropdowns();
-              }}
-              className="flex items-center justify-center py-1 group focus:outline-none cursor-pointer transition-opacity hover:opacity-95"
-              aria-label="OFIS Home"
-            >
-              <OfisLogo size="md" />
-            </button>
-          </div>
+          {/* ========================================================================= */}
+          {/* CENTER: Desktop Sleek Search Input                                        */}
+          {/* ========================================================================= */}
+          <div className="hidden md:flex items-center flex-1 max-w-xs lg:max-w-sm mx-2">
+            <div className={`relative w-full flex items-center rounded-xl bg-[#141816] border transition-all duration-200 ${
+              searchFocused 
+                ? 'border-[#00C878]/60 bg-[#161C19] ring-2 ring-[#00C878]/15' 
+                : 'border-[#232D28] hover:border-[#35433C]'
+            }`}>
+              <Search className="w-4 h-4 absolute left-3 text-[#718079] pointer-events-none shrink-0" />
+              
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={filters.searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                placeholder="Search spaces, areas, cities..."
+                className="w-full pl-9 pr-14 py-2 bg-transparent text-xs text-[#F2F2F2] placeholder-[#718079] focus:outline-none"
+              />
 
-          {/* TOP RIGHT: List Your Space CTA | AI Advisor | Notifications | User Avatar */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5">
-            
-            {/* Hotels.ng style Prominent "List Your Space" Button */}
-            <button
-              type="button"
-              id="header-list-space-btn"
-              onClick={() => setIsListSpaceModalOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#00C878] hover:bg-[#00B06A] text-[#0A0A0A] font-bold text-xs transition-all shadow-md shadow-[#00C878]/15 cursor-pointer active:scale-95"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>List Your Space</span>
-            </button>
-
-            {/* AI Advisor Button */}
-            <button
-              type="button"
-              id="ai-advisor-nav-btn"
-              onClick={() => openAiModal('match')}
-              className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl ${
-                isLight ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border-neutral-300' : 'bg-[#171717] hover:bg-[#222222] text-[#F2F2F2] border-[#2A2A2A]'
-              } border hover:border-[#D6A83A]/60 text-xs font-bold transition-all cursor-pointer group`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#D6A83A] group-hover:scale-110 transition-transform" />
-              <span className="text-[11px]">AI Match</span>
-            </button>
-
-            {/* Notification Bell (🔔) */}
-            <div className="relative">
-              <button
-                type="button"
-                id="header-notification-btn"
-                onClick={() => {
-                  setIsNotificationOpen(!isNotificationOpen);
-                  setIsProfileDropdownOpen(false);
-                }}
-                className={`p-2 rounded-xl border ${
-                  isLight ? 'border-neutral-200 bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'border-[#282828] bg-[#171717] hover:bg-[#222222] text-[#9A9A9A] hover:text-white'
-                } transition-colors relative cursor-pointer`}
-                aria-label="Notifications"
-              >
-                <Bell className="w-4 h-4" />
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#00C878] text-[9px] font-black text-[#0D0D0D] flex items-center justify-center shadow-sm">
-                  2
-                </span>
-              </button>
-
-              {isNotificationOpen && (
-                <div
-                  id="notifications-panel"
-                  className={`absolute right-0 mt-2 w-80 ${
-                    isLight ? 'bg-white text-neutral-900 border-neutral-200 shadow-2xl' : 'bg-[#171717] text-white border-[#2A2A2A] shadow-2xl'
-                  } rounded-2xl border p-3 z-50 animate-in fade-in slide-in-from-top-2 duration-150`}
+              {filters.searchQuery ? (
+                <button
+                  type="button"
+                  onClick={() => updateFilter('searchQuery', '')}
+                  className="absolute right-2.5 p-1 rounded-md text-[#718079] hover:text-[#F2F2F2] hover:bg-[#232D28] transition-colors"
+                  aria-label="Clear search"
                 >
-                  <div className={`flex items-center justify-between pb-2 border-b ${isLight ? 'border-neutral-200' : 'border-[#282828]'}`}>
-                    <span className="text-xs font-bold">Notifications</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                      isLight ? 'bg-[#E8F8F0] text-[#00A865]' : 'bg-[#063B2A] text-[#00C878]'
-                    } font-bold`}>
-                      2 Active
-                    </span>
-                  </div>
-                  <div className="space-y-2 mt-2">
-                    <div className={`p-2.5 rounded-xl ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-[#222222] border-[#2D2D2D]'} border text-xs`}>
-                      <div className="font-bold text-[#00C878]">Booking Confirmed!</div>
-                      <div className={`text-[11px] ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-0.5`}>
-                        Your desk pass at Greenhouse Studio (Lekki Phase 1) is active.
-                      </div>
-                    </div>
-                    <div className={`p-2.5 rounded-xl ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-[#1C1C1C] border-[#282828]'} border text-xs`}>
-                      <div className="font-bold text-[#00C878]">⚡ 24/7 Power Guaranteed</div>
-                      <div className={`text-[11px] ${isLight ? 'text-neutral-600' : 'text-[#D4D4D4]'} mt-0.5`}>
-                        Dual generators & solar inverters active across all verified spaces.
-                      </div>
-                    </div>
-                  </div>
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              ) : (
+                <div className="absolute right-2.5 hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-[#1C2420] border border-[#2B3831] text-[10px] text-[#718079] font-mono select-none pointer-events-none">
+                  <span>⌘</span>
+                  <span>K</span>
                 </div>
               )}
             </div>
+          </div>
 
-            {/* User Avatar Menu Dropdown */}
-            <div className="relative">
+          {/* ========================================================================= */}
+          {/* RIGHT: Actions, Notifications, User Profile & Mobile Hamburger            */}
+          {/* ========================================================================= */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            
+            {/* Currency Switcher Quick Toggle (Desktop) */}
+            <div className="hidden lg:flex items-center bg-[#141816] border border-[#232D28] rounded-lg p-0.5 text-[11px] font-bold">
               <button
                 type="button"
-                id="header-profile-avatar-btn"
-                onClick={() => {
-                  setIsProfileDropdownOpen(!isProfileDropdownOpen);
-                  setIsNotificationOpen(false);
-                }}
-                className="flex items-center justify-center p-0.5 rounded-full ring-2 ring-[#282828] hover:ring-[#00C878] transition-all cursor-pointer group focus:outline-none"
-                aria-label="User account menu"
+                onClick={() => setCurrency('NGN')}
+                className={`px-2 py-1 rounded transition-all flex items-center gap-0.5 ${
+                  currency === 'NGN'
+                    ? 'bg-[#00C878] text-[#0D0D0D] shadow-sm'
+                    : 'text-[#9EABA3] hover:text-[#F2F2F2]'
+                }`}
+                title="Nigerian Naira"
               >
-                {isAuthenticated && currentUser ? (
-                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden bg-[#1A1A1A] relative shadow-md">
-                    <img
-                      src={currentUser.avatar}
-                      alt={currentUser.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                    />
-                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#00C878] rounded-full ring-1 ring-[#0D0D0D]" />
-                  </div>
-                ) : (
-                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full ${
-                    isLight ? 'bg-neutral-100 border-neutral-300 text-neutral-600 hover:bg-neutral-200' : 'bg-[#1C1C1C] border-[#333333] text-stone-300 hover:text-white hover:bg-[#252525]'
-                  } border flex items-center justify-center transition-colors`}>
-                    <User className="w-4 h-4 text-stone-400 group-hover:text-[#00C878] transition-colors" />
-                  </div>
+                <span>₦</span>
+                <span>NGN</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrency('USD')}
+                className={`px-2 py-1 rounded transition-all flex items-center gap-0.5 ${
+                  currency === 'USD'
+                    ? 'bg-[#00C878] text-[#0D0D0D] shadow-sm'
+                    : 'text-[#9EABA3] hover:text-[#F2F2F2]'
+                }`}
+                title="US Dollar (Auto-converted)"
+              >
+                <span>$</span>
+                <span>USD</span>
+              </button>
+            </div>
+
+            {/* AI Assistant Quick Trigger (Desktop) */}
+            <button
+              id="nav-ai-assistant-btn"
+              type="button"
+              onClick={() => setIsAiAssistantOpen(true)}
+              className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141816] border border-[#232D28] hover:border-[#00C878]/40 text-xs font-medium text-[#9EABA3] hover:text-[#00C878] transition-all duration-200 ease-out"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#00C878]" />
+              <span>AI Concierge</span>
+            </button>
+
+            {/* List Space CTA (Desktop) */}
+            <button
+              id="nav-list-space-btn"
+              type="button"
+              onClick={() => setIsListSpaceOpen(true)}
+              className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold text-[#0D0D0D] bg-[#00C878] hover:bg-[#00E58B] transition-all duration-200 ease-out active:scale-[0.98]"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>List Space</span>
+            </button>
+
+            {/* Notification Bell (Desktop & Mobile) */}
+            <div className="relative" ref={notifRef}>
+              <button
+                id="nav-notifications-btn"
+                type="button"
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className={`p-2 sm:p-2.5 rounded-lg border text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19] transition-all duration-200 ease-out relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C878]/50 ${
+                  isNotificationsOpen 
+                    ? 'bg-[#161D19] border-[#232D28] text-[#F2F2F2]' 
+                    : 'border-transparent hover:border-[#232D28]'
+                }`}
+                aria-label="View notifications"
+                aria-expanded={isNotificationsOpen}
+              >
+                <Bell className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[#00C878] text-[#0D0D0D] text-[10px] font-extrabold flex items-center justify-center ring-2 ring-[#0D0D0D]">
+                    {unreadNotificationsCount}
+                  </span>
                 )}
               </button>
 
-              {/* Avatar Menu Dropdown */}
-              {isProfileDropdownOpen && (
-                <div
-                  id="profile-menu-dropdown"
-                  className={`absolute right-0 mt-2 w-72 sm:w-80 ${
-                    isLight ? 'bg-white text-neutral-900 border-neutral-200 shadow-2xl' : 'bg-[#161616] text-white border-[#2A2A2A] shadow-2xl'
-                  } rounded-2xl border p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150`}
-                >
-                  {isAuthenticated && currentUser ? (
-                    <>
-                      {/* Logged-In User Profile Header */}
-                      <div className={`p-3 ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-[#1D1D1D] border-[#2A2A2A]'} rounded-xl border mb-2`}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full overflow-hidden bg-[#242424] ring-2 ring-[#00C878]/60 shrink-0">
-                            <img
-                              src={currentUser.avatar}
-                              alt={currentUser.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className={`text-sm font-bold ${isLight ? 'text-neutral-900' : 'text-white'} truncate`}>{currentUser.name}</div>
-                            <div className={`text-xs ${isLight ? 'text-neutral-500' : 'text-[#D4D4D4]'} truncate`}>{currentUser.email}</div>
-                            <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#063B2A] text-[#00C878] border border-[#00C878]/40">
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#00C878]" />
-                              {(currentUser?.role || 'coworker').toUpperCase()}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Required Avatar Menu Links */}
-                      <div className="space-y-0.5 py-1">
-                        {/* 1. My Profile */}
-                        <button
-                          type="button"
-                          id="menu-item-my-profile"
-                          onClick={() => {
-                            setIsProfileDropdownOpen(false);
-                            openAvatarModal();
-                          }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold ${
-                            isLight ? 'text-neutral-700 hover:bg-neutral-100 hover:text-[#00A865]' : 'text-stone-200 hover:bg-[#222222] hover:text-[#00C878]'
-                          } transition-colors cursor-pointer`}
-                        >
-                          <Camera className="w-4 h-4 text-[#00C878]" />
-                          <span>My Profile</span>
-                        </button>
-
-                        {/* 2. My Bookings */}
-                        <button
-                          type="button"
-                          id="menu-item-my-bookings"
-                          onClick={() => {
-                            setCurrentView('passes');
-                            setIsProfileDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
-                            isLight ? 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900' : 'text-stone-200 hover:bg-[#222222] hover:text-white'
-                          } transition-colors cursor-pointer`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Ticket className="w-4 h-4 text-stone-400" />
-                            <span>My Bookings</span>
-                          </div>
-                          {activeBookingsCount > 0 && (
-                            <span className="px-1.5 py-0.2 text-[10px] font-bold bg-[#00C878] text-[#0D0D0D] rounded-full">
-                              {activeBookingsCount}
-                            </span>
-                          )}
-                        </button>
-
-                        {/* 3. Saved Spaces */}
-                        <button
-                          type="button"
-                          id="menu-item-saved-spaces"
-                          onClick={() => {
-                            setCategoryFilter('saved');
-                            setCurrentView('results');
-                            setIsProfileDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
-                            isLight ? 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900' : 'text-stone-200 hover:bg-[#222222] hover:text-white'
-                          } transition-colors cursor-pointer`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Bookmark className="w-4 h-4 text-stone-400" />
-                            <span>Saved Spaces</span>
-                          </div>
-                          <span className={`text-[11px] ${isLight ? 'text-neutral-500' : 'text-[#D4D4D4]'}`}>{favorites.length}</span>
-                        </button>
-
-                        {/* 4. Messages */}
-                        <button
-                          type="button"
-                          id="menu-item-messages"
-                          onClick={() => {
-                            showToast('Host messaging channel is active.', 'info');
-                            setIsProfileDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold ${
-                            isLight ? 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900' : 'text-stone-200 hover:bg-[#222222] hover:text-white'
-                          } transition-colors cursor-pointer`}
-                        >
-                          <MessageSquare className="w-4 h-4 text-stone-400" />
-                          <span>Messages</span>
-                        </button>
-
-                        {/* 5. List a Space */}
-                        <button
-                          type="button"
-                          id="menu-item-list-space"
-                          onClick={() => {
-                            setIsListSpaceModalOpen(true);
-                            setIsProfileDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-[#00C878] ${
-                            isLight ? 'hover:bg-[#E8F8F0]' : 'hover:bg-[#063B2A]/40'
-                          } transition-colors cursor-pointer`}
-                        >
-                          <PlusCircle className="w-4 h-4 text-[#00C878]" />
-                          <span>List a Space</span>
-                        </button>
-
-                        {/* 6. Host Hub */}
-                        <button
-                          type="button"
-                          id="menu-item-host-hub"
-                          onClick={() => {
-                            setCurrentView('host');
-                            setIsProfileDropdownOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold ${
-                            isLight ? 'text-neutral-700 hover:bg-neutral-100' : 'text-stone-200 hover:bg-[#222222]'
-                          } transition-colors cursor-pointer`}
-                        >
-                          <LayoutDashboard className="w-4 h-4 text-stone-400" />
-                          <span>Host Hub</span>
-                        </button>
-                      </div>
-
-                      {/* Demo User Switcher */}
-                      <div className={`p-2 border-t ${isLight ? 'border-neutral-200' : 'border-[#262626]'} mt-1`}>
-                        <div className={`px-2 py-1 text-[10px] font-bold ${isLight ? 'text-neutral-500' : 'text-stone-400'} uppercase tracking-wider`}>
-                          Switch Demo User
-                        </div>
-                        <div className="space-y-1 mt-1">
-                          {DEMO_USERS.map(user => (
-                            <button
-                              key={user.id}
-                              type="button"
-                              id={`demo-user-select-${user.id}`}
-                              onClick={() => {
-                                switchDemoUser(user.id);
-                                setIsProfileDropdownOpen(false);
-                              }}
-                              className={`w-full flex items-center gap-2 p-1.5 rounded-xl text-left transition-colors cursor-pointer ${
-                                currentUser?.id === user.id
-                                  ? isLight ? 'bg-[#E8F8F0] text-[#00A865] font-bold' : 'bg-[#063B2A] text-[#00C878] font-bold'
-                                  : isLight ? 'hover:bg-neutral-100 text-neutral-800' : 'hover:bg-[#222222] text-[#F2F2F2]'
-                              }`}
-                            >
-                              <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-bold truncate">{user.name}</div>
-                                <div className={`text-[10px] ${isLight ? 'text-neutral-500' : 'text-[#D4D4D4]'} capitalize`}>
-                                  {user.role} ({user.company || 'Member'})
-                                </div>
-                              </div>
-                              {currentUser?.id === user.id && <Check className="w-3.5 h-3.5 text-[#00C878] shrink-0" />}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* 7. Account Settings & 8. Sign Out */}
-                      <div className={`p-1 border-t ${isLight ? 'border-neutral-200' : 'border-[#262626]'} space-y-0.5 mt-1`}>
-                        <button
-                          type="button"
-                          id="menu-item-account-settings"
-                          onClick={() => {
-                            setIsProfileDropdownOpen(false);
-                            openSettingsModal();
-                          }}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
-                            isLight ? 'text-neutral-700 hover:text-neutral-900 hover:bg-neutral-100' : 'text-stone-300 hover:text-white hover:bg-[#222222]'
-                          } transition-colors cursor-pointer`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Settings className="w-3.5 h-3.5 text-[#00C878]" />
-                            <span>Settings & Preferences</span>
-                          </div>
-                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${
-                            isLight ? 'bg-neutral-100 text-neutral-600' : 'bg-[#222222] text-[#A3A3A3]'
-                          }`}>
-                            {themeMode.toUpperCase()}
-                          </span>
-                        </button>
-
-                        <button
-                          type="button"
-                          id="menu-item-signout"
-                          onClick={() => {
-                            signOut();
-                            setIsProfileDropdownOpen(false);
-                          }}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
-                        >
-                          <LogOut className="w-3.5 h-3.5" />
-                          <span>Sign Out</span>
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    /* When user is NOT signed in: Sign In, Create Account & Settings */
-                    <div className="p-2 space-y-2">
-                      <div className={`p-3 ${isLight ? 'bg-neutral-50 border-neutral-200' : 'bg-[#1D1D1D] border-[#2A2A2A]'} rounded-xl border text-center`}>
-                        <div className="w-10 h-10 rounded-full bg-[#063B2A] text-[#00C878] mx-auto flex items-center justify-center mb-2">
-                          <User className="w-5 h-5" />
-                        </div>
-                        <div className={`text-xs font-bold ${isLight ? 'text-neutral-900' : 'text-white'}`}>Welcome to OFIS</div>
-                        <div className={`text-[11px] ${isLight ? 'text-neutral-500' : 'text-[#D4D4D4]'} mt-0.5`}>
-                          Book physical workspaces across Nigeria
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <button
-                          type="button"
-                          id="menu-signin-btn"
-                          onClick={() => {
-                            setIsProfileDropdownOpen(false);
-                            openAuthModal('signin');
-                          }}
-                          className="w-full py-2 px-3 bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer"
-                        >
-                          <LogIn className="w-4 h-4" />
-                          <span>Sign In</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          id="menu-create-account-btn"
-                          onClick={() => {
-                            setIsProfileDropdownOpen(false);
-                            openAuthModal('signup');
-                          }}
-                          className={`w-full py-2 px-3 ${
-                            isLight ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border-neutral-300' : 'bg-[#222222] hover:bg-[#2A2A2A] text-white border-[#333333]'
-                          } font-semibold text-xs rounded-xl border flex items-center justify-center gap-2 transition-colors cursor-pointer`}
-                        >
-                          <UserPlus className="w-4 h-4 text-[#00C878]" />
-                          <span>Create Account</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          id="menu-settings-unauth-btn"
-                          onClick={() => {
-                            setIsProfileDropdownOpen(false);
-                            openSettingsModal();
-                          }}
-                          className={`w-full py-2 px-3 ${
-                            isLight ? 'hover:bg-neutral-100 text-neutral-700' : 'hover:bg-[#222222] text-[#D4D4D4]'
-                          } font-semibold text-xs rounded-xl flex items-center justify-center gap-2 transition-colors cursor-pointer`}
-                        >
-                          <Settings className="w-3.5 h-3.5 text-[#00C878]" />
-                          <span>Settings & Preferences</span>
-                        </button>
-                      </div>
+              {/* Notifications Popover */}
+              {isNotificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-[#121614] border border-[#232D28] shadow-2xl p-4 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between pb-3 border-b border-[#1E2522]">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-semibold text-[#F2F2F2]">Notifications</h4>
+                      {unreadNotificationsCount > 0 && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#00C878]/15 text-[#00C878]">
+                          {unreadNotificationsCount} new
+                        </span>
+                      )}
                     </div>
-                  )}
+                    {unreadNotificationsCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={markAllNotificationsAsRead}
+                        className="text-[11px] font-semibold text-[#00C878] hover:underline flex items-center gap-1"
+                      >
+                        <CheckCheck className="w-3.5 h-3.5" />
+                        <span>Mark all read</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-3 space-y-2 max-h-[320px] overflow-y-auto">
+                    {notifications.length > 0 ? (
+                      notifications.map((notif) => {
+                        return (
+                          <div 
+                            key={notif.id}
+                            onClick={() => {
+                              markNotificationAsRead(notif.id);
+                              if (notif.bookingId) {
+                                const matchedBooking = userBookings.find(b => b.id === notif.bookingId);
+                                if (matchedBooking) {
+                                  if (matchedBooking.bookingStatus === 'active' || matchedBooking.bookingStatus === 'confirmed') {
+                                    setActivePassBooking(matchedBooking);
+                                  } else {
+                                    setSelectedBookingDetails(matchedBooking);
+                                  }
+                                } else {
+                                  setCurrentView('bookings');
+                                }
+                              } else if (notif.spaceId) {
+                                setCurrentView('explore');
+                              }
+                              setIsNotificationsOpen(false);
+                            }}
+                            className={`p-3 rounded-xl border cursor-pointer transition-all duration-150 ${
+                              notif.read
+                                ? 'bg-[#141816] border-[#1E2522] text-[#9EABA3] hover:border-[#2A3630]'
+                                : 'bg-[#17201B] border-[#00C878]/30 text-[#F2F2F2] hover:border-[#00C878]'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 text-xs font-semibold">
+                                {notif.type === 'booking_confirmed' && <Zap className="w-3.5 h-3.5 text-[#00C878]" />}
+                                {notif.type === 'payment_confirmed' && <ShieldCheck className="w-3.5 h-3.5 text-[#00C878]" />}
+                                {notif.type === 'booking_cancelled' && <AlertCircle className="w-3.5 h-3.5 text-rose-400" />}
+                                {notif.type === 'host_verification_update' && <ShieldCheck className="w-3.5 h-3.5 text-[#00C878]" />}
+                                {notif.type === 'listing_published' && <Building2 className="w-3.5 h-3.5 text-[#00C878]" />}
+                                <span className={notif.read ? 'text-[#9EABA3]' : 'text-[#00C878]'}>{notif.title}</span>
+                              </div>
+                              <span className="text-[10px] text-[#718079] whitespace-nowrap">{notif.timestamp}</span>
+                            </div>
+                            <p className="text-xs text-[#9EABA3] mt-1 leading-relaxed">{notif.message}</p>
+                            {notif.reference && (
+                              <div className="mt-1.5 text-[10px] font-mono text-[#718079]">
+                                Ref: {notif.reference}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="p-6 text-center text-[#718079] space-y-1.5">
+                        <Inbox className="w-8 h-8 mx-auto opacity-40 text-[#9EABA3]" />
+                        <p className="text-xs font-semibold text-[#9EABA3]">You're all caught up.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
+
+            {/* User Profile Avatar Dropdown (Desktop & Mobile) */}
+            <div className="relative" ref={profileRef}>
+              <button
+                id="nav-user-profile-btn"
+                type="button"
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+                className={`flex items-center gap-2 p-1 sm:p-1.5 sm:pr-2.5 rounded-xl border transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C878]/50 ${
+                  isProfileOpen 
+                    ? 'bg-[#161D19] border-[#35433C]' 
+                    : 'bg-[#141816] border-[#232D28] hover:border-[#35433C]'
+                }`}
+                aria-label="User menu"
+                aria-expanded={isProfileOpen}
+              >
+                {currentUser.avatarUrl ? (
+                  <img
+                    src={currentUser.avatarUrl}
+                    alt={currentUser.name}
+                    className="w-7 h-7 rounded-lg object-cover ring-1 ring-[#00C878]/30 shrink-0"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-lg bg-[#232D28] flex items-center justify-center text-[#00C878] shrink-0">
+                    <User className="w-4 h-4" />
+                  </div>
+                )}
+                <span className="text-xs font-semibold text-[#F2F2F2] hidden sm:inline max-w-[85px] truncate">
+                  {currentUser.name.split(' ')[0]}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-[#718079] hidden sm:inline transition-transform duration-200 ${
+                  isProfileOpen ? 'rotate-180 text-[#00C878]' : ''
+                }`} />
+              </button>
+
+              {/* User Dropdown Popover */}
+              {isProfileOpen && (
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#121614] border border-[#232D28] shadow-2xl p-2.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  {/* User Profile Card */}
+                  <div className="p-2.5 pb-3 border-b border-[#1E2522]">
+                    <div className="flex items-center gap-2.5">
+                      {currentUser.avatarUrl && (
+                        <img
+                          src={currentUser.avatarUrl}
+                          alt={currentUser.name}
+                          className="w-9 h-9 rounded-xl object-cover ring-1 ring-[#00C878]/40"
+                        />
+                      )}
+                      <div className="overflow-hidden min-w-0">
+                        <p className="text-xs font-bold text-[#F2F2F2] truncate">{currentUser.name}</p>
+                        <p className="text-[11px] text-[#718079] truncate">{currentUser.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between text-xs bg-[#161D19] px-2.5 py-1.5 rounded-lg border border-[#1E2522]">
+                      <span className="text-[#9EABA3] flex items-center gap-1.5">
+                        <CreditCard className="w-3.5 h-3.5 text-[#718079]" />
+                        <span>Wallet</span>
+                      </span>
+                      <span className="font-semibold text-[#00C878]">{formatPrice(currentUser.walletBalance)}</span>
+                    </div>
+                  </div>
+
+                  {/* Switch Demo Roles */}
+                  <div className="py-2 border-b border-[#1E2522]">
+                    <p className="text-[10px] uppercase font-bold tracking-wider text-[#718079] px-2 mb-1">
+                      Switch Role
+                    </p>
+                    <div className="space-y-0.5">
+                      {DEMO_USERS.map(u => (
+                        <button
+                          key={u.id}
+                          type="button"
+                          onClick={() => {
+                            switchUser(u.id);
+                            setIsProfileOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs transition-colors duration-150 ${
+                            currentUser.id === u.id
+                              ? 'bg-[#00C878]/10 text-[#00C878] font-semibold'
+                              : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19]'
+                          }`}
+                        >
+                          <span className="truncate">{u.name} ({u.role})</span>
+                          {currentUser.id === u.id && <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-1.5 space-y-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSettingsOpen(true);
+                        setIsProfileOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19] transition-colors duration-150"
+                    >
+                      <Settings className="w-3.5 h-3.5" />
+                      <span>Account Settings</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAuthModalOpen(true);
+                        setIsProfileOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19] transition-colors duration-150"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#00C878]" />
+                      <span>Sign In / Auth</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Hamburger Menu Toggle */}
+            <button
+              id="nav-mobile-hamburger-btn"
+              type="button"
+              onClick={() => setIsNavDrawerOpen(true)}
+              className="lg:hidden p-2 rounded-lg text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19] border border-transparent hover:border-[#232D28] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00C878]/50"
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
           </div>
+
         </div>
       </div>
     </header>
   );
 };
+

@@ -1,68 +1,43 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { storageService } from './storageService';
+
+const SAVED_KEY = 'saved_spaces';
 
 export const favoritesService = {
-  async fetchFavorites(userId: string): Promise<{ favoriteSpaceIds: string[]; error: string | null }> {
-    if (!isSupabaseConfigured() || !supabase) {
-      // Local fallback for development/demo
-      const saved = localStorage.getItem(`ofis_favs_${userId}`);
-      if (saved) {
-        try {
-          return { favoriteSpaceIds: JSON.parse(saved), error: null };
-        } catch {
-          return { favoriteSpaceIds: [], error: null };
-        }
-      }
-      return { favoriteSpaceIds: ['space-1', 'space-3'], error: null };
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('favorites')
-        .select('space_id')
-        .eq('user_id', userId);
-
-      if (error) return { favoriteSpaceIds: [], error: error.message };
-
-      return { favoriteSpaceIds: (data || []).map(f => f.space_id), error: null };
-    } catch (err: any) {
-      return { favoriteSpaceIds: [], error: err.message };
-    }
+  getSavedSpaceIds(): string[] {
+    return storageService.getItem<string[]>(SAVED_KEY, ['space_1', 'space_3']);
   },
 
-  async toggleFavorite(userId: string, spaceId: string): Promise<{ isFavorited: boolean; error: string | null }> {
-    if (!isSupabaseConfigured() || !supabase) {
-      const saved = localStorage.getItem(`ofis_favs_${userId}`);
-      let list: string[] = saved ? JSON.parse(saved) : ['space-1', 'space-3'];
-      const exists = list.includes(spaceId);
-      list = exists ? list.filter(id => id !== spaceId) : [...list, spaceId];
-      localStorage.setItem(`ofis_favs_${userId}`, JSON.stringify(list));
-      return { isFavorited: !exists, error: null };
-    }
-
-    try {
-      // Check if already favorited
-      const { data } = await supabase
-        .from('favorites')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('space_id', spaceId)
-        .single();
-
-      if (data) {
-        await supabase
-          .from('favorites')
-          .delete()
-          .eq('user_id', userId)
-          .eq('space_id', spaceId);
-        return { isFavorited: false, error: null };
-      } else {
-        await supabase
-          .from('favorites')
-          .insert({ user_id: userId, space_id: spaceId });
-        return { isFavorited: true, error: null };
-      }
-    } catch (err: any) {
-      return { isFavorited: false, error: err.message };
-    }
+  isSaved(spaceId: string): boolean {
+    const saved = this.getSavedSpaceIds();
+    return saved.includes(spaceId);
   },
+
+  toggleFavorite(spaceId: string): boolean {
+    const saved = this.getSavedSpaceIds();
+    let updated: string[];
+    let isNowSaved = false;
+    
+    if (saved.includes(spaceId)) {
+      updated = saved.filter(id => id !== spaceId);
+      isNowSaved = false;
+    } else {
+      updated = [...saved, spaceId];
+      isNowSaved = true;
+    }
+    
+    storageService.setItem(SAVED_KEY, updated);
+    return isNowSaved;
+  },
+
+  toggleSave(spaceId: string): string[] {
+    const saved = this.getSavedSpaceIds();
+    let updated: string[];
+    if (saved.includes(spaceId)) {
+      updated = saved.filter(id => id !== spaceId);
+    } else {
+      updated = [...saved, spaceId];
+    }
+    storageService.setItem(SAVED_KEY, updated);
+    return updated;
+  }
 };

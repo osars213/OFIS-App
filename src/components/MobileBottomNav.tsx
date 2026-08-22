@@ -1,141 +1,81 @@
 import React from 'react';
-import {
-  Compass,
-  MapPin,
-  Ticket,
-  PlusCircle,
-  User,
-  Sparkles
-} from 'lucide-react';
+import { Compass, MapPin, Ticket, Building2, Sparkles } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-interface MobileBottomNavProps {
-  currentView: 'explore' | 'results' | 'passes' | 'host' | 'ops';
-  setCurrentView: (view: 'explore' | 'results' | 'passes' | 'host' | 'ops') => void;
-  onOpenNavDrawer: () => void;
-}
-
-/**
- * Mobile Bottom Navigation Bar (Hotels.ng simplicity)
- * Provides 1-tap navigation for mobile and tablet users.
- */
-export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
-  currentView,
-  setCurrentView,
-  onOpenNavDrawer,
-}) => {
-  const {
-    currentUser,
-    bookings,
-    setIsListSpaceModalOpen,
-    openAuthModal,
-    setSelectedSpace,
-    effectiveTheme,
-  } = useApp();
-
-  const isLight = effectiveTheme === 'light';
-
-  const activeBookingsCount = currentUser
-    ? bookings.filter(
-        b => b.coworkerId === currentUser.id && (b.status === 'confirmed' || b.status === 'checked_in')
-      ).length
-    : 0;
+export const MobileBottomNav: React.FC = () => {
+  const { currentView, setCurrentView, userBookings, setIsAiAssistantOpen, focusSearchInput } = useApp();
 
   return (
-    <div
-      id="mobile-bottom-navigation"
-      className={`md:hidden fixed bottom-0 left-0 right-0 z-40 ${
-        isLight ? 'bg-white/95 border-t border-neutral-200 shadow-xl' : 'bg-[#0E0E0E]/95 border-t border-[#222222] shadow-2xl'
-      } backdrop-blur-lg px-2 py-1.5 transition-colors duration-150`}
-    >
-      <div className="flex items-center justify-around max-w-md mx-auto">
-        {/* 1. Explore */}
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0D0D0D]/95 backdrop-blur-lg border-t border-[#1E2522] py-2 px-3">
+      <div className="flex items-center justify-around">
+        
         <button
           type="button"
-          id="mobile-nav-explore-btn"
-          onClick={() => {
-            setSelectedSpace(null);
-            setCurrentView('explore');
-          }}
-          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
-            currentView === 'explore'
-              ? 'text-[#00C878] font-bold'
-              : isLight ? 'text-neutral-500 hover:text-neutral-900' : 'text-[#888888] hover:text-white'
+          onClick={() => focusSearchInput()}
+          className={`flex flex-col items-center space-y-1 py-1 px-3 rounded-xl transition-all ${
+            currentView === 'explore' || currentView === 'details'
+              ? 'text-[#00C878]'
+              : 'text-[#9EABA3] hover:text-[#F2F2F2]'
           }`}
         >
-          <Compass className={`w-5 h-5 mb-0.5 ${currentView === 'explore' ? 'text-[#00C878]' : ''}`} />
-          <span className="text-[10px]">Explore</span>
+          <Compass className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Spaces</span>
         </button>
 
-        {/* 2. Map Search */}
         <button
           type="button"
-          id="mobile-nav-map-btn"
-          onClick={() => {
-            setSelectedSpace(null);
-            setCurrentView('results');
-          }}
-          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all cursor-pointer ${
-            currentView === 'results'
-              ? 'text-[#00C878] font-bold'
-              : isLight ? 'text-neutral-500 hover:text-neutral-900' : 'text-[#888888] hover:text-white'
+          onClick={() => setCurrentView('map')}
+          className={`flex flex-col items-center space-y-1 py-1 px-3 rounded-xl transition-all ${
+            currentView === 'map'
+              ? 'text-[#00C878]'
+              : 'text-[#9EABA3] hover:text-[#F2F2F2]'
           }`}
         >
-          <MapPin className={`w-5 h-5 mb-0.5 ${currentView === 'results' ? 'text-[#00C878]' : ''}`} />
-          <span className="text-[10px]">Map</span>
+          <MapPin className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Around Me</span>
         </button>
 
-        {/* 3. List Space CTA (Center Highlight) */}
         <button
           type="button"
-          id="mobile-nav-list-btn"
-          onClick={() => setIsListSpaceModalOpen(true)}
-          className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[#00C878] hover:text-[#00B06A] transition-all cursor-pointer group"
+          onClick={() => setIsAiAssistantOpen(true)}
+          className="flex flex-col items-center justify-center -mt-5"
         >
-          <div className="w-8 h-8 rounded-full bg-[#00C878]/15 border border-[#00C878]/40 flex items-center justify-center text-[#00C878] group-active:scale-95 transition-transform mb-0.5">
-            <PlusCircle className="w-4 h-4" />
+          <div className="w-11 h-11 rounded-full bg-[#00C878] text-[#0D0D0D] flex items-center justify-center shadow-[0_2px_12px_rgba(0,200,120,0.4)] ring-4 ring-[#0D0D0D] active:scale-95 transition-transform">
+            <Sparkles className="w-5 h-5" />
           </div>
-          <span className="text-[10px] font-bold text-[#00C878]">List Space</span>
+          <span className="text-[10px] font-bold text-[#00C878] mt-0.5">AI Concierge</span>
         </button>
 
-        {/* 4. Passes */}
         <button
           type="button"
-          id="mobile-nav-passes-btn"
-          onClick={() => {
-            setSelectedSpace(null);
-            setCurrentView('passes');
-          }}
-          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all relative cursor-pointer ${
-            currentView === 'passes'
-              ? 'text-[#00C878] font-bold'
-              : isLight ? 'text-neutral-500 hover:text-neutral-900' : 'text-[#888888] hover:text-white'
+          onClick={() => setCurrentView('bookings')}
+          className={`flex flex-col items-center space-y-1 py-1 px-3 rounded-xl transition-all relative ${
+            currentView === 'bookings'
+              ? 'text-[#00C878]'
+              : 'text-[#9EABA3] hover:text-[#F2F2F2]'
           }`}
         >
-          <div className="relative">
-            <Ticket className={`w-5 h-5 mb-0.5 ${currentView === 'passes' ? 'text-[#00C878]' : ''}`} />
-            {activeBookingsCount > 0 && (
-              <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-[#00C878] text-[9px] font-black text-[#0D0D0D] flex items-center justify-center">
-                {activeBookingsCount}
-              </span>
-            )}
-          </div>
-          <span className="text-[10px]">Passes</span>
+          <Ticket className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Passes</span>
+          {userBookings.length > 0 && (
+            <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-[#00C878]" />
+          )}
         </button>
 
-        {/* 5. Menu / Account */}
         <button
           type="button"
-          id="mobile-nav-menu-btn"
-          onClick={onOpenNavDrawer}
-          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl ${
-            isLight ? 'text-neutral-500 hover:text-neutral-900' : 'text-[#888888] hover:text-white'
-          } transition-all cursor-pointer`}
+          onClick={() => setCurrentView('host')}
+          className={`flex flex-col items-center space-y-1 py-1 px-3 rounded-xl transition-all ${
+            currentView === 'host'
+              ? 'text-[#00C878]'
+              : 'text-[#9EABA3] hover:text-[#F2F2F2]'
+          }`}
         >
-          <User className="w-5 h-5 mb-0.5" />
-          <span className="text-[10px]">Menu</span>
+          <Building2 className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Host</span>
         </button>
+
       </div>
-    </div>
+    </nav>
   );
 };

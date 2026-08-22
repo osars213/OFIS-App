@@ -1,61 +1,28 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
-
 export const storageService = {
-  async uploadSpaceImage(file: File, spaceId: string): Promise<{ url: string | null; error: string | null }> {
-    if (!isSupabaseConfigured() || !supabase) {
-      // In demo/offline mode, convert to object URL or data URL
-      const localUrl = URL.createObjectURL(file);
-      return { url: localUrl, error: null };
-    }
-
+  getItem<T>(key: string, defaultValue: T): T {
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${spaceId}/${Date.now()}.${fileExt}`;
-      const filePath = `spaces/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('ofis-media')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) {
-        return { url: null, error: uploadError.message };
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('ofis-media')
-        .getPublicUrl(filePath);
-
-      return { url: publicUrl, error: null };
-    } catch (err: any) {
-      return { url: null, error: err.message || 'Image upload failed' };
+      const item = localStorage.getItem(`ofis_${key}`);
+      if (item === null) return defaultValue;
+      return JSON.parse(item) as T;
+    } catch (e) {
+      console.warn(`Error reading localStorage key ofis_${key}:`, e);
+      return defaultValue;
     }
   },
 
-  async uploadAvatar(file: File, userId: string): Promise<{ url: string | null; error: string | null }> {
-    if (!isSupabaseConfigured() || !supabase) {
-      const localUrl = URL.createObjectURL(file);
-      return { url: localUrl, error: null };
-    }
-
+  setItem<T>(key: string, value: T): void {
     try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `avatars/${userId}-${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('ofis-media')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) {
-        return { url: null, error: uploadError.message };
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('ofis-media')
-        .getPublicUrl(filePath);
-
-      return { url: publicUrl, error: null };
-    } catch (err: any) {
-      return { url: null, error: err.message || 'Avatar upload failed' };
+      localStorage.setItem(`ofis_${key}`, JSON.stringify(value));
+    } catch (e) {
+      console.warn(`Error setting localStorage key ofis_${key}:`, e);
     }
   },
+
+  removeItem(key: string): void {
+    try {
+      localStorage.removeItem(`ofis_${key}`);
+    } catch (e) {
+      console.warn(`Error removing localStorage key ofis_${key}:`, e);
+    }
+  }
 };

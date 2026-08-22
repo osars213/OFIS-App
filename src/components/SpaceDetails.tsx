@@ -1,682 +1,434 @@
-import React, { useState, useMemo } from 'react';
-import {
-  ArrowLeft,
-  Star,
-  MapPin,
-  Clock,
-  ShieldCheck,
-  Wifi,
-  Sparkles,
-  CheckCircle2,
-  Share2,
-  Heart,
-  ChevronRight,
-  Info,
-  Calendar,
+import React, { useState } from 'react';
+import { 
+  ArrowLeft, 
+  MapPin, 
+  Zap, 
+  Wifi, 
+  VolumeX, 
+  Star, 
+  Heart, 
+  ShieldCheck, 
+  Clock, 
+  Users, 
+  Share2, 
+  Calendar, 
   CreditCard,
-  Building,
-  Check,
-  Lock,
-  Zap,
-  Mic,
-  Camera,
-  Tv,
-  Headphones,
-  Sliders,
-  Sun,
-  Flame,
-  Layers,
-  Award,
-  Video,
-  Radio,
-  PhoneCall,
-  MessageCircle,
-  Users,
-  AlertCircle
+  CheckCircle2
 } from 'lucide-react';
-import { Space, Desk, BookingDurationType } from '../types';
 import { useApp } from '../context/AppContext';
+import { spacesService } from '../services/spacesService';
 import { FloorPlan } from './FloorPlan';
 import { ReviewsSection } from './ReviewsSection';
 
-interface SpaceDetailsProps {
-  space: Space;
-  onBack: () => void;
-}
-
-const AVAILABLE_TIME_SLOTS = [
-  { id: '08:00 AM', label: '08:00 AM', status: 'available', tag: 'Early Bird' },
-  { id: '09:00 AM', label: '09:00 AM', status: 'available', tag: 'Popular' },
-  { id: '10:00 AM', label: '10:00 AM', status: 'available', tag: 'Prime' },
-  { id: '11:00 AM', label: '11:00 AM', status: 'available', tag: 'Prime' },
-  { id: '12:00 PM', label: '12:00 PM', status: 'available', tag: 'Afternoon' },
-  { id: '01:00 PM', label: '01:00 PM', status: 'available', tag: 'Afternoon' },
-  { id: '02:00 PM', label: '02:00 PM', status: 'available', tag: 'Popular' },
-  { id: '03:00 PM', label: '03:00 PM', status: 'available', tag: 'Prime' },
-  { id: '04:00 PM', label: '04:00 PM', status: 'available', tag: 'Golden Hour' },
-  { id: '05:00 PM', label: '05:00 PM', status: 'available', tag: 'Evening' },
-  { id: '06:00 PM', label: '06:00 PM', status: 'available', tag: 'Night Session' },
-  { id: '07:00 PM', label: '07:00 PM', status: 'available', tag: 'Night Owl' },
-];
-
-const DURATION_OPTIONS = [
-  { hours: 1, label: '1 Hour', subtitle: 'Quick Session' },
-  { hours: 2, label: '2 Hours', subtitle: 'Standard Block', badge: 'Popular' },
-  { hours: 3, label: '3 Hours', subtitle: 'Focus Pod', badge: 'Recommended' },
-  { hours: 4, label: '4 Hours', subtitle: 'Half Day Sprint', badge: 'Best Value' },
-  { hours: 6, label: '6 Hours', subtitle: 'Extended Block' },
-  { hours: 8, label: '8 Hours', subtitle: 'Full Day Pass', badge: 'Full Day' },
-];
-
-export const SpaceDetails: React.FC<SpaceDetailsProps> = ({ space, onBack }) => {
+export const SpaceDetails: React.FC = () => {
   const {
-    currentCurrency,
-    formatPrice,
-    convertPrice,
-    formatPriceNaira,
-    selectedDesk,
-    setSelectedDesk,
-    setIsCheckoutModalOpen,
-    openAiModal,
+    selectedSpaceId,
+    setCurrentView,
+    savedSpaceIds,
+    toggleSaveSpace,
+    setCheckoutSpace,
+    setIsCheckoutOpen,
     showToast,
-    toggleFavorite,
-    isFavorite,
-    bookingDraft,
-    setBookingDraft,
+    currency,
+    formatPrice,
   } = useApp();
 
-  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
-  const [selectedDate, setSelectedDate] = useState(bookingDraft.startDate || new Date().toISOString().split('T')[0]);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(bookingDraft.startTime || '09:00 AM');
-  const [selectedHours, setSelectedHours] = useState(bookingDraft.durationUnits || 3);
+  const space = selectedSpaceId ? spacesService.getSpaceById(selectedSpaceId) : null;
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [bookingMode, setBookingMode] = useState<'hourly' | 'daily'>('hourly');
+  const [duration, setDuration] = useState(3); // 3 hours default
+  const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>(['desk-01']);
 
-  const isSaved = isFavorite(space.id);
+  if (!space) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center space-y-4">
+        <p className="text-sm text-[#9EABA3]">Space not found or no longer available.</p>
+        <button
+          onClick={() => setCurrentView('explore')}
+          className="px-4 py-2 rounded-xl bg-[#00C878] text-[#0D0D0D] font-bold text-xs"
+        >
+          Back to Spaces
+        </button>
+      </div>
+    );
+  }
 
-  // Hourly and daily rate in Naira
-  const hourlyRateNaira = space.hourlyRateNGN || Math.round(space.hourlyRate * 1550);
-  const dailyRateNaira = space.dailyRateNGN || Math.round(space.dailyRate * 1550);
+  const isSaved = savedSpaceIds.includes(space.id);
+  const calculatedTotal = bookingMode === 'hourly' 
+    ? space.pricePerHour * duration * Math.max(1, selectedSeatIds.length)
+    : space.pricePerDay * Math.max(1, Math.ceil(duration / 8)) * Math.max(1, selectedSeatIds.length);
 
-  // Dynamic equipment fallback based on space category
-  const equipmentList = useMemo(() => {
-    if (space.equipment && space.equipment.length > 0) {
-      return space.equipment;
-    }
-    if (space.primaryCategory === 'CREATE') {
-      return [
-        '4x Shure SM7B Broadcast Microphones with Cloudlifters',
-        'Rodecaster Pro II Audio Production & Mixing Console',
-        '2x Sony FX3 Cinema Cameras with 24-70mm G-Master',
-        'Aputure 300d II Key Light + Nanlite Pavotube RGB Lighting Grid',
-        'Seamless White Cyclorama + Acoustic Soundproofing',
-        'Apple Silicon M3 Max Video Editing Suite',
-        'Sony WH-1000XM5 Studio Monitor Headphones',
-      ];
-    } else if (space.primaryCategory === 'MEET') {
-      return [
-        '75" 4K Sony Bravia HDR AirPlay & HDMI Display',
-        'Polycom Studio 4K Auto-Framing Video Conference Bar',
-        'Jabra Speak 750 Wireless Omnidirectional Microphones',
-        'Solid Mahogany Conference Table with Integrated Power',
-        'Executive Ergonomic Leather Chairs',
-      ];
-    } else if (space.primaryCategory === 'HOST') {
-      return [
-        '150" 4K High-Lumen Laser Projection Screen',
-        'JBL EON Powered Sound PA System with Digital Mixer',
-        '4x Sennheiser Wireless Handheld & Lapel Mics',
-        'Modular Theatre, Classroom & Banquet Seating Configs',
-        'RGB DMX Ambient Stage Wash Lights',
-      ];
+  const toggleSeat = (seatId: string) => {
+    if (selectedSeatIds.includes(seatId)) {
+      setSelectedSeatIds(selectedSeatIds.filter(id => id !== seatId));
     } else {
-      return [
-        'Dual 27" 4K Dell UltraSharp USB-C Power Delivery Monitors',
-        'Herman Miller Aeron Ergonomic Mesh Work Chairs',
-        'Motorized Heavy-Duty Dual-Motor Sit-Stand Workstations',
-        'Private Soundproof Acoustic Zoom & Phone Call Booths',
-        'Dedicated Hardwired 1Gbps LAN Ports at Every Desk',
-      ];
+      setSelectedSeatIds([...selectedSeatIds, seatId]);
     }
-  }, [space]);
-
-  // Compute session end time
-  const calculatedEndTime = useMemo(() => {
-    try {
-      const [time, modifier] = selectedTimeSlot.split(' ');
-      let [hours, minutes] = time.split(':').map(Number);
-      if (modifier === 'PM' && hours < 12) hours += 12;
-      if (modifier === 'AM' && hours === 12) hours = 0;
-
-      const startDateObj = new Date();
-      startDateObj.setHours(hours, minutes, 0, 0);
-      startDateObj.setHours(startDateObj.getHours() + selectedHours);
-
-      return startDateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch (e) {
-      return '05:00 PM';
-    }
-  }, [selectedTimeSlot, selectedHours]);
-
-  // Calculations in Naira (and USD base)
-  const subtotalNaira = hourlyRateNaira * selectedHours;
-  const serviceFeeNaira = Math.round(subtotalNaira * 0.05); // 5% transparent OFIS service fee
-  const totalNaira = subtotalNaira + serviceFeeNaira;
-
-  const handleStartBooking = () => {
-    // Pick first available desk in space if not set
-    let targetDesk = selectedDesk;
-    if (!targetDesk || targetDesk.spaceId !== space.id || targetDesk.status !== 'available') {
-      const spaceDesks = Array.isArray(space.desks) ? space.desks : [];
-      const firstAvail = spaceDesks.find(d => d.status === 'available') || spaceDesks[0];
-      targetDesk = firstAvail;
-      setSelectedDesk(firstAvail);
-    }
-
-    // Save draft state
-    setBookingDraft({
-      startDate: selectedDate,
-      startTime: selectedTimeSlot,
-      durationUnits: selectedHours,
-      durationType: 'hourly',
-    });
-
-    setIsCheckoutModalOpen(true);
   };
 
   const handleShare = () => {
-    if (navigator?.share) {
-      navigator.share({
-        title: space.name,
-        text: `Book ${space.name} in ${space.city} on OFIS!`,
-        url: window.location.href,
-      }).catch(() => {});
-    } else if (navigator?.clipboard?.writeText) {
-      navigator.clipboard.writeText(window.location.href).catch(() => {});
-      showToast('Space link copied to clipboard!', 'info');
-    } else {
-      showToast('Space link ready to share', 'info');
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      showToast('Space link copied to clipboard');
     }
   };
 
-  const quickDates = [
-    { label: 'Today', date: new Date().toISOString().split('T')[0] },
-    {
-      label: 'Tomorrow',
-      date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-    },
-    {
-      label: 'In 2 Days',
-      date: new Date(Date.now() + 172800000).toISOString().split('T')[0],
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-[#F2F2F2] py-6 sm:py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        {/* Top Breadcrumb & Actions Bar */}
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-[#0D0D0D] pb-28 pt-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Navigation Bar */}
+        <div className="flex items-center justify-between py-3 mb-4">
           <button
-            id="back-to-spaces-btn"
-            onClick={onBack}
-            className="flex items-center gap-2 text-xs font-bold text-[#F2F2F2] hover:text-[#00C878] bg-[#171717] hover:bg-[#222222] px-4 py-2 rounded-xl border border-[#282828] transition-colors cursor-pointer"
+            type="button"
+            onClick={() => setCurrentView('explore')}
+            className="flex items-center space-x-2 text-xs font-semibold text-[#9EABA3] hover:text-[#F2F2F2] px-3 py-1.5 rounded-xl bg-[#161D19] border border-[#232D28] transition-all"
           >
-            <ArrowLeft className="w-4 h-4 text-[#00C878]" />
-            <span>Back to All Spaces</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to explore</span>
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center space-x-2">
             <button
-              id="share-space-btn"
+              type="button"
               onClick={handleShare}
-              className="p-2.5 rounded-xl bg-[#171717] border border-[#282828] text-[#9A9A9A] hover:text-white hover:bg-[#222222] text-xs flex items-center gap-1.5 transition-colors font-semibold cursor-pointer"
-              title="Share space"
+              className="p-2 rounded-xl bg-[#161D19] border border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2]"
+              title="Share Space"
             >
               <Share2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Share</span>
             </button>
-
             <button
-              id="space-details-fav-btn"
-              onClick={() => toggleFavorite(space.id)}
-              className={`p-2.5 rounded-xl border text-xs flex items-center gap-1.5 transition-colors font-bold cursor-pointer ${
-                isSaved
-                  ? 'bg-[#063B2A] border-[#00C878] text-[#00C878]'
-                  : 'bg-[#171717] border-[#282828] text-[#9A9A9A] hover:text-white hover:bg-[#222222]'
-              }`}
-              title={isSaved ? 'Remove from saved' : 'Save to favorites'}
+              type="button"
+              onClick={() => toggleSaveSpace(space.id)}
+              className="p-2 rounded-xl bg-[#161D19] border border-[#232D28] text-[#9EABA3] hover:text-[#00C878]"
+              title="Save Space"
             >
-              <Heart className={`w-4 h-4 ${isSaved ? 'fill-[#00C878] text-[#00C878]' : 'text-[#9A9A9A]'}`} />
-              <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Save Space'}</span>
-            </button>
-
-            <button
-              id="ai-advisor-space-btn"
-              onClick={() => openAiModal('match')}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#171717] hover:bg-[#222222] text-[#D6A83A] border border-[#D6A83A]/40 text-xs font-bold cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-[#D6A83A]" />
-              <span>AI Match</span>
+              <Heart className={`w-4 h-4 ${isSaved ? 'fill-[#00C878] text-[#00C878]' : ''}`} />
             </button>
           </div>
         </div>
 
-        {/* Main Title, Nigerian Location & Badges */}
-        <div>
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className="px-3 py-1 rounded-full text-xs font-black bg-[#063B2A] text-[#00C878] border border-[#00C878]/40 uppercase tracking-wider">
-              {space.primaryCategory}
-            </span>
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#171717] text-[#F2F2F2] border border-[#282828]">
-              🇳🇬 {space.neighborhood}, {space.city}
-            </span>
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#1A1A1A] text-[#00C878] border border-[#00C878]/30 flex items-center gap-1">
-              <Zap className="w-3.5 h-3.5 text-[#00C878]" /> 24/7 Power (Gen + Solar)
-            </span>
-            {space.isSuperhost && (
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#D6A83A]/20 text-[#D6A83A] border border-[#D6A83A]/40 flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#D6A83A]" /> Verified Host
+        {/* Gallery */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-8">
+          <div className="lg:col-span-8 aspect-[16/10] bg-[#141816] rounded-2xl overflow-hidden border border-[#1E2522] relative">
+            <img
+              src={space.images[activeImageIdx] || space.featuredImage}
+              alt={space.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute top-4 left-4 flex gap-2">
+              <span className="px-3 py-1 rounded-lg bg-[#0D0D0D]/85 backdrop-blur-md border border-[#232D28] text-xs font-bold text-[#00C878] flex items-center space-x-1.5">
+                <Zap className="w-3.5 h-3.5 text-[#00C878]" />
+                <span>{space.backupPowerType}</span>
               </span>
-            )}
-          </div>
-
-          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-            {space.name}
-          </h1>
-
-          <p className="text-[#9A9A9A] text-xs sm:text-sm mt-1.5 font-normal max-w-3xl leading-relaxed">
-            {space.tagline}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-[#9A9A9A] mt-3">
-            <div className="flex items-center gap-1.5 font-bold text-white">
-              <Star className="w-4 h-4 fill-[#D6A83A] text-[#D6A83A]" />
-              <span>{(space.rating || 4.9).toFixed(2)}</span>
-              <span className="text-[#9A9A9A] font-normal">({space.reviewCount || 10} verified Nigerian reviews)</span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <MapPin className="w-4 h-4 text-[#00C878]" />
-              <span>{space.address || `${space.city}, Nigeria`}</span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <Users className="w-4 h-4 text-[#9A9A9A]" />
-              <span>Capacity: {space.capacity || 10} {(space.capacity || 10) === 1 ? 'person' : 'people'}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Large Photo Gallery */}
-        <div className="space-y-2">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 h-[360px] sm:h-[480px] rounded-2xl overflow-hidden border border-[#262626]">
-            {/* Main big image */}
-            <div className="lg:col-span-8 relative h-full bg-[#141414]">
-              <img
-                src={(space.images || [])[activePhotoIndex] || (space.images || [])[0] || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80'}
-                alt={space.name}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute bottom-4 left-4 bg-[#0D0D0D]/90 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-bold text-white border border-[#282828]">
-                📸 Photo {activePhotoIndex + 1} of {(space.images || []).length || 1}
-              </div>
-            </div>
-
-            {/* Side Thumbnail Stack */}
-            <div className="hidden lg:grid lg:col-span-4 grid-rows-3 gap-2 h-full">
-              {(space.images || []).slice(1, 4).map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActivePhotoIndex(idx + 1)}
-                  className={`relative w-full h-full overflow-hidden rounded-xl border-2 transition-all cursor-pointer ${
-                    activePhotoIndex === idx + 1 ? 'border-[#00C878] ring-2 ring-[#00C878]/30' : 'border-transparent opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  <img src={img} alt={`${space.name} view ${idx + 2}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
             </div>
           </div>
 
-          {/* Mobile thumbnail strip */}
-          <div className="flex lg:hidden gap-2 overflow-x-auto pb-1">
-            {(space.images || []).map((img, idx) => (
-              <button
+          <div className="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-3">
+            {space.images.slice(0, 3).map((img, idx) => (
+              <div
                 key={idx}
-                onClick={() => setActivePhotoIndex(idx)}
-                className={`w-20 h-14 rounded-xl overflow-hidden shrink-0 border-2 ${
-                  activePhotoIndex === idx ? 'border-[#00C878]' : 'border-[#262626] opacity-60'
+                onClick={() => setActiveImageIdx(idx)}
+                className={`aspect-[16/10] lg:aspect-auto lg:h-[135px] rounded-xl overflow-hidden border cursor-pointer transition-all ${
+                  activeImageIdx === idx
+                    ? 'border-[#00C878] ring-2 ring-[#00C878]/30'
+                    : 'border-[#1E2522] opacity-70 hover:opacity-100'
                 }`}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
-              </button>
+                <img src={img} alt="preview" className="w-full h-full object-cover" />
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Main Two-Column Layout: Space Details & Booking Card */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-2">
-          {/* Left Column: Description, Host, Facilities, Equipment, Rules */}
-          <div className="lg:col-span-7 space-y-8">
-            {/* Verified Superhost Box with WhatsApp Chat */}
-            <div className="p-5 rounded-2xl bg-[#171717] border border-[#262626] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <img
-                  src={space.hostAvatar || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'}
-                  alt={space.hostName}
-                  className="w-12 h-12 rounded-2xl object-cover ring-2 ring-[#00C878]/50"
-                />
+        {/* Main Content & Booking Column */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Left Details Column */}
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* Header info */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2 text-xs text-[#00C878]">
+                <MapPin className="w-4 h-4" />
+                <span className="font-semibold">{space.address}</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F2F2F2]">{space.title}</h1>
+              <p className="text-sm text-[#9EABA3] leading-relaxed">{space.description}</p>
+            </div>
+
+            {/* Core Telemetry Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-xl bg-[#141816] border border-[#1E2522] space-y-1">
+                <div className="flex items-center space-x-1.5 text-xs text-[#00C878] font-bold">
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Power Backup</span>
+                </div>
+                <p className="text-xs font-semibold text-[#F2F2F2]">{space.backupPowerType.split(' ')[0]}</p>
+                <p className="text-[10px] text-[#718079]">Zero outage history</p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#141816] border border-[#1E2522] space-y-1">
+                <div className="flex items-center space-x-1.5 text-xs text-[#00C878] font-bold">
+                  <Wifi className="w-3.5 h-3.5" />
+                  <span>Speed Test</span>
+                </div>
+                <p className="text-xs font-semibold text-[#F2F2F2]">{space.internetSpeedMbps} Mbps</p>
+                <p className="text-[10px] text-[#718079]">High-speed fiber internet</p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#141816] border border-[#1E2522] space-y-1">
+                <div className="flex items-center space-x-1.5 text-xs text-[#00C878] font-bold">
+                  <VolumeX className="w-3.5 h-3.5" />
+                  <span>Noise Rating</span>
+                </div>
+                <p className="text-xs font-semibold text-[#F2F2F2] truncate">{space.noiseLevel.split('/')[0]}</p>
+                <p className="text-[10px] text-[#718079]">Acoustic insulation</p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-[#141816] border border-[#1E2522] space-y-1">
+                <div className="flex items-center space-x-1.5 text-xs text-[#00C878] font-bold">
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Max Capacity</span>
+                </div>
+                <p className="text-xs font-semibold text-[#F2F2F2]">{space.capacity} Guests</p>
+                <p className="text-[10px] text-[#718079]">Ergonomic seating</p>
+              </div>
+            </div>
+
+            {/* Floor Plan Seat Selector (if provided) */}
+            {space.floorPlanSeats && space.floorPlanSeats.length > 0 && (
+              <FloorPlan
+                seats={space.floorPlanSeats}
+                selectedSeatIds={selectedSeatIds}
+                onToggleSeat={toggleSeat}
+              />
+            )}
+
+            {/* Amenities Grid */}
+            <div className="space-y-3">
+              <h3 className="text-base font-bold text-[#F2F2F2]">What this space includes</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {space.amenities.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center space-x-2.5 p-3 rounded-xl bg-[#141816] border border-[#1E2522]"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-[#00C878] flex-shrink-0" />
+                    <span className="text-xs text-[#F2F2F2] font-medium">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Host Section */}
+            <div className="p-5 rounded-2xl bg-[#141816] border border-[#1E2522] flex items-center justify-between">
+              <div className="flex items-center space-x-3.5">
+                {space.hostAvatar && (
+                  <img
+                    src={space.hostAvatar}
+                    alt={space.hostName}
+                    className="w-12 h-12 rounded-xl object-cover ring-2 ring-[#00C878]/30"
+                  />
+                )}
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-sm text-white">{space.hostName}</span>
+                  <div className="flex items-center space-x-2">
+                    <h4 className="text-sm font-bold text-[#F2F2F2]">{space.hostName}</h4>
                     {space.isSuperhost && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#D6A83A]/20 text-[#D6A83A] border border-[#D6A83A]/40">
-                        ★ VERIFIED HOST
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#00C878] text-[#0D0D0D] font-bold uppercase">
+                        Superhost
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-[#9A9A9A] mt-0.5">
-                    Host response time: <span className="font-bold text-[#00C878]">{space.hostResponseTime || 'Within 5 minutes'}</span>
-                  </p>
+                  <p className="text-xs text-[#9EABA3]">Host response: {space.hostResponseRate || '99% • Under 10 mins'}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <a
-                  href={`https://wa.me/${(space.hostWhatsApp || '').replace('+', '')}?text=Hello%20${encodeURIComponent(space.hostName || '')},%20I%20am%20interested%20in%20booking%20${encodeURIComponent(space.name || '')}%20on%20OFIS.`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] rounded-xl text-xs font-black transition-colors shadow-md"
-                >
-                  <MessageCircle className="w-3.5 h-3.5 text-[#0D0D0D]" />
-                  <span>WhatsApp Host</span>
-                </a>
-
-                <a
-                  href={`tel:${space.hostPhone || ''}`}
-                  className="p-2 bg-[#222222] hover:bg-[#2A2A2A] text-white rounded-xl transition-colors border border-[#2D2D2D]"
-                  title="Call Host"
-                >
-                  <PhoneCall className="w-4 h-4" />
-                </a>
+              <div className="text-right">
+                <span className="text-xs text-[#00C878] font-bold">Verified Partner</span>
+                <p className="text-[10px] text-[#718079]">Identity & space audited</p>
               </div>
             </div>
 
-            {/* Description */}
-            <div className="space-y-3">
-              <h2 className="text-base sm:text-lg font-black text-white">
-                About this Space
-              </h2>
-              <p className="text-[#9A9A9A] text-xs sm:text-sm leading-relaxed whitespace-pre-line">
-                {space.description}
-              </p>
-            </div>
-
-            {/* Facilities / Amenities */}
-            <div className="space-y-3">
-              <h2 className="text-base sm:text-lg font-black text-white">
-                Key Facilities & Nigerian Infrastructure
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {(space.amenities || []).map((facility, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-2.5 p-3 rounded-xl bg-[#171717] border border-[#262626] text-xs font-semibold text-[#F2F2F2]"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-[#00C878] shrink-0" />
-                    <span>{facility}</span>
-                  </div>
+            {/* Space Rules */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-[#F2F2F2]">House & Security Rules</h3>
+              <ul className="space-y-1.5">
+                {space.rules.map((r, i) => (
+                  <li key={i} className="text-xs text-[#9EABA3] flex items-start space-x-2">
+                    <span className="text-[#00C878] font-bold">•</span>
+                    <span>{r}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
 
-            {/* Available Equipment & Gear */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base sm:text-lg font-black text-white">
-                  Included Gear & Production Equipment
-                </h2>
-                <span className="text-[11px] font-bold text-[#00C878] bg-[#063B2A] px-2.5 py-0.5 rounded-full border border-[#00C878]/30">
-                  Included
-                </span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {(equipmentList || []).map((eq, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-2.5 p-3 rounded-xl bg-[#171717] border border-[#262626] text-xs font-semibold text-[#F2F2F2]"
-                  >
-                    <Zap className="w-4 h-4 text-[#D6A83A] shrink-0" />
-                    <span>{eq}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Reviews */}
+            <ReviewsSection
+              spaceId={space.id}
+              rating={space.rating}
+              reviewsCount={space.reviewsCount}
+              spaceTitle={space.title}
+            />
 
-            {/* Interactive Seat / Station Selection */}
-            <div className="space-y-3">
-              <h2 className="text-base sm:text-lg font-black text-white">
-                Available Workstations & Pods
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(space.desks || []).map(desk => {
-                  const isSelected = selectedDesk?.id === desk.id;
-                  const isAvail = desk.status === 'available';
-
-                  return (
-                    <div
-                      key={desk.id}
-                      onClick={() => isAvail && setSelectedDesk(desk)}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-[#063B2A] border-[#00C878] ring-2 ring-[#00C878]/40 shadow-sm'
-                          : isAvail
-                          ? 'bg-[#171717] border-[#262626] hover:border-[#383838]'
-                          : 'bg-[#121212] border-[#202020] opacity-50 cursor-not-allowed'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-md bg-[#222222] text-white">
-                          {desk.code}
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            isAvail ? 'bg-[#063B2A] text-[#00C878]' : 'bg-rose-950 text-rose-300'
-                          }`}
-                        >
-                          {isAvail ? '🟢 Available' : '🔴 Occupied'}
-                        </span>
-                      </div>
-
-                      <h4 className="text-xs font-black text-white">{desk.name}</h4>
-                      <p className="text-[11px] text-[#9A9A9A] mt-0.5">{desk.monitorSetup}</p>
-
-                      <div className="mt-2 text-[10px] text-stone-300 flex items-center gap-2">
-                        <span>💺 {desk.chairType}</span>
-                        {desk.standingMotorized && <span>• ⚡ Motorized Desk</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Cancellation Policy & House Rules */}
-            <div className="p-5 rounded-2xl bg-[#171717] border border-[#282828] space-y-3 text-xs text-[#F2F2F2]">
-              <div className="flex items-center gap-2 font-bold text-[#D6A83A]">
-                <ShieldCheck className="w-4 h-4 text-[#D6A83A]" />
-                <span>Cancellation & Host Policies</span>
-              </div>
-              <p className="text-[#9A9A9A] font-normal">
-                {space.cancellationPolicy}
-              </p>
-              <div className="border-t border-[#262626] pt-2 space-y-1">
-                <span className="font-bold text-white">House Rules:</span>
-                <ul className="list-disc pl-4 space-y-0.5 text-[#9A9A9A]">
-                  {(space.rules || []).map((rule, idx) => (
-                    <li key={idx}>{rule}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Reviews Section */}
-            <ReviewsSection space={space} />
           </div>
 
-          {/* Right Column: Prominent Booking Card & Instant Pricing Calculation */}
-          <div className="lg:col-span-5 sticky top-24">
-            <div className="bg-[#171717] rounded-3xl border border-[#282828] shadow-2xl p-6 sm:p-7 space-y-6">
-              {/* Header with Pricing */}
-              <div className="flex items-baseline justify-between border-b border-[#262626] pb-4">
+          {/* Right Sticky Booking Box */}
+          <div className="lg:col-span-4">
+            <div className="sticky top-24 bg-[#141816] rounded-2xl border border-[#232D28] p-6 shadow-2xl space-y-5">
+              
+              {/* Pricing Header */}
+              <div className="flex items-baseline justify-between border-b border-[#1E2522] pb-4">
                 <div>
-                  <span className="text-2xl sm:text-3xl font-black text-white font-mono">
-                    {formatPriceNaira(hourlyRateNaira)}
+                  <span className="text-2xl font-black text-[#00C878] font-mono">
+                    {formatPrice(bookingMode === 'hourly' ? space.pricePerHour : space.pricePerDay)}
                   </span>
-                  <span className="text-xs font-normal text-[#9A9A9A] ml-1">/ hour</span>
+                  <span className="text-xs text-[#9EABA3]"> / {bookingMode === 'hourly' ? 'hour' : 'day'}</span>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs text-[#9A9A9A] block">or Full Day Pass</span>
-                  <span className="text-xs font-black text-[#00C878] font-mono">
-                    {formatPriceNaira(dailyRateNaira)} / day
-                  </span>
-                </div>
-              </div>
-
-              {/* Step 1: Select Date */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-white flex items-center justify-between">
-                  <span>1. Select Date</span>
-                  <span className="text-[11px] font-normal text-[#9A9A9A]">Pick a day</span>
-                </label>
-
-                <div className="grid grid-cols-3 gap-2">
-                  {quickDates.map(qd => (
-                    <button
-                      key={qd.label}
-                      onClick={() => setSelectedDate(qd.date)}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                        selectedDate === qd.date
-                          ? 'bg-[#063B2A] text-[#00C878] border-[#00C878]'
-                          : 'bg-[#202020] border-[#2D2D2D] text-[#9A9A9A] hover:text-white'
-                      }`}
-                    >
-                      {qd.label}
-                    </button>
-                  ))}
-                </div>
-
-                <input
-                  type="date"
-                  value={selectedDate}
-                  min={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full text-xs font-bold p-2.5 rounded-xl border border-[#2D2D2D] bg-[#202020] text-white focus:outline-none focus:border-[#00C878]"
-                />
-              </div>
-
-              {/* Step 2: Select Start Time Slot */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-white flex items-center justify-between">
-                  <span>2. Start Time Slot</span>
-                  <span className="text-[11px] font-bold text-[#00C878]">🟢 Available</span>
-                </label>
-
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 max-h-36 overflow-y-auto pr-1">
-                  {AVAILABLE_TIME_SLOTS.map(slot => (
-                    <button
-                      key={slot.id}
-                      onClick={() => setSelectedTimeSlot(slot.id)}
-                      className={`p-2 rounded-xl text-center border transition-all cursor-pointer ${
-                        selectedTimeSlot === slot.id
-                          ? 'bg-[#00C878] text-[#0D0D0D] border-[#00C878] font-black'
-                          : 'bg-[#202020] border-[#2D2D2D] text-[#F2F2F2] hover:bg-[#2A2A2A] font-medium'
-                      }`}
-                    >
-                      <div className="text-xs">{slot.label}</div>
-                    </button>
-                  ))}
+                <div className="flex items-center space-x-1 text-xs text-[#F2F2F2]">
+                  <Star className="w-3.5 h-3.5 fill-[#00C878] text-[#00C878]" />
+                  <span className="font-bold">{space.rating}</span>
+                  <span className="text-[#718079]">({space.reviewsCount})</span>
                 </div>
               </div>
 
-              {/* Step 3: Duration Selector */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-white flex items-center justify-between">
-                  <span>3. Duration</span>
-                  <span className="text-[11px] font-bold text-[#00C878]">
-                    {selectedTimeSlot} – {calculatedEndTime}
-                  </span>
-                </label>
+              {/* Mode Toggle */}
+              <div className="grid grid-cols-2 gap-2 bg-[#1A201D] p-1 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setBookingMode('hourly')}
+                  className={`py-2 text-xs font-bold rounded-lg transition-all ${
+                    bookingMode === 'hourly'
+                      ? 'bg-[#00C878] text-[#0D0D0D] shadow-sm'
+                      : 'text-[#9EABA3] hover:text-[#F2F2F2]'
+                  }`}
+                >
+                  Hourly Pass
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBookingMode('daily')}
+                  className={`py-2 text-xs font-bold rounded-lg transition-all ${
+                    bookingMode === 'daily'
+                      ? 'bg-[#00C878] text-[#0D0D0D] shadow-sm'
+                      : 'text-[#9EABA3] hover:text-[#F2F2F2]'
+                  }`}
+                >
+                  Full Day Pass
+                </button>
+              </div>
 
-                <div className="grid grid-cols-3 gap-2">
-                  {DURATION_OPTIONS.map(opt => (
-                    <button
-                      key={opt.hours}
-                      onClick={() => setSelectedHours(opt.hours)}
-                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                        selectedHours === opt.hours
-                          ? 'bg-[#063B2A] text-[#00C878] border-[#00C878]'
-                          : 'bg-[#202020] border-[#2D2D2D] text-[#F2F2F2] hover:bg-[#2A2A2A]'
-                      }`}
-                    >
-                      <div className="text-xs font-bold">{opt.label}</div>
-                      <div className={`text-[10px] ${selectedHours === opt.hours ? 'text-[#00C878]' : 'text-[#9A9A9A]'}`}>
-                        {opt.badge || opt.subtitle}
-                      </div>
-                    </button>
-                  ))}
+              {/* Booking Selectors */}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-[#9EABA3] mb-1 block">
+                    Duration ({bookingMode === 'hourly' ? 'Hours' : 'Days'})
+                  </label>
+                  <select
+                    value={duration}
+                    onChange={(e) => setDuration(Number(e.target.value))}
+                    className="w-full p-2.5 bg-[#1A201D] rounded-xl text-xs text-[#F2F2F2] border border-[#232D28] focus:border-[#00C878] focus:outline-none"
+                  >
+                    {bookingMode === 'hourly' ? (
+                      <>
+                        <option value={1}>1 Hour</option>
+                        <option value={2}>2 Hours</option>
+                        <option value={3}>3 Hours (Recommended)</option>
+                        <option value={4}>4 Hours (Half Day)</option>
+                        <option value={6}>6 Hours</option>
+                        <option value={8}>8 Hours (Full Day)</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value={1}>1 Day (9:00 AM - 6:00 PM)</option>
+                        <option value={2}>2 Days</option>
+                        <option value={5}>5 Days (Weekly Pass)</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-semibold text-[#9EABA3] mb-1 block">
+                    Start Time
+                  </label>
+                  <select className="w-full p-2.5 bg-[#1A201D] rounded-xl text-xs text-[#F2F2F2] border border-[#232D28] focus:border-[#00C878] focus:outline-none">
+                    <option>Now (Instant Check-In)</option>
+                    <option>10:00 AM Today</option>
+                    <option>12:00 PM Today</option>
+                    <option>02:00 PM Today</option>
+                    <option>Tomorrow Morning (09:00 AM)</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Step 4: Instant Calculation Summary in Naira */}
-              <div className="bg-[#202020] rounded-2xl p-4 border border-[#2D2D2D] space-y-2.5 text-xs">
-                <div className="font-mono font-black text-white border-b border-[#2A2A2A] pb-1.5 flex items-center justify-between">
-                  <span>Booking Breakdown</span>
-                  <span className="text-[10px] font-bold text-[#00C878]">🇳🇬 ₦ NGN</span>
+              {/* Calculation Breakdown */}
+              <div className="p-3.5 rounded-xl bg-[#1A201D] space-y-2 text-xs">
+                <div className="flex justify-between text-[#9EABA3]">
+                  <span>Space ({duration} {bookingMode === 'hourly' ? (duration === 1 ? 'hr' : 'hrs') : (duration === 1 ? 'day' : 'days')})</span>
+                  <span>{formatPrice(calculatedTotal)}</span>
                 </div>
-
-                <div className="flex items-center justify-between text-[#9A9A9A]">
-                  <span>{formatPriceNaira(hourlyRateNaira)} × {selectedHours} {selectedHours === 1 ? 'hour' : 'hours'}</span>
-                  <span className="font-mono font-bold text-white">{formatPriceNaira(subtotalNaira)}</span>
+                {selectedSeatIds.length > 1 && (
+                  <div className="flex justify-between text-[#9EABA3]">
+                    <span>Seats selected</span>
+                    <span>{selectedSeatIds.length} desks</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-[#9EABA3]">
+                  <span>Service Fee</span>
+                  <span className="text-[#00C878] font-semibold">{formatPrice(0)} (Free)</span>
                 </div>
-
-                <div className="flex items-center justify-between text-[#9A9A9A]">
-                  <span className="flex items-center gap-1">
-                    <span>OFIS Service fee (5%)</span>
-                    <Info className="w-3 h-3 text-[#9A9A9A]" />
-                  </span>
-                  <span className="font-mono font-bold text-white">{formatPriceNaira(serviceFeeNaira)}</span>
-                </div>
-
-                <div className="border-t border-[#2A2A2A] pt-2 flex items-center justify-between text-white font-black text-sm">
-                  <span>Total Amount</span>
-                  <span className="font-mono text-base text-[#00C878]">{formatPriceNaira(totalNaira)}</span>
+                <div className="pt-2 border-t border-[#232D28] flex justify-between font-bold text-sm text-[#F2F2F2]">
+                  <span>Total</span>
+                  <span className="text-[#00C878] font-mono text-base">{formatPrice(calculatedTotal)}</span>
                 </div>
               </div>
 
-              {/* Step 5 / Primary CTA: "Book this space" */}
+              {/* Book Space Button */}
               <button
-                id="book-this-space-cta-btn"
-                onClick={handleStartBooking}
-                className="w-full py-4 px-6 rounded-2xl bg-[#00C878] hover:bg-[#00b06a] text-[#0D0D0D] font-black text-sm transition-all shadow-xl shadow-[#00C878]/10 flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                type="button"
+                onClick={() => {
+                  setCheckoutSpace(space);
+                  setIsCheckoutOpen(true);
+                }}
+                className="w-full py-3.5 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-extrabold text-sm transition-all shadow-[0_4px_16px_rgba(0,200,120,0.3)] active:scale-95 flex items-center justify-center space-x-2"
               >
-                <CreditCard className="w-4 h-4 text-[#0D0D0D]" />
-                <span>Book this space • {formatPriceNaira(totalNaira)}</span>
+                <Zap className="w-4 h-4 fill-current" />
+                <span>Book Space</span>
               </button>
 
-              {/* Trust Markers */}
-              <div className="flex items-center justify-center gap-4 text-[11px] font-semibold text-[#9A9A9A] pt-1">
-                <span className="flex items-center gap-1">
-                  <Lock className="w-3 h-3 text-[#00C878]" /> Paystack Secured
-                </span>
-                <span className="flex items-center gap-1">
-                  <Zap className="w-3 h-3 text-[#D6A83A]" /> Instant Pass
-                </span>
-                <span className="flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-[#00C878]" /> Power Guaranteed
-                </span>
+              <div className="flex items-center justify-center space-x-1.5 text-[11px] text-[#718079]">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#00C878]" />
+                <span>Clear pricing • Secure payment • Instant booking</span>
               </div>
+
             </div>
           </div>
+
         </div>
+
+        {/* Mobile Sticky Booking Bar */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3.5 bg-[#141816]/95 backdrop-blur-md border-t border-[#232D28] z-30 flex items-center justify-between">
+          <div>
+            <div className="text-[10px] text-[#9EABA3]">Total</div>
+            <div className="text-base font-extrabold text-[#00C878] font-mono">
+              {formatPrice(calculatedTotal)}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setCheckoutSpace(space);
+              setIsCheckoutOpen(true);
+            }}
+            className="px-6 py-2.5 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-extrabold text-xs shadow-md active:scale-95 transition-all flex items-center gap-1.5"
+          >
+            <Zap className="w-3.5 h-3.5 fill-current" />
+            <span>Book Space</span>
+          </button>
+        </div>
+
       </div>
     </div>
   );

@@ -1,300 +1,84 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { SpaceList } from './components/SpaceList';
-import { SearchResultsView } from './components/SearchResultsView';
 import { SpaceDetails } from './components/SpaceDetails';
+import { ExploreMapView } from './components/ExploreMapView';
 import { UserBookingsView } from './components/UserBookingsView';
 import { HostDashboard } from './components/HostDashboard';
-import { AdminPlatformDashboard } from './components/AdminPlatformDashboard';
+import { OfisNavigationDrawer } from './components/OfisNavigationDrawer';
+import { OfisAuthModal } from './components/OfisAuthModal';
 import { CheckoutModal } from './components/CheckoutModal';
 import { DigitalPassModal } from './components/DigitalPassModal';
 import { ListSpaceModal } from './components/ListSpaceModal';
 import { AiAssistantModal } from './components/AiAssistantModal';
-import { WriteReviewModal } from './components/WriteReviewModal';
-import { SessionReminderModal } from './components/SessionReminderModal';
-import { SessionReminderToast } from './components/SessionReminderToast';
-import { OfisAuthModal } from './components/OfisAuthModal';
-import { BookingSuccessModal } from './components/BookingSuccessModal';
-import { AvatarCreationModal } from './components/AvatarCreationModal';
-import { OfisOpeningAnimation } from './components/OfisOpeningAnimation';
-import { OfisNavigationDrawer } from './components/OfisNavigationDrawer';
-import { MobileBottomNav } from './components/MobileBottomNav';
-import { OfisInfoModal, InfoModalSection } from './components/OfisInfoModal';
 import { SettingsModal } from './components/SettingsModal';
-import { OfisLogo } from './components/OfisLogo';
-import {
-  Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  Info,
-  XCircle,
-  Building2,
-  CreditCard,
-  Zap,
-  Lock,
-  ShieldCheck,
-  Ticket
-} from 'lucide-react';
+import { BookingDetailsModal } from './components/BookingDetailsModal';
+import { ContactHostModal } from './components/ContactHostModal';
+import { DirectionsModal } from './components/DirectionsModal';
+import { WriteReviewModal } from './components/WriteReviewModal';
+import { MobileBottomNav } from './components/MobileBottomNav';
+import ofisWordmark from './assets/ofis-wordmark.png';
 
-const AppContent: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'explore' | 'results' | 'passes' | 'host' | 'ops'>('explore');
-  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
-  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
-  const [infoModalSection, setInfoModalSection] = useState<InfoModalSection>('about');
-
-  const [showIntroAnimation, setShowIntroAnimation] = useState<boolean>(() => {
-    // Only run on initial launch
-    const hasSeenIntro = sessionStorage.getItem('ofis_intro_seen');
-    return !hasSeenIntro;
-  });
-
-  const {
-    selectedSpace,
-    setSelectedSpace,
-    toast,
-    reminderBooking,
-    isReminderModalOpen,
-    setIsReminderModalOpen,
-    isReminderToastVisible,
-    dismissSessionReminder,
-    snoozeSessionReminder,
-    isAuthModalOpen,
-    setIsAuthModalOpen,
-    authModalMode,
-    isAvatarModalOpen,
-    setIsAvatarModalOpen,
-    isPassModalOpen,
-    setIsPassModalOpen,
-    isBookingSuccessModalOpen,
-    setIsBookingSuccessModalOpen,
-    latestSuccessBooking,
-    setActivePassBooking,
-    setIsListSpaceModalOpen,
-    isSettingsModalOpen,
-    setIsSettingsModalOpen,
-    effectiveTheme,
-  } = useApp();
-
-  const isLight = effectiveTheme === 'light';
-
-  const handleCompleteIntro = useCallback(() => {
-    try {
-      sessionStorage.setItem('ofis_intro_seen', 'true');
-    } catch {
-      // ignore storage quota / sandbox restrictions
-    }
-    setShowIntroAnimation(false);
-  }, []);
-
-  const handleOpenInfoSection = (section: InfoModalSection) => {
-    setInfoModalSection(section);
-    setIsInfoModalOpen(true);
-  };
+const MainLayout: React.FC = () => {
+  const { currentView, toastMessage, setCurrentView } = useApp();
 
   return (
-    <div className={`min-h-screen ${
-      isLight ? 'bg-[#F8FAFC] text-neutral-900' : 'bg-[#0D0D0D] text-[#F2F2F2]'
-    } flex flex-col font-sans selection:bg-[#00C878] selection:text-[#0D0D0D] transition-colors duration-150`}>
-      {/* Startup Cinematic Animation (runs once on initial launch) */}
-      {showIntroAnimation && (
-        <OfisOpeningAnimation
-          onComplete={handleCompleteIntro}
-          onSkip={handleCompleteIntro}
-        />
-      )}
+    <div className="min-h-screen bg-[#0D0D0D] text-[#F2F2F2] flex flex-col selection:bg-[#00C878] selection:text-[#0D0D0D]">
+      {/* Top Navbar */}
+      <Navbar />
 
-      {/* Top Header Navbar */}
-      <Navbar
-        currentView={currentView}
-        setCurrentView={setCurrentView}
-        onOpenNavDrawer={() => setIsNavDrawerOpen(true)}
-      />
-
-      {/* Slide-out Navigation Drawer (Hamburger Menu ☰) */}
-      <OfisNavigationDrawer
-        isOpen={isNavDrawerOpen}
-        onClose={() => setIsNavDrawerOpen(false)}
-        onNavigate={(view) => {
-          setSelectedSpace(null);
-          setCurrentView(view);
-        }}
-        onOpenListSpace={() => setIsListSpaceModalOpen(true)}
-        onOpenInfoSection={handleOpenInfoSection}
-      />
-
-      {/* Rich Informational Modals */}
-      <OfisInfoModal
-        isOpen={isInfoModalOpen}
-        onClose={() => setIsInfoModalOpen(false)}
-        initialSection={infoModalSection}
-        onNavigateToExplore={() => {
-          setSelectedSpace(null);
-          setCurrentView('explore');
-        }}
-        onNavigateToListSpace={() => setIsListSpaceModalOpen(true)}
-        onNavigateToHostHub={() => {
-          setSelectedSpace(null);
-          setCurrentView('host');
-        }}
-      />
-
-      {/* Main Content Area */}
-      <main className="flex-1 pb-16">
-        {currentView === 'explore' && (
-          <>
-            {selectedSpace ? (
-              <SpaceDetails
-                space={selectedSpace}
-                onBack={() => setSelectedSpace(null)}
-              />
-            ) : (
-              <SpaceList
-                onSelectSpace={(space) => setSelectedSpace(space)}
-                onNavigateToResults={() => setCurrentView('results')}
-              />
-            )}
-          </>
-        )}
-
-        {currentView === 'results' && (
-          <>
-            {selectedSpace ? (
-              <SpaceDetails
-                space={selectedSpace}
-                onBack={() => setSelectedSpace(null)}
-              />
-            ) : (
-              <SearchResultsView
-                onSelectSpace={(space) => setSelectedSpace(space)}
-                onBackToHome={() => setCurrentView('explore')}
-              />
-            )}
-          </>
-        )}
-
-        {currentView === 'passes' && <UserBookingsView />}
+      {/* Dynamic Views */}
+      <div className="flex-1">
+        {currentView === 'explore' && <SpaceList />}
+        {currentView === 'details' && <SpaceDetails />}
+        {currentView === 'map' && <ExploreMapView />}
+        {currentView === 'bookings' && <UserBookingsView />}
         {currentView === 'host' && <HostDashboard />}
-        {currentView === 'ops' && <AdminPlatformDashboard />}
-      </main>
+      </div>
 
-      {/* Premium Footer */}
-      <footer className={`${
-        isLight ? 'bg-white text-neutral-600 border-neutral-200' : 'bg-[#0A0A0A] text-[#9A9A9A] border-[#222222]'
-      } text-xs border-t py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-150`}>
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <OfisLogo size="sm" showTagline={true} />
+      {/* Footer */}
+      <footer className="border-t border-[#1E2522] bg-[#0A0D0B] py-12 px-4 sm:px-6 lg:px-8 hidden md:block">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center sm:text-left">
+            <img src={ofisWordmark} alt="OFIS" className="h-8 w-auto object-contain mx-auto sm:mx-0" />
+            <p className="text-xs text-[#718079] max-w-sm">
+              Nigeria's verified workspace marketplace for high-performance teams, creators, and professionals.
+            </p>
           </div>
 
-          {/* Features badge */}
-          <div className={`flex flex-wrap items-center justify-center gap-4 text-[11px] ${isLight ? 'text-neutral-600' : 'text-[#9A9A9A]'}`}>
-            <span className={`flex items-center gap-1.5 ${isLight ? 'text-neutral-800 font-semibold' : 'text-[#F2F2F2]'}`}>
-              <Zap className="w-3.5 h-3.5 text-[#00C878]" /> Hourly & Daily Space Bookings
-            </span>
-            <span className={`flex items-center gap-1.5 ${isLight ? 'text-neutral-800 font-semibold' : 'text-[#F2F2F2]'}`}>
-              <CreditCard className="w-3.5 h-3.5 text-[#D6A83A]" /> Paystack, Flutterwave & Bank Transfer
-            </span>
-            <span className={`flex items-center gap-1.5 ${isLight ? 'text-neutral-800 font-semibold' : 'text-[#F2F2F2]'}`}>
-              <Lock className="w-3.5 h-3.5 text-[#00C878]" /> Instant Digital Pass & Keyless Entry
-            </span>
-          </div>
-
-          <div className={`text-[11px] ${isLight ? 'text-neutral-500' : 'text-[#9A9A9A]'} font-medium text-center md:text-right`}>
-            Lagos • Abuja • Port Harcourt • Ibadan • Benin City • Enugu
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-[#9EABA3]">
+            <button onClick={() => setCurrentView('explore')} className="hover:text-[#00C878] transition-colors">Spaces</button>
+            <button onClick={() => setCurrentView('map')} className="hover:text-[#00C878] transition-colors">Map</button>
+            <button onClick={() => setCurrentView('bookings')} className="hover:text-[#00C878] transition-colors">Access Passes</button>
+            <button onClick={() => setCurrentView('host')} className="hover:text-[#00C878] transition-colors">Host Portal</button>
+            <span className="text-[#35433C]">|</span>
+            <span className="text-[11px] text-[#718079]">© {new Date().getFullYear()} OFIS Nigeria</span>
           </div>
         </div>
       </footer>
 
-      {/* Global Modals */}
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
+
+      {/* Modals & Overlays */}
+      <OfisNavigationDrawer />
+      <OfisAuthModal />
       <CheckoutModal />
       <DigitalPassModal />
+      <BookingDetailsModal />
+      <ContactHostModal />
+      <DirectionsModal />
+      <WriteReviewModal />
       <ListSpaceModal />
       <AiAssistantModal />
-      <WriteReviewModal />
-      <SettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-      />
-      <SessionReminderModal
-        isOpen={isReminderModalOpen}
-        onClose={dismissSessionReminder}
-        booking={reminderBooking}
-        onSnooze={snoozeSessionReminder}
-      />
+      <SettingsModal />
 
-      {/* Mobile Bottom Navigation (Hotels.ng Simplicity) */}
-      <MobileBottomNav
-        currentView={currentView}
-        setCurrentView={(view) => {
-          setSelectedSpace(null);
-          setCurrentView(view);
-        }}
-        onOpenNavDrawer={() => setIsNavDrawerOpen(true)}
-      />
-
-      {/* OFIS Sign In & Sign Up Modal with Guided Choice Landing */}
-      <OfisAuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-        initialMode={authModalMode}
-        onCompletedHostSignup={() => {
-          setIsListSpaceModalOpen(true);
-        }}
-        onCompletedClientSignup={() => {
-          setSelectedSpace(null);
-          setCurrentView('explore');
-        }}
-      />
-
-      {/* OFIS Profile Avatar Customizer Modal */}
-      <AvatarCreationModal
-        isOpen={isAvatarModalOpen}
-        onClose={() => setIsAvatarModalOpen(false)}
-      />
-
-      {/* OFIS Cinematic Booking Success Modal */}
-      <BookingSuccessModal
-        isOpen={isBookingSuccessModalOpen}
-        booking={latestSuccessBooking}
-        onViewPass={() => {
-          setIsBookingSuccessModalOpen(false);
-          if (latestSuccessBooking) {
-            setActivePassBooking(latestSuccessBooking);
-            setIsPassModalOpen(true);
-          }
-        }}
-        onClose={() => setIsBookingSuccessModalOpen(false)}
-      />
-
-      {/* 1-Hour Session Reminder Floating Toast */}
-      {isReminderToastVisible && reminderBooking && !isReminderModalOpen && (
-        <SessionReminderToast
-          booking={reminderBooking}
-          onOpenModal={() => setIsReminderModalOpen(true)}
-          onDismiss={dismissSessionReminder}
-          onSnooze={snoozeSessionReminder}
-        />
-      )}
-
-      {/* Global Notification Toast */}
-      {toast && (
-        <div
-          id="global-toast-notification"
-          className={`fixed bottom-6 right-6 z-50 p-4 rounded-2xl ${
-            isLight ? 'bg-white text-neutral-900 border-neutral-200 shadow-xl' : 'bg-[#171717] text-white border-[#282828] shadow-2xl'
-          } border flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-200 text-xs font-semibold max-w-md`}
-        >
-          {toast.type === 'success' && <CheckCircle2 className="w-5 h-5 text-[#00C878] shrink-0" />}
-          {toast.type === 'warning' && <AlertTriangle className="w-5 h-5 text-[#D6A83A] shrink-0" />}
-          {toast.type === 'error' && <XCircle className="w-5 h-5 text-rose-400 shrink-0" />}
-          {toast.type === 'info' && <Info className="w-5 h-5 text-[#00C878] shrink-0" />}
-          <span>{toast.message}</span>
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-20 md:bottom-6 right-6 z-50 px-4 py-3 rounded-xl bg-[#141816] text-[#F2F2F2] border border-[#00C878]/50 shadow-2xl text-xs font-semibold flex items-center space-x-2 animate-in slide-in-from-bottom duration-200">
+          <div className="w-2 h-2 rounded-full bg-[#00C878] animate-pulse" />
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>
@@ -304,7 +88,7 @@ const AppContent: React.FC = () => {
 export function App() {
   return (
     <AppProvider>
-      <AppContent />
+      <MainLayout />
     </AppProvider>
   );
 }
