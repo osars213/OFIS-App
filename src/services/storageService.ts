@@ -1,28 +1,26 @@
-export const storageService = {
-  getItem<T>(key: string, defaultValue: T): T {
+// Local storage persistence helper with error fallback
+export const storage = {
+  get: <T>(key: string, fallback: T): T => {
     try {
       const item = localStorage.getItem(`ofis_${key}`);
-      if (item === null) return defaultValue;
-      return JSON.parse(item) as T;
+      return item ? JSON.parse(item) : fallback;
     } catch (e) {
-      console.warn(`Error reading localStorage key ofis_${key}:`, e);
-      return defaultValue;
+      console.warn(`[storage] Error reading ${key}`, e);
+      return fallback;
     }
   },
-
-  setItem<T>(key: string, value: T): void {
+  set: <T>(key: string, value: T): void => {
     try {
       localStorage.setItem(`ofis_${key}`, JSON.stringify(value));
     } catch (e) {
-      console.warn(`Error setting localStorage key ofis_${key}:`, e);
+      console.warn(`[storage] Error writing ${key}`, e);
     }
   },
-
-  removeItem(key: string): void {
+  remove: (key: string): void => {
     try {
       localStorage.removeItem(`ofis_${key}`);
     } catch (e) {
-      console.warn(`Error removing localStorage key ofis_${key}:`, e);
+      console.warn(`[storage] Error removing ${key}`, e);
     }
   }
 };

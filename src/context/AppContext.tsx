@@ -1,111 +1,216 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Space, Booking, UserProfile, SearchFilterState, SpaceCategory, AppNotification } from '../types';
-import { authService } from '../services/authService';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { Space, UserProfile, SearchFilters, Booking, SpaceCategory, AppNotification, HostPayout, DiagnosticItem, PricingRules, HostMessage, SavedComparison } from '../types';
 import { spacesService } from '../services/spacesService';
+import { authService } from '../services/authService';
 import { bookingsService } from '../services/bookingsService';
 import { favoritesService } from '../services/favoritesService';
 import { notificationsService } from '../services/notificationsService';
+import { recommendationsService } from '../services/recommendationsService';
+import { reviewsService } from '../services/reviewsService';
+import { compareService } from '../services/compareService';
+import { storage } from '../services/storageService';
+import { formatTimeDisplay } from '../utils/timeFormat';
+import { getSupabaseClient, checkSupabaseConnection, isSupabaseConfigured, mapDbBookingToBooking, mapDbSpaceToSpace } from '../services/supabaseClient';
 
-export type CurrencyCode = 'NGN' | 'USD';
-export const USD_TO_NGN_RATE = 1450; // 1 USD = ₦1,450
+export type AppView = 'explore' | 'map' | 'details' | 'bookings' | 'host_dashboard' | 'saved';
 
 interface AppContextType {
   currentUser: UserProfile;
-  switchUser: (userId: string) => void;
-  updateCurrentUser: (updates: Partial<UserProfile>) => void;
-  
-  // Navigation & Views
-  currentView: 'explore' | 'map' | 'bookings' | 'host' | 'details';
-  setCurrentView: (view: 'explore' | 'map' | 'bookings' | 'host' | 'details') => void;
-  selectedSpaceId: string | null;
-  setSelectedSpaceId: (id: string | null) => void;
-  
-  // Spaces & Search Filters
+  setCurrentUser: (user: UserProfile) => void;
+  updateCurrentUser: (data: Partial<UserProfile>) => void;
+  registerUser: (payload: { name: string; email: string; phone: string; role: 'user' | 'host'; company?: string; password?: string; avatar?: string }) => Promise<{ success: boolean; user?: UserProfile; message: string }>;
+  loginUser: (emailOrPhone: string, password?: string) => Promise<{ success: boolean; user?: UserProfile; message: string }>;
+  switchUserRole: (role: 'user' | 'host') => void;
+  signOut: () => void;
+  signIn: (role?: 'user' | 'host') => void;
+  openAuthModal: (tab?: 'signup' | 'login' | 'profile') => void;
+  authModalTab: 'signup' | 'login' | 'profile';
+  setAuthModalTab: (tab: 'signup' | 'login' | 'profile') => void;
+  isGuest: boolean;
+  isAuthLoading: boolean;
+
   spaces: Space[];
-  filters: SearchFilterState;
-  setFilters: React.Dispatch<React.SetStateAction<SearchFilterState>>;
-  updateFilter: <K extends keyof SearchFilterState>(key: K, value: SearchFilterState[K]) => void;
+  allSpaces: Space[];
+  refreshSpaces: () => Promise<void>;
+  isLoadingSpaces: boolean;
+  spacesError: string | null;
+  addNewSpace: (spaceData: any) => Promise<void>;
+  updateSpace: (space: Space) => Promise<void>;
+  deleteSpace: (spaceId: string) => Promise<void>;
+  toggleSpaceActive: (spaceId: string) => Promise<void>;
+
+  filters: SearchFilters;
+  updateFilter: <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => void;
   resetFilters: () => void;
+
   activeCategory: SpaceCategory | 'all';
   setActiveCategory: (cat: SpaceCategory | 'all') => void;
-  
-  // Bookings
-  userBookings: Booking[];
-  refreshBookings: () => void;
-  createBooking: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'passCode' | 'qrCodeValue'>) => Booking;
-  cancelBooking: (bookingId: string) => void;
-  activePassBooking: Booking | null;
-  setActivePassBooking: (booking: Booking | null) => void;
-  selectedBookingDetails: Booking | null;
-  setSelectedBookingDetails: (booking: Booking | null) => void;
-  
-  // Notifications
+
+  currentView: AppView;
+  setCurrentView: (view: AppView) => void;
+
+  selectedSpaceId: string | null;
+  setSelectedSpaceId: (id: string | null) => void;
+  selectedSpace: Space | undefined;
+
+  savedSpaceIds: string[];
+  toggleSaveSpace: (id: string) => void;
+
+  bookings: Booking[];
+  isLoadingBookings: boolean;
+  bookingsError: string | null;
+  refreshBookings: () => Promise<void>;
+  createBooking: (data: Omit<Booking, 'id' | 'qrCodeValue' | 'digitalPassCode' | 'createdAt'>) => Booking;
+  cancelBooking: (id: string) => void;
+  approveBooking: (id: string) => { success: boolean; message: string; booking?: Booking };
+  cancelBookingWithReason: (id: string, reason: string) => { success: boolean; message: string; booking?: Booking };
+  checkInGuest: (bookingIdOrCode: string) => { success: boolean; message: string; booking?: Booking };
+  requestEarlyAccess: (bookingId: string) => { success: boolean; message: string; booking?: Booking };
+  extendBooking: (bookingId: string, additionalHours: number, paymentMethod?: 'paystack' | 'flutterwave' | 'wallet' | 'card') => { success: boolean; message: string; booking?: Booking };
+  checkOutBooking: (bookingId: string) => { success: boolean; message: string; booking?: Booking };
+  submitPostVisitReview: (bookingId: string, data: { rating: number; hostRating?: number; powerRating: number; internetRating: number; noiseRating: number; comment: string; verifiedAmenities?: string[]; photos?: string[] }) => void;
+  toggleBookingReminder: (bookingId: string) => boolean;
+
+  // Host Space Configuration & Messaging
+  hostMessages: HostMessage[];
+  sendHostMessage: (msg: Omit<HostMessage, 'id' | 'timestamp'>) => HostMessage;
+  toggleBlockSpaceDate: (spaceId: string, dateStr: string) => void;
+  updateSpacePricingRules: (spaceId: string, rules: PricingRules) => void;
+  updateSpacePhotos: (spaceId: string, images: string[], featuredImage?: string) => void;
+  updateSpaceAmenities: (spaceId: string, amenities: string[]) => void;
+  updateSpaceOperatingHours: (spaceId: string, hours: { open: string; close: string; days: string }) => void;
+
+  // Host Payouts
+  hostPayouts: HostPayout[];
+  requestHostPayout: (data: { amountNgn: number; bankName: string; accountNumber: string; accountName: string }) => HostPayout;
+
+  // Recommendations & History
+  recentlyViewedIds: string[];
+  recordSpaceView: (spaceId: string) => void;
+  clearRecentlyViewed: () => void;
+  recentSearches: string[];
+  addRecentSearch: (query: string) => void;
+  clearRecentSearches: () => void;
+  trendingSearches: string[];
+  executeSearchQuery: (query: string, category?: SpaceCategory | 'all') => void;
+
   notifications: AppNotification[];
   unreadNotificationsCount: number;
-  markNotificationAsRead: (id: string) => void;
-  markAllNotificationsAsRead: () => void;
-  refreshNotifications: () => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  addNotification: (notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'> & { timestamp?: string; read?: boolean }) => void;
 
-  // Favorites
-  savedSpaceIds: string[];
-  toggleSaveSpace: (spaceId: string) => void;
-  
-  // Modals & Popovers
-  isNavDrawerOpen: boolean;
-  setIsNavDrawerOpen: (open: boolean) => void;
+  currency: 'NGN';
+  setCurrency: (c: 'NGN') => void;
+  formatPrice: (amountNgn?: number | null, options?: { perHour?: boolean; perDay?: boolean }) => string;
+
+  timeFormat: '12h' | '24h';
+  setTimeFormat: (format: '12h' | '24h') => void;
+  toggleTimeFormat: () => void;
+  formatTime: (timeStr?: string | null) => string;
+
+  // Modals
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: (open: boolean) => void;
-  isCheckoutOpen: boolean;
-  setIsCheckoutOpen: (open: boolean) => void;
-  isListSpaceOpen: boolean;
-  setIsListSpaceOpen: (open: boolean) => void;
-  isAiAssistantOpen: boolean;
-  setIsAiAssistantOpen: (open: boolean) => void;
+
+  isListSpaceModalOpen: boolean;
+  setIsListSpaceModalOpen: (open: boolean) => void;
+
+  isEditSpaceModalOpen: boolean;
+  setIsEditSpaceModalOpen: (open: boolean) => void;
+  editingSpace: Space | null;
+  setEditingSpace: (space: Space | null) => void;
+
+  isHostPayoutModalOpen: boolean;
+  setIsHostPayoutModalOpen: (open: boolean) => void;
+
+  isDiagnosticsModalOpen: boolean;
+  setIsDiagnosticsModalOpen: (open: boolean) => void;
+
+  isAiModalOpen: boolean;
+  setIsAiModalOpen: (open: boolean) => void;
+
   isSettingsOpen: boolean;
   setIsSettingsOpen: (open: boolean) => void;
+
+  isDrawerOpen: boolean;
+  setIsDrawerOpen: (open: boolean) => void;
+
+  isCheckoutOpen: boolean;
+  setIsCheckoutOpen: (open: boolean) => void;
   checkoutSpace: Space | null;
   setCheckoutSpace: (space: Space | null) => void;
-  contactHostData: { hostName: string; spaceTitle: string; phone?: string; email?: string } | null;
-  setContactHostData: (data: { hostName: string; spaceTitle: string; phone?: string; email?: string } | null) => void;
-  directionsData: { address: string; city: string; title: string; lat?: number; lng?: number } | null;
-  setDirectionsData: (data: { address: string; city: string; title: string; lat?: number; lng?: number } | null) => void;
-  writeReviewModalData: { spaceId: string; spaceTitle: string } | null;
-  setWriteReviewModalData: (data: { spaceId: string; spaceTitle: string } | null) => void;
+  checkoutPrefillSlot: { date: string; startTime: string } | null;
+  setCheckoutPrefillSlot: (slot: { date: string; startTime: string } | null) => void;
+  openQuickBook: (space: Space, prefillSlot?: { date: string; startTime: string }) => void;
 
-  // Toast notifications
-  toastMessage: string | null;
-  showToast: (msg: string) => void;
+  isDigitalPassOpen: boolean;
+  setIsDigitalPassOpen: (open: boolean) => void;
+  activeDigitalPassBooking: Booking | null;
+  setActiveDigitalPassBooking: (b: Booking | null) => void;
 
-  // Theme & Search Focus
-  themeMode: 'light' | 'dark' | 'system' | 'default';
-  setThemeMode: (mode: 'light' | 'dark' | 'system' | 'default') => void;
-  resolvedTheme: 'light' | 'dark';
-  focusSearchInput: () => void;
+  isBookingDetailsOpen: boolean;
+  setIsBookingDetailsOpen: (open: boolean) => void;
+  activeBookingDetails: Booking | null;
+  setActiveBookingDetails: (b: Booking | null) => void;
 
-  // Currency & Geolocation
-  currency: CurrencyCode;
-  setCurrency: (currency: CurrencyCode) => void;
-  detectedCountry: string | null;
-  formatPrice: (amountInNgn: number, options?: { perHour?: boolean; perDay?: boolean; hideUnit?: boolean; compact?: boolean }) => string;
-  convertAmount: (amountInNgn: number) => number;
+  isDirectionsOpen: boolean;
+  setIsDirectionsOpen: (open: boolean) => void;
+  directionsSpace: Space | null;
+  setDirectionsSpace: (s: Space | null) => void;
+
+  isContactOpen: boolean;
+  setIsContactOpen: (open: boolean) => void;
+  contactSpace: Space | null;
+  setContactSpace: (s: Space | null) => void;
+
+  isWriteReviewOpen: boolean;
+  setIsWriteReviewOpen: (open: boolean) => void;
+  reviewSpace: Space | null;
+  setReviewSpace: (s: Space | null) => void;
+
+  // Workspace Comparison & Smart Match
+  comparedSpaceIds: string[];
+  addSpaceToCompare: (spaceId: string) => { success: boolean; message: string };
+  removeSpaceFromCompare: (spaceId: string) => void;
+  toggleSpaceCompare: (spaceId: string) => void;
+  clearCompareList: () => void;
+  isCompareModalOpen: boolean;
+  setIsCompareModalOpen: (open: boolean) => void;
+  savedComparisons: SavedComparison[];
+  saveCurrentComparison: (customTitle?: string) => SavedComparison;
+  deleteSavedComparison: (id: string) => void;
+  loadSavedComparison: (id: string) => void;
+  compareToast: { message: string; type: 'success' | 'info' | 'warning' } | null;
+  setCompareToast: (t: { message: string; type: 'success' | 'info' | 'warning' } | null) => void;
+
+  // Supabase Status
+  supabaseStatus: 'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error';
+  supabaseMessage: string;
+  checkSupabaseHealth: () => Promise<void>;
 }
 
-const DEFAULT_FILTERS: SearchFilterState = {
+const DEFAULT_FILTERS: SearchFilters = {
   searchQuery: '',
   city: 'All Cities',
   neighborhood: 'All',
   category: 'all',
   minPrice: 0,
-  maxPrice: 60000,
+  maxPrice: 150000,
+  minCapacity: 0,
   date: 'Today',
   timeSlot: 'Now (Next Available)',
+  startHour: 'any',
   duration: 2,
   guests: 1,
   needsBackupPower: false,
   needsHighSpeedInternet: false,
+  needsFixedInternet: false,
+  needsWiredInternet: false,
   needsSoundproofing: false,
   amenities: [],
   instantBookingOnly: false,
+  availableNowOnly: false,
   sortBy: 'recommended',
 };
 
@@ -113,319 +218,1063 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile>(authService.getCurrentUser());
-  const [currentView, setCurrentView] = useState<'explore' | 'map' | 'bookings' | 'host' | 'details'>('explore');
-  const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
-  const [filters, setFilters] = useState<SearchFilterState>(DEFAULT_FILTERS);
-  const [activeCategory, setActiveCategory] = useState<SpaceCategory | 'all'>('all');
-  const [spaces, setSpaces] = useState<Space[]>(spacesService.getAllSpaces());
-  const [userBookings, setUserBookings] = useState<Booking[]>(bookingsService.getUserBookings(currentUser.id));
-  const [savedSpaceIds, setSavedSpaceIds] = useState<string[]>(favoritesService.getSavedSpaceIds());
-  const [notifications, setNotifications] = useState<AppNotification[]>(notificationsService.getNotifications(currentUser.id));
+  const [allSpaces, setAllSpaces] = useState<Space[]>(spacesService.getSpaces());
+  const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS);
+  const [activeCategory, setActiveCategoryState] = useState<SpaceCategory | 'all'>('all');
+  const [currentView, setCurrentView] = useState<AppView>('explore');
+  const [selectedSpaceId, setSelectedSpaceIdState] = useState<string | null>(null);
+  const [savedSpaceIds, setSavedSpaceIds] = useState<string[]>(favoritesService.getSavedIds());
+  const [bookings, setBookings] = useState<Booking[]>(bookingsService.getBookings());
+  const [notifications, setNotifications] = useState<AppNotification[]>(notificationsService.getNotifications());
+  const [currency, setCurrency] = useState<'NGN'>('NGN');
+  const [timeFormat, setTimeFormatState] = useState<'12h' | '24h'>(() => storage.get<'12h' | '24h'>('time_format_pref', '12h'));
   
-  // Modals state
-  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [isListSpaceOpen, setIsListSpaceOpen] = useState(false);
-  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [checkoutSpace, setCheckoutSpace] = useState<Space | null>(null);
-  const [activePassBooking, setActivePassBooking] = useState<Booking | null>(null);
-  const [selectedBookingDetails, setSelectedBookingDetails] = useState<Booking | null>(null);
-  const [contactHostData, setContactHostData] = useState<{ hostName: string; spaceTitle: string; phone?: string; email?: string } | null>(null);
-  const [directionsData, setDirectionsData] = useState<{ address: string; city: string; title: string; lat?: number; lng?: number } | null>(null);
-  const [writeReviewModalData, setWriteReviewModalData] = useState<{ spaceId: string; spaceTitle: string } | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  
-  // Theme state: 'light' | 'dark' | 'system' | 'default'
-  const [themeMode, setThemeModeState] = useState<'light' | 'dark' | 'system' | 'default'>(() => {
-    const saved = localStorage.getItem('ofis_theme_mode');
-    if (saved === 'dark' || saved === 'light' || saved === 'system' || saved === 'default') {
-      return saved as 'light' | 'dark' | 'system' | 'default';
+  // Async Loading & Error States
+  const [isLoadingSpaces, setIsLoadingSpaces] = useState(false);
+  const [spacesError, setSpacesError] = useState<string | null>(null);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
+  const [bookingsError, setBookingsError] = useState<string | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [supabaseStatus, setSupabaseStatus] = useState<'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error'>('unconfigured');
+  const [supabaseMessage, setSupabaseMessage] = useState('Initializing Supabase connection...');
+
+  const [hostPayouts, setHostPayouts] = useState<HostPayout[]>(() => storage.get<HostPayout[]>('ofis_host_payouts', [
+    {
+      id: 'payout-101',
+      hostId: 'host-1',
+      amountNgn: 185000,
+      bankName: 'Access Bank PLC',
+      accountNumber: '0123456789',
+      accountName: 'WorkHub Africa Ltd',
+      status: 'completed',
+      reference: 'PAY-NG-98421',
+      createdAt: '2025-02-20',
     }
-    return 'system';
-  });
+  ]));
 
-  const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(() => {
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return true;
-  });
+  // Recommendation & History States
+  const [recentlyViewedIds, setRecentlyViewedIds] = useState<string[]>(() => recommendationsService.getRecentlyViewedIds());
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => recommendationsService.getRecentSearches());
+  const trendingSearches = recommendationsService.getTrendingSearches();
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e: MediaQueryListEvent) => {
-      setSystemPrefersDark(e.matches);
-    };
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
-
-  const resolvedTheme: 'light' | 'dark' =
-    themeMode === 'light'
-      ? 'light'
-      : themeMode === 'dark'
-      ? 'dark'
-      : systemPrefersDark
-      ? 'dark'
-      : 'light';
-
-  const setThemeMode = (mode: 'light' | 'dark' | 'system' | 'default') => {
-    setThemeModeState(mode);
-    localStorage.setItem('ofis_theme_mode', mode);
+  const recordSpaceView = (spaceId: string) => {
+    if (!spaceId) return;
+    const updated = recommendationsService.recordSpaceView(spaceId);
+    setRecentlyViewedIds(updated);
   };
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', resolvedTheme);
-    document.documentElement.setAttribute('data-theme-mode', themeMode);
-    document.documentElement.className = resolvedTheme === 'light' ? 'light' : 'dark';
-    if (document.body) {
-      document.body.className = resolvedTheme === 'light' ? 'light-mode' : 'dark-mode';
-    }
-  }, [resolvedTheme, themeMode]);
-
-  // Currency & IP Detection State
-  const [currency, setCurrencyState] = useState<CurrencyCode>(() => {
-    const saved = localStorage.getItem('ofis_user_currency');
-    if (saved === 'USD' || saved === 'NGN') return saved;
-    // Default heuristic from timezone
-    try {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-      return (tz.includes('Lagos') || tz.includes('Nigeria') || tz.includes('Africa/')) ? 'NGN' : 'USD';
-    } catch {
-      return 'NGN';
-    }
-  });
-  const [detectedCountry, setDetectedCountry] = useState<string | null>(null);
-
-  // Auto-detect IP location if user hasn't explicitly set preference
-  useEffect(() => {
-    const detectIpCountry = async () => {
-      const savedPref = localStorage.getItem('ofis_user_currency');
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-        const res = await fetch('https://ipapi.co/json/', { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.country_code) {
-            const countryCode = data.country_code.toUpperCase();
-            setDetectedCountry(countryCode);
-            if (!savedPref) {
-              const autoCurrency = countryCode === 'NG' ? 'NGN' : 'USD';
-              setCurrencyState(autoCurrency);
-            }
-          }
-        }
-      } catch {
-        // Fallback already set via timezone
-      }
-    };
-    detectIpCountry();
-  }, []);
-
-  const setCurrency = (c: CurrencyCode) => {
-    setCurrencyState(c);
-    localStorage.setItem('ofis_user_currency', c);
-    showToast(`Currency switched to ${c === 'USD' ? 'USD ($)' : 'Nigerian Naira (₦)'}`);
+  const clearRecentlyViewed = () => {
+    const updated = recommendationsService.clearRecentlyViewed();
+    setRecentlyViewedIds(updated);
   };
 
-  const convertAmount = (amountInNgn: number): number => {
-    if (currency === 'USD') {
-      return +(amountInNgn / USD_TO_NGN_RATE).toFixed(2);
-    }
-    return amountInNgn;
+  const addRecentSearch = (query: string) => {
+    if (!query || !query.trim()) return;
+    const updated = recommendationsService.addRecentSearch(query);
+    setRecentSearches(updated);
   };
 
-  const formatPrice = (
-    amountInNgn: number,
-    options?: { perHour?: boolean; perDay?: boolean; hideUnit?: boolean; compact?: boolean }
-  ): string => {
-    let formattedNumber = '';
-    if (currency === 'USD') {
-      const usdVal = amountInNgn / USD_TO_NGN_RATE;
-      if (usdVal >= 100) {
-        formattedNumber = `$${Math.round(usdVal).toLocaleString()}`;
-      } else if (usdVal % 1 === 0) {
-        formattedNumber = `$${usdVal.toFixed(0)}`;
-      } else {
-        formattedNumber = `$${usdVal.toFixed(2)}`;
-      }
-    } else {
-      formattedNumber = `₦${Math.round(amountInNgn).toLocaleString()}`;
-    }
-
-    if (options?.perHour) {
-      return `${formattedNumber}/hr`;
-    }
-    if (options?.perDay) {
-      return `${formattedNumber}/day`;
-    }
-    return formattedNumber;
+  const clearRecentSearches = () => {
+    const updated = recommendationsService.clearRecentSearches();
+    setRecentSearches(updated);
   };
 
-  const focusSearchInput = () => {
-    setCurrentView('explore');
-    setSelectedSpaceId(null);
-    setIsNavDrawerOpen(false);
+  const setSelectedSpaceId = (id: string | null) => {
+    setSelectedSpaceIdState(id);
+    if (id) {
+      recordSpaceView(id);
+    }
+  };
+
+  const executeSearchQuery = (query: string, category?: SpaceCategory | 'all') => {
+    const cleanQuery = query.trim();
+    if (cleanQuery) {
+      addRecentSearch(cleanQuery);
+    }
+
+    let catToSet: SpaceCategory | 'all' = category || 'all';
+    const lower = cleanQuery.toLowerCase();
+    if (lower.includes('meeting') || lower.includes('boardroom')) {
+      catToSet = 'meeting';
+    } else if (lower.includes('podcast') || lower.includes('audio') || lower.includes('recording')) {
+      catToSet = 'podcast';
+    } else if (lower.includes('photo') || lower.includes('studio') || lower.includes('film') || lower.includes('camera')) {
+      catToSet = 'photography';
+    } else if (lower.includes('office') || lower.includes('suite') || lower.includes('private')) {
+      catToSet = 'private_office';
+    } else if (lower.includes('coworking') || lower.includes('desk') || lower.includes('day pass') || lower.includes('hot desk')) {
+      catToSet = 'coworking';
+    } else if (lower.includes('event') || lower.includes('hall')) {
+      catToSet = 'event';
+    }
+
+    updateFilter('searchQuery', cleanQuery);
+    if (catToSet !== 'all') {
+      setActiveCategory(catToSet);
+    }
+
+    if (currentView !== 'explore') {
+      setCurrentView('explore');
+    }
+    setSelectedSpaceIdState(null);
+
     setTimeout(() => {
-      const input = document.getElementById('main-search-input') as HTMLInputElement | null;
-      if (input) {
-        input.focus();
-        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } else {
-        const searchSection = document.getElementById('spaces-discovery-section');
-        searchSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const resultsEl = document.getElementById('spaces-results-section');
+      if (resultsEl) {
+        resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 100);
+    }, 120);
   };
 
-  // Sync category filter
+  const setTimeFormat = (format: '12h' | '24h') => {
+    setTimeFormatState(format);
+    storage.set('time_format_pref', format);
+  };
+
+  const toggleTimeFormat = () => {
+    const nextFormat = timeFormat === '12h' ? '24h' : '12h';
+    setTimeFormat(nextFormat);
+  };
+
+  const formatTime = (timeStr?: string | null): string => {
+    return formatTimeDisplay(timeStr, timeFormat);
+  };
+
+  // Modal States
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<'signup' | 'login' | 'profile'>('signup');
+  const [isListSpaceModalOpen, setIsListSpaceModalOpen] = useState(false);
+  const [isEditSpaceModalOpen, setIsEditSpaceModalOpen] = useState(false);
+  const [editingSpace, setEditingSpace] = useState<Space | null>(null);
+  const [isHostPayoutModalOpen, setIsHostPayoutModalOpen] = useState(false);
+  const [isDiagnosticsModalOpen, setIsDiagnosticsModalOpen] = useState(false);
+
+  const openAuthModal = (tab: 'signup' | 'login' | 'profile' = 'signup') => {
+    setAuthModalTab(tab);
+    setIsAuthModalOpen(true);
+  };
+
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [checkoutSpace, setCheckoutSpace] = useState<Space | null>(null);
+  const [checkoutPrefillSlot, setCheckoutPrefillSlot] = useState<{ date: string; startTime: string } | null>(null);
+
+  const openQuickBook = (space: Space, prefillSlot?: { date: string; startTime: string }) => {
+    setCheckoutSpace(space);
+    if (prefillSlot) {
+      setCheckoutPrefillSlot(prefillSlot);
+    } else if (space.nextAvailableSlot) {
+      setCheckoutPrefillSlot({
+        date: space.nextAvailableSlot.date,
+        startTime: space.nextAvailableSlot.time,
+      });
+    } else {
+      setCheckoutPrefillSlot(null);
+    }
+    setIsCheckoutOpen(true);
+  };
+
+  const [isDigitalPassOpen, setIsDigitalPassOpen] = useState(false);
+  const [activeDigitalPassBooking, setActiveDigitalPassBooking] = useState<Booking | null>(null);
+
+  const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
+  const [activeBookingDetails, setActiveBookingDetails] = useState<Booking | null>(null);
+
+  const [isDirectionsOpen, setIsDirectionsOpen] = useState(false);
+  const [directionsSpace, setDirectionsSpace] = useState<Space | null>(null);
+
+  const [isContactOpen, setIsContactOpen] = useState(false);
+  const [contactSpace, setContactSpace] = useState<Space | null>(null);
+
+  const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
+  const [reviewSpace, setReviewSpace] = useState<Space | null>(null);
+
+  // Comparison & Smart Match States
+  const [comparedSpaceIds, setComparedSpaceIds] = useState<string[]>(() => storage.get<string[]>('compared_spaces_ids', []));
+  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
+  const [savedComparisons, setSavedComparisons] = useState<SavedComparison[]>(() => compareService.getSavedComparisons());
+  const [compareToast, setCompareToast] = useState<{ message: string; type: 'success' | 'info' | 'warning' } | null>(null);
+
+  const addSpaceToCompare = (spaceId: string) => {
+    if (comparedSpaceIds.includes(spaceId)) {
+      return { success: true, message: 'Already in compare list' };
+    }
+    if (comparedSpaceIds.length >= 3) {
+      setCompareToast({
+        message: 'You can compare up to 3 workspaces at a time. Remove one to add another.',
+        type: 'warning',
+      });
+      setTimeout(() => setCompareToast(null), 3500);
+      return { success: false, message: 'Max 3 workspaces' };
+    }
+    const updated = [...comparedSpaceIds, spaceId];
+    setComparedSpaceIds(updated);
+    storage.set('compared_spaces_ids', updated);
+    setCompareToast({
+      message: `Added to compare list (${updated.length}/3)`,
+      type: 'success',
+    });
+    setTimeout(() => setCompareToast(null), 2500);
+    return { success: true, message: 'Added to compare list' };
+  };
+
+  const removeSpaceFromCompare = (spaceId: string) => {
+    const updated = comparedSpaceIds.filter(id => id !== spaceId);
+    setComparedSpaceIds(updated);
+    storage.set('compared_spaces_ids', updated);
+    setCompareToast({
+      message: `Removed from compare list (${updated.length}/3)`,
+      type: 'info',
+    });
+    setTimeout(() => setCompareToast(null), 2000);
+  };
+
+  const toggleSpaceCompare = (spaceId: string) => {
+    if (comparedSpaceIds.includes(spaceId)) {
+      removeSpaceFromCompare(spaceId);
+    } else {
+      addSpaceToCompare(spaceId);
+    }
+  };
+
+  const clearCompareList = () => {
+    setComparedSpaceIds([]);
+    storage.set('compared_spaces_ids', []);
+    setCompareToast({
+      message: 'Comparison list cleared',
+      type: 'info',
+    });
+    setTimeout(() => setCompareToast(null), 2000);
+  };
+
+  const saveCurrentComparison = (customTitle?: string): SavedComparison => {
+    const spacesToSave = allSpaces.filter(s => comparedSpaceIds.includes(s.id));
+    const saved = compareService.saveComparison(spacesToSave, customTitle);
+    setSavedComparisons(compareService.getSavedComparisons());
+    setCompareToast({
+      message: 'Comparison saved to your profile!',
+      type: 'success',
+    });
+    setTimeout(() => setCompareToast(null), 2500);
+    return saved;
+  };
+
+  const deleteSavedComparison = (id: string) => {
+    const updated = compareService.deleteSavedComparison(id);
+    setSavedComparisons(updated);
+    setCompareToast({
+      message: 'Saved comparison removed',
+      type: 'info',
+    });
+    setTimeout(() => setCompareToast(null), 2000);
+  };
+
+  const loadSavedComparison = (id: string) => {
+    const target = savedComparisons.find(c => c.id === id);
+    if (target) {
+      setComparedSpaceIds(target.spaceIds.slice(0, 3));
+      storage.set('compared_spaces_ids', target.spaceIds.slice(0, 3));
+      setIsCompareModalOpen(true);
+    }
+  };
+
+  // Supabase Data Loaders
+  const checkSupabaseHealth = async () => {
+    const res = await checkSupabaseConnection();
+    setSupabaseStatus(res.status);
+    setSupabaseMessage(res.message);
+  };
+
+  const refreshSpaces = async () => {
+    setIsLoadingSpaces(true);
+    setSpacesError(null);
+    try {
+      const res = await spacesService.fetchSpacesAsync();
+      setAllSpaces(res.spaces);
+    } catch (err: any) {
+      setSpacesError(err.message || 'Failed to refresh spaces');
+    } finally {
+      setIsLoadingSpaces(false);
+    }
+  };
+
+  const refreshBookings = async () => {
+    setIsLoadingBookings(true);
+    setBookingsError(null);
+    try {
+      const res = await bookingsService.fetchBookingsAsync(currentUser.id);
+      setBookings(res.bookings);
+    } catch (err: any) {
+      setBookingsError(err.message || 'Failed to refresh bookings');
+    } finally {
+      setIsLoadingBookings(false);
+    }
+  };
+
+  // Initial Boot: Supabase Health & Data Hydration
   useEffect(() => {
-    setFilters(prev => ({ ...prev, category: activeCategory }));
-  }, [activeCategory]);
+    let isMounted = true;
 
-  // Update spaces based on filters
-  useEffect(() => {
-    setSpaces(spacesService.filterSpaces(filters));
-  }, [filters]);
+    async function initializeData() {
+      await checkSupabaseHealth();
+      if (!isMounted) return;
 
-  const refreshNotifications = () => {
-    setNotifications(notificationsService.getNotifications(currentUser.id));
-  };
+      // 1. Fetch spaces from Supabase
+      refreshSpaces();
 
-  const switchUser = (userId: string) => {
-    const user = authService.signInAs(userId);
-    setCurrentUser(user);
-    setUserBookings(bookingsService.getUserBookings(user.id));
-    setNotifications(notificationsService.getNotifications(user.id));
-    showToast(`Switched account to ${user.name}`);
-  };
+      // 2. Fetch bookings for current user
+      refreshBookings();
 
-  const updateCurrentUser = (updates: Partial<UserProfile>) => {
-    const updated = authService.updateProfile(updates);
-    setCurrentUser(updated);
-  };
+      // 3. Fetch saved favorites
+      if (currentUser.id && !currentUser.id.startsWith('guest')) {
+        favoritesService.fetchFavoritesAsync(currentUser.id).then(ids => {
+          if (isMounted) setSavedSpaceIds(ids);
+        });
+      }
 
-  const updateFilter = <K extends keyof SearchFilterState>(key: K, value: SearchFilterState[K]) => {
+      // 4. Listen to Supabase Auth State Changes if client is active
+      const client = getSupabaseClient();
+      if (client) {
+        try {
+          const { data: authListener } = client.auth.onAuthStateChange(async (event, session) => {
+            if (!isMounted) return;
+            if (event === 'SIGNED_IN' && session?.user) {
+              const profile = await authService.fetchProfileAsync(session.user.id);
+              if (profile && isMounted) {
+                setCurrentUser(profile);
+                setSavedSpaceIds(profile.savedSpaceIds || []);
+              }
+            } else if (event === 'SIGNED_OUT') {
+              // Sign out handled gracefully
+            }
+          });
+
+          // Realtime subscriptions for live updates
+          const spacesChannel = client
+            .channel('public:spaces_live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'spaces' }, () => {
+              if (isMounted) refreshSpaces();
+            })
+            .subscribe();
+
+          const bookingsChannel = client
+            .channel('public:bookings_live')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
+              if (isMounted) refreshBookings();
+            })
+            .subscribe();
+
+          return () => {
+            authListener?.subscription?.unsubscribe();
+            spacesChannel.unsubscribe();
+            bookingsChannel.unsubscribe();
+          };
+        } catch (err) {
+          console.warn('[AppContext] Supabase realtime listener notice:', err);
+        }
+      }
+    }
+
+    initializeData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const updateFilter = <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   const resetFilters = () => {
     setFilters(DEFAULT_FILTERS);
-    setActiveCategory('all');
+    setActiveCategoryState('all');
   };
 
-  const refreshBookings = () => {
-    setUserBookings(bookingsService.getUserBookings(currentUser.id));
-    refreshNotifications();
+  const setActiveCategory = (cat: SpaceCategory | 'all') => {
+    setActiveCategoryState(cat);
+    updateFilter('category', cat);
   };
 
-  const createBooking = (bookingData: Omit<Booking, 'id' | 'createdAt' | 'passCode' | 'qrCodeValue'>) => {
+  const updateCurrentUser = (data: Partial<UserProfile>) => {
+    const updated = { ...currentUser, ...data };
+    setCurrentUser(updated);
+    authService.setCurrentUser(updated);
+    if (currentUser.id && !currentUser.id.startsWith('guest')) {
+      authService.updateProfileAsync(currentUser.id, data);
+    }
+  };
+
+  const addNewSpace = async (spaceData: any) => {
+    const newSpace: Space = {
+      id: `space-${Date.now()}`,
+      state: spaceData.city === 'Abuja' ? 'FCT' : `${spaceData.city} State`,
+      rules: ['No loud calls in quiet focus zones', 'Keep desks neat and sanitized'],
+      tags: ['Verified Power', 'High Speed', spaceData.city],
+      isActive: true,
+      ...spaceData,
+    };
+    await spacesService.addSpace(newSpace);
+    await refreshSpaces();
+    addNotification({
+      title: 'New Hub Published',
+      message: `"${newSpace.title}" has been successfully published to OFIS 2.0 network.`,
+      type: 'system',
+      read: false,
+    });
+  };
+
+  const updateSpace = async (updatedSpace: Space) => {
+    await spacesService.updateSpace(updatedSpace);
+    await refreshSpaces();
+    addNotification({
+      title: 'Workspace Updated',
+      message: `Modifications to "${updatedSpace.title}" are now live across OFIS.`,
+      type: 'system',
+      read: false,
+    });
+  };
+
+  const deleteSpace = async (spaceId: string) => {
+    const target = allSpaces.find(s => s.id === spaceId);
+    await spacesService.deleteSpace(spaceId);
+    await refreshSpaces();
+    addNotification({
+      title: 'Listing Removed',
+      message: `"${target?.title || 'Workspace'}" was deleted from your listings.`,
+      type: 'system',
+      read: false,
+    });
+  };
+
+  const toggleSpaceActive = async (spaceId: string) => {
+    const target = await spacesService.toggleSpaceActive(spaceId);
+    await refreshSpaces();
+    if (target) {
+      addNotification({
+        title: target.isActive !== false ? 'Hub Resumed' : 'Hub Paused',
+        message: `"${target.title}" is now ${target.isActive !== false ? 'accepting instant bookings' : 'hidden from public search'}.`,
+        type: 'system',
+        read: false,
+      });
+    }
+  };
+
+  const checkInGuest = (bookingIdOrCode: string): { success: boolean; message: string; booking?: Booking } => {
+    const res = bookingsService.checkInBooking(bookingIdOrCode);
+    if (res.success && res.booking) {
+      setBookings(bookingsService.getBookings());
+      addNotification({
+        title: '✓ Guest Checked In',
+        message: `${res.booking.userName} has successfully scanned turnstile pass for ${res.booking.spaceTitle}.`,
+        type: 'booking',
+        read: false,
+        bookingId: res.booking.id,
+      });
+      return res;
+    }
+    return {
+      success: false,
+      message: res.message || `Pass or Booking code "${bookingIdOrCode}" not found. Please verify the code.`,
+    };
+  };
+
+  const requestEarlyAccess = (bookingId: string): { success: boolean; message: string; booking?: Booking } => {
+    const res = bookingsService.requestEarlyAccess(bookingId);
+    if (res.success && res.booking) {
+      setBookings(bookingsService.getBookings());
+      addNotification({
+        title: 'Early Arrival Approved',
+        message: `Host approved early access for ${res.booking.spaceTitle}. You can now check in!`,
+        type: 'booking',
+        read: false,
+        bookingId: res.booking.id,
+      });
+      addNotification({
+        title: 'Host Alert: Early Guest Arrival',
+        message: `${res.booking.userName} requested early desk access and was granted entrance to ${res.booking.spaceTitle}.`,
+        type: 'system',
+        read: false,
+        bookingId: res.booking.id,
+      });
+      return res;
+    }
+    return res;
+  };
+
+  const extendBooking = (
+    bookingId: string,
+    additionalHours: number,
+    paymentMethod: 'paystack' | 'flutterwave' | 'wallet' | 'card' = 'wallet'
+  ): { success: boolean; message: string; booking?: Booking } => {
+    const target = bookings.find(b => b.id === bookingId);
+    const space = allSpaces.find(s => s.id === target?.spaceId);
+    const hourlyRate = space?.pricePerHour || (target ? Math.round(target.totalAmount / target.durationHours) : 3500);
+
+    const res = bookingsService.extendBooking(bookingId, additionalHours, hourlyRate, paymentMethod);
+    if (res.success && res.booking) {
+      setBookings(bookingsService.getBookings());
+      addNotification({
+        title: 'Booking Extended (+ ' + additionalHours + 'h)',
+        message: `Your session at ${res.booking.spaceTitle} has been extended to ${res.booking.endTime}.`,
+        type: 'booking',
+        read: false,
+        bookingId: res.booking.id,
+      });
+      addNotification({
+        title: 'Host Alert: Session Extended',
+        message: `${res.booking.userName} extended their stay at ${res.booking.spaceTitle} by +${additionalHours} hour(s). Total: ₦${res.booking.totalAmount.toLocaleString()}.`,
+        type: 'system',
+        read: false,
+        bookingId: res.booking.id,
+      });
+      return res;
+    }
+    return res;
+  };
+
+  const checkOutBooking = (bookingId: string): { success: boolean; message: string; booking?: Booking } => {
+    const res = bookingsService.checkOutBooking(bookingId);
+    if (res.success && res.booking) {
+      setBookings(bookingsService.getBookings());
+      addNotification({
+        title: 'Checked Out Successfully',
+        message: `You've checked out from ${res.booking.spaceTitle}. We hope you had a productive session!`,
+        type: 'booking',
+        read: false,
+        bookingId: res.booking.id,
+      });
+      addNotification({
+        title: 'Host Alert: Guest Checked Out',
+        message: `${res.booking.userName} has completed their reservation and checked out of ${res.booking.spaceTitle}.`,
+        type: 'system',
+        read: false,
+        bookingId: res.booking.id,
+      });
+
+      const matchedSpace = allSpaces.find(s => s.id === res.booking?.spaceId);
+      if (matchedSpace) {
+        setReviewSpace(matchedSpace);
+        setIsWriteReviewOpen(true);
+      }
+
+      return res;
+    }
+    return res;
+  };
+
+  const submitPostVisitReview = (
+    bookingId: string,
+    data: {
+      rating: number;
+      hostRating?: number;
+      powerRating: number;
+      internetRating: number;
+      noiseRating: number;
+      comment: string;
+      verifiedAmenities?: string[];
+      photos?: string[];
+    }
+  ) => {
+    const b = bookings.find(item => item.id === bookingId);
+    const spaceId = b?.spaceId || reviewSpace?.id || 'space-vi-hive';
+    const spaceTitle = b?.spaceTitle || reviewSpace?.title || 'Workspace';
+
+    reviewsService.addReview({
+      spaceId,
+      bookingId,
+      userId: currentUser.id,
+      userName: currentUser.name,
+      userRole: currentUser.company || 'Verified Professional',
+      rating: data.rating,
+      hostRating: data.hostRating,
+      powerRating: data.powerRating,
+      internetRating: data.internetRating,
+      noiseRating: data.noiseRating,
+      comment: data.comment,
+      verifiedAmenities: data.verifiedAmenities,
+      photos: data.photos,
+      verifiedBooking: true,
+    });
+
+    bookingsService.markReviewed(bookingId);
+    setBookings(bookingsService.getBookings());
+
+    addNotification({
+      title: '✓ Review Published (Verified Guest)',
+      message: `Thank you for reviewing ${spaceTitle}. Your verified feedback gives community members trusted insights.`,
+      type: 'booking',
+      read: false,
+      bookingId,
+    });
+    addNotification({
+      title: 'Host Alert: New Verified Review',
+      message: `${currentUser.name} rated ${spaceTitle} ${data.rating}★ with verified amenity checks.`,
+      type: 'system',
+      read: false,
+      bookingId,
+    });
+  };
+
+  const requestHostPayout = (data: { amountNgn: number; bankName: string; accountNumber: string; accountName: string }): HostPayout => {
+    const newPayout: HostPayout = {
+      id: `payout-${Date.now()}`,
+      hostId: currentUser.id,
+      amountNgn: data.amountNgn,
+      bankName: data.bankName,
+      accountNumber: data.accountNumber,
+      accountName: data.accountName,
+      status: 'processing',
+      reference: `PAY-NG-${Math.floor(10000 + Math.random() * 90000)}`,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+
+    const nextPayouts = [newPayout, ...hostPayouts];
+    setHostPayouts(nextPayouts);
+    storage.set('ofis_host_payouts', nextPayouts);
+
+    addNotification({
+      title: 'Payout Request Dispatched',
+      message: `₦${data.amountNgn.toLocaleString()} transfer initiated to ${data.bankName} (${data.accountNumber.slice(-4)}). Reference: ${newPayout.reference}.`,
+      type: 'payment',
+      read: false,
+    });
+
+    return newPayout;
+  };
+
+  const [hostMessages, setHostMessages] = useState<HostMessage[]>(() => bookingsService.getHostMessages());
+
+  const sendHostMessage = (msg: Omit<HostMessage, 'id' | 'timestamp'>): HostMessage => {
+    const created = bookingsService.sendHostMessage(msg);
+    setHostMessages(bookingsService.getHostMessages());
+    addNotification({
+      title: `Message Sent to ${msg.senderRole === 'host' ? 'Guest' : 'Host'}`,
+      message: msg.content.length > 60 ? `${msg.content.slice(0, 60)}...` : msg.content,
+      type: 'system',
+      read: false,
+    });
+    return created;
+  };
+
+  const approveBooking = (bookingId: string) => {
+    const res = bookingsService.approveBooking(bookingId);
+    if (res.success && res.booking) {
+      setBookings(bookingsService.getBookings());
+      addNotification({
+        title: 'Booking Request Approved',
+        message: `Reservation ${res.booking.id} for ${res.booking.userName} (${res.booking.spaceTitle}) is now confirmed.`,
+        type: 'booking',
+        read: false,
+      });
+    }
+    return res;
+  };
+
+  const cancelBookingWithReason = (bookingId: string, reason: string) => {
+    const res = bookingsService.cancelBookingWithReason(bookingId, reason);
+    if (res.success && res.booking) {
+      setBookings(bookingsService.getBookings());
+      addNotification({
+        title: 'Booking Cancelled',
+        message: `Reservation ${res.booking.id} has been cancelled. Reason: "${reason}".`,
+        type: 'booking',
+        read: false,
+      });
+    }
+    return res;
+  };
+
+  const toggleBlockSpaceDate = (spaceId: string, dateStr: string) => {
+    const target = allSpaces.find(s => s.id === spaceId);
+    if (!target) return;
+    const currentBlocked = target.blockedDates || [];
+    const isAlreadyBlocked = currentBlocked.includes(dateStr);
+    const updatedBlocked = isAlreadyBlocked
+      ? currentBlocked.filter(d => d !== dateStr)
+      : [...currentBlocked, dateStr];
+
+    const updatedSpace: Space = {
+      ...target,
+      blockedDates: updatedBlocked,
+    };
+    updateSpace(updatedSpace);
+    addNotification({
+      title: isAlreadyBlocked ? 'Date Unblocked' : 'Date Blocked for Maintenance/Private Use',
+      message: `${dateStr} is now ${isAlreadyBlocked ? 'available for bookings' : 'blocked'} on "${target.title}".`,
+      type: 'system',
+      read: false,
+    });
+  };
+
+  const updateSpacePricingRules = (spaceId: string, rules: PricingRules) => {
+    const target = allSpaces.find(s => s.id === spaceId);
+    if (!target) return;
+    const updatedSpace: Space = {
+      ...target,
+      pricingRules: rules,
+    };
+    updateSpace(updatedSpace);
+    addNotification({
+      title: 'Pricing Rules Updated',
+      message: `Custom hourly/daily & weekend pricing rules saved for "${target.title}".`,
+      type: 'system',
+      read: false,
+    });
+  };
+
+  const updateSpacePhotos = (spaceId: string, images: string[], featuredImage?: string) => {
+    const target = allSpaces.find(s => s.id === spaceId);
+    if (!target) return;
+    const updatedSpace: Space = {
+      ...target,
+      images,
+      featuredImage: featuredImage || images[0] || target.featuredImage,
+    };
+    updateSpace(updatedSpace);
+  };
+
+  const updateSpaceAmenities = (spaceId: string, amenities: string[]) => {
+    const target = allSpaces.find(s => s.id === spaceId);
+    if (!target) return;
+    const updatedSpace: Space = {
+      ...target,
+      amenities,
+    };
+    updateSpace(updatedSpace);
+  };
+
+  const updateSpaceOperatingHours = (spaceId: string, hours: { open: string; close: string; days: string }) => {
+    const target = allSpaces.find(s => s.id === spaceId);
+    if (!target) return;
+    const updatedSpace: Space = {
+      ...target,
+      operatingHours: hours,
+    };
+    updateSpace(updatedSpace);
+  };
+
+  const registerUser = async (payload: { name: string; email: string; phone: string; role: 'user' | 'host'; company?: string; password?: string; avatar?: string }) => {
+    setIsAuthLoading(true);
+    try {
+      const res = await authService.register(payload);
+      if (res.success && res.user) {
+        setCurrentUser(res.user);
+        setSavedSpaceIds(res.user.savedSpaceIds || []);
+        addNotification({
+          title: 'Welcome to OFIS Network',
+          message: `Your account is ready! ₦${(res.user.walletBalanceNgn || 0).toLocaleString()} initial welcome credit has been applied to your wallet.`,
+          type: 'system',
+          read: false,
+        });
+        if (res.user.role === 'host') {
+          setCurrentView('host_dashboard');
+        } else {
+          setCurrentView('explore');
+        }
+      }
+      return res;
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const loginUser = async (emailOrPhone: string, password?: string) => {
+    setIsAuthLoading(true);
+    try {
+      const res = await authService.login(emailOrPhone, password);
+      if (res.success && res.user) {
+        setCurrentUser(res.user);
+        setSavedSpaceIds(res.user.savedSpaceIds || []);
+        addNotification({
+          title: 'Session Authenticated',
+          message: `Logged in as ${res.user.name} (${res.user.role === 'host' ? 'Host Portal' : 'Workspace Member'}).`,
+          type: 'system',
+          read: false,
+        });
+        if (res.user.role === 'host') {
+          setCurrentView('host_dashboard');
+        }
+        // Fetch user-specific bookings & favorites
+        refreshBookings();
+        favoritesService.fetchFavoritesAsync(res.user.id).then(ids => setSavedSpaceIds(ids));
+      }
+      return res;
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  const switchUserRole = (role: 'user' | 'host') => {
+    const updated = authService.switchRole(role);
+    setCurrentUser(updated);
+    if (role === 'host') {
+      setCurrentView('host_dashboard');
+    } else {
+      setCurrentView('explore');
+    }
+  };
+
+  const signOut = () => {
+    authService.logout().then(guest => {
+      setCurrentUser(guest);
+      setSavedSpaceIds([]);
+      setCurrentView('explore');
+      addNotification({
+        title: 'Signed Out of OFIS',
+        message: 'You are browsing in guest mode. Sign in anytime to book spaces and access your digital passes.',
+        type: 'system',
+        read: false,
+      });
+    });
+  };
+
+  const signIn = (role: 'user' | 'host' = 'user') => {
+    openAuthModal('login');
+  };
+
+  const isGuest = currentUser.id === 'guest-user' || currentUser.id === 'guest';
+
+  const toggleSaveSpace = (spaceId: string) => {
+    const updated = favoritesService.toggleFavorite(spaceId, currentUser.id);
+    setSavedSpaceIds(updated);
+  };
+
+  const createBooking = (bookingData: Omit<Booking, 'id' | 'qrCodeValue' | 'digitalPassCode' | 'createdAt'>): Booking => {
     const newBooking = bookingsService.createBooking(bookingData);
-    refreshBookings();
+    setBookings(bookingsService.getBookings());
+
+    if (bookingData.hasReminder) {
+      const formattedStartTime = formatTimeDisplay(newBooking.startTime, timeFormat);
+      const updated = notificationsService.addNotification({
+        title: `30-Min Reservation Reminder`,
+        message: `Your session at ${newBooking.spaceTitle} starts in 30 minutes (${formattedStartTime}). Pass code: ${newBooking.digitalPassCode}.`,
+        type: 'reminder',
+        timestamp: '30m before start',
+        read: false,
+        bookingId: newBooking.id,
+      });
+      setNotifications(updated);
+    }
+
     return newBooking;
   };
 
-  const cancelBooking = (bookingId: string) => {
-    bookingsService.cancelBooking(bookingId);
-    refreshBookings();
-    showToast('Booking cancelled. Access pass revoked.');
+  const cancelBooking = (id: string) => {
+    bookingsService.cancelBooking(id);
+    setBookings(bookingsService.getBookings());
   };
 
-  const toggleSaveSpace = (spaceId: string) => {
-    const isSaved = savedSpaceIds.includes(spaceId);
-    const newSaved = favoritesService.toggleSave(spaceId);
-    setSavedSpaceIds(newSaved);
-    showToast(isSaved ? 'Removed from saved spaces' : 'Added to saved spaces');
+  const toggleBookingReminder = (bookingId: string): boolean => {
+    const currentBookings = bookingsService.getBookings();
+    const b = currentBookings.find(item => item.id === bookingId);
+    if (!b) return false;
+
+    const newReminderState = !b.hasReminder;
+    bookingsService.updateBookingReminder(bookingId, newReminderState);
+    setBookings(bookingsService.getBookings());
+
+    if (newReminderState) {
+      const formattedStartTime = formatTimeDisplay(b.startTime, timeFormat);
+      const updated = notificationsService.addNotification({
+        title: `30-Min Reservation Reminder`,
+        message: `Your session at ${b.spaceTitle} starts in 30 minutes (${formattedStartTime}). Pass code: ${b.digitalPassCode}.`,
+        type: 'reminder',
+        timestamp: '30m before start',
+        read: false,
+        bookingId: b.id,
+      });
+      setNotifications(updated);
+    } else {
+      const updated = notificationsService.removeNotificationByBookingIdAndType(bookingId, 'reminder');
+      setNotifications(updated);
+    }
+
+    return newReminderState;
   };
 
-  const markNotificationAsRead = (id: string) => {
-    notificationsService.markAsRead(id);
-    refreshNotifications();
+  const addNotification = (notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'> & { timestamp?: string; read?: boolean }) => {
+    const updated = notificationsService.addNotification(notif);
+    setNotifications(updated);
   };
 
-  const markAllNotificationsAsRead = () => {
-    notificationsService.markAllAsRead(currentUser.id);
-    refreshNotifications();
-    showToast('All notifications marked as read');
+  const markNotificationRead = (id: string) => {
+    const updated = notificationsService.markAsRead(id);
+    setNotifications(updated);
   };
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 3500);
+  const markAllNotificationsRead = () => {
+    const updated = notificationsService.markAllAsRead();
+    setNotifications(updated);
   };
 
-  const unreadNotificationsCount = notifications.filter(n => !n.isRead).length;
+  const unreadNotificationsCount = notifications.filter(n => !n.read).length;
+
+  const filteredSpaces = useMemo(() => {
+    return spacesService.filterSpaces({
+      ...filters,
+      category: activeCategory !== 'all' ? activeCategory : filters.category,
+    });
+  }, [filters, activeCategory, allSpaces]);
+
+  const selectedSpace = useMemo(() => {
+    if (!selectedSpaceId) return undefined;
+    return allSpaces.find(s => s.id === selectedSpaceId);
+  }, [selectedSpaceId, allSpaces]);
+
+  const formatPrice = (amountNgn?: number | null, options?: { perHour?: boolean; perDay?: boolean }): string => {
+    const validAmount = typeof amountNgn === 'number' && !isNaN(amountNgn) ? amountNgn : 0;
+    let formatted = `₦${validAmount.toLocaleString('en-NG')}`;
+
+    if (options?.perHour) formatted += '/hr';
+    if (options?.perDay) formatted += '/day';
+    return formatted;
+  };
 
   return (
     <AppContext.Provider
       value={{
         currentUser,
-        switchUser,
+        setCurrentUser,
         updateCurrentUser,
-        currentView,
-        setCurrentView,
-        selectedSpaceId,
-        setSelectedSpaceId,
-        spaces,
+        registerUser,
+        loginUser,
+        switchUserRole,
+        signOut,
+        signIn,
+        isGuest,
+        isAuthLoading,
+        spaces: filteredSpaces,
+        allSpaces,
+        refreshSpaces,
+        isLoadingSpaces,
+        spacesError,
+        addNewSpace,
+        updateSpace,
+        deleteSpace,
+        toggleSpaceActive,
         filters,
-        setFilters,
         updateFilter,
         resetFilters,
         activeCategory,
         setActiveCategory,
-        userBookings,
+        currentView,
+        setCurrentView,
+        selectedSpaceId,
+        setSelectedSpaceId,
+        selectedSpace,
+        savedSpaceIds,
+        toggleSaveSpace,
+        bookings,
+        isLoadingBookings,
+        bookingsError,
         refreshBookings,
         createBooking,
         cancelBooking,
-        activePassBooking,
-        setActivePassBooking,
-        selectedBookingDetails,
-        setSelectedBookingDetails,
+        approveBooking,
+        cancelBookingWithReason,
+        hostMessages,
+        sendHostMessage,
+        toggleBlockSpaceDate,
+        updateSpacePricingRules,
+        updateSpacePhotos,
+        updateSpaceAmenities,
+        updateSpaceOperatingHours,
+        checkInGuest,
+        requestEarlyAccess,
+        extendBooking,
+        checkOutBooking,
+        submitPostVisitReview,
+        toggleBookingReminder,
+        hostPayouts,
+        requestHostPayout,
+        recentlyViewedIds,
+        recordSpaceView,
+        clearRecentlyViewed,
+        recentSearches,
+        addRecentSearch,
+        clearRecentSearches,
+        trendingSearches,
+        executeSearchQuery,
         notifications,
         unreadNotificationsCount,
-        markNotificationAsRead,
-        markAllNotificationsAsRead,
-        refreshNotifications,
-        savedSpaceIds,
-        toggleSaveSpace,
-        isNavDrawerOpen,
-        setIsNavDrawerOpen,
-        isAuthModalOpen,
-        setIsAuthModalOpen,
-        isCheckoutOpen,
-        setIsCheckoutOpen,
-        isListSpaceOpen,
-        setIsListSpaceOpen,
-        isAiAssistantOpen,
-        setIsAiAssistantOpen,
-        isSettingsOpen,
-        setIsSettingsOpen,
-        checkoutSpace,
-        setCheckoutSpace,
-        contactHostData,
-        setContactHostData,
-        directionsData,
-        setDirectionsData,
-        writeReviewModalData,
-        setWriteReviewModalData,
-        toastMessage,
-        showToast,
-        themeMode,
-        setThemeMode,
-        resolvedTheme,
-        focusSearchInput,
+        markNotificationRead,
+        markAllNotificationsRead,
+        addNotification,
         currency,
         setCurrency,
-        detectedCountry,
         formatPrice,
-        convertAmount,
+        timeFormat,
+        setTimeFormat,
+        toggleTimeFormat,
+        formatTime,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        authModalTab,
+        setAuthModalTab,
+        openAuthModal,
+        isListSpaceModalOpen,
+        setIsListSpaceModalOpen,
+        isEditSpaceModalOpen,
+        setIsEditSpaceModalOpen,
+        editingSpace,
+        setEditingSpace,
+        isHostPayoutModalOpen,
+        setIsHostPayoutModalOpen,
+        isDiagnosticsModalOpen,
+        setIsDiagnosticsModalOpen,
+        isAiModalOpen,
+        setIsAiModalOpen,
+        isSettingsOpen,
+        setIsSettingsOpen,
+        isDrawerOpen,
+        setIsDrawerOpen,
+        isCheckoutOpen,
+        setIsCheckoutOpen,
+        checkoutSpace,
+        setCheckoutSpace,
+        checkoutPrefillSlot,
+        setCheckoutPrefillSlot,
+        openQuickBook,
+        isDigitalPassOpen,
+        setIsDigitalPassOpen,
+        activeDigitalPassBooking,
+        setActiveDigitalPassBooking,
+        isBookingDetailsOpen,
+        setIsBookingDetailsOpen,
+        activeBookingDetails,
+        setActiveBookingDetails,
+        isDirectionsOpen,
+        setIsDirectionsOpen,
+        directionsSpace,
+        setDirectionsSpace,
+        isContactOpen,
+        setIsContactOpen,
+        contactSpace,
+        setContactSpace,
+        isWriteReviewOpen,
+        setIsWriteReviewOpen,
+        reviewSpace,
+        setReviewSpace,
+        comparedSpaceIds,
+        addSpaceToCompare,
+        removeSpaceFromCompare,
+        toggleSpaceCompare,
+        clearCompareList,
+        isCompareModalOpen,
+        setIsCompareModalOpen,
+        savedComparisons,
+        saveCurrentComparison,
+        deleteSavedComparison,
+        loadSavedComparison,
+        compareToast,
+        setCompareToast,
+        supabaseStatus,
+        supabaseMessage,
+        checkSupabaseHealth,
       }}
     >
       {children}

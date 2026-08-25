@@ -1,41 +1,48 @@
 import React from 'react';
+import { useApp } from '../context/AppContext';
 
 interface PriceRangeSliderProps {
-  min: number;
-  max: number;
-  value: number;
-  onChange: (val: number) => void;
-  currency?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  className?: string;
 }
 
 export const PriceRangeSlider: React.FC<PriceRangeSliderProps> = ({
-  min = 0,
-  max = 60000,
-  value,
-  onChange,
-  currency = '₦'
+  min = 2000,
+  max = 150000,
+  step = 1000,
+  className = '',
 }) => {
+  const { filters, updateFilter, formatPrice } = useApp();
+
+  const currentValue = filters.maxPrice || max;
+
   return (
-    <div className="space-y-2">
+    <div className={`space-y-2 ${className}`}>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-[#9EABA3]">Max Price / hr:</span>
-        <span className="font-bold text-[#00C878] font-mono">
-          {value >= max ? `Any price (up to ${currency}${max.toLocaleString()}+)` : `${currency}${value.toLocaleString()}`}
+        <span className="text-[#718079] font-medium">Hourly Budget Range</span>
+        <span className="font-mono font-bold text-[#00C878] bg-[#00C878]/10 px-2 py-0.5 rounded border border-[#00C878]/20">
+          {currentValue >= max ? 'Any Price' : `Up to ${formatPrice(currentValue, { perHour: true })}`}
         </span>
       </div>
+
       <input
         type="range"
         min={min}
         max={max}
-        step={1000}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-1.5 bg-[#232D28] rounded-lg appearance-none cursor-pointer accent-[#00C878]"
+        step={step}
+        value={currentValue}
+        onChange={(e) => updateFilter('maxPrice', Number(e.target.value))}
+        className="w-full h-2 bg-[#232D28] rounded-lg appearance-none cursor-pointer accent-[#00C878] focus:outline-none"
+        aria-label="Price range filter"
       />
-      <div className="flex justify-between text-[10px] text-[#718079]">
-        <span>{currency}{min.toLocaleString()}</span>
-        <span>{currency}{(max / 2).toLocaleString()}</span>
-        <span>{currency}{max.toLocaleString()}+</span>
+
+      <div className="flex items-center justify-between text-[10px] text-[#718079] font-mono">
+        <span>₦{(min ?? 2000).toLocaleString()}</span>
+        <span>₦50,000</span>
+        <span>₦100,000</span>
+        <span>₦{(max ?? 150000).toLocaleString()}+</span>
       </div>
     </div>
   );

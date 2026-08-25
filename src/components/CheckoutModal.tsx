@@ -1,22 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
+  CreditCard, 
   ShieldCheck, 
   Zap, 
-  CreditCard, 
-  Wallet, 
-  CheckCircle2, 
-  Calendar, 
   Clock, 
-  AlertCircle,
-  QrCode,
-  ArrowLeft,
-  Lock
+  Calendar, 
+  Users, 
+  CheckCircle2, 
+  Sparkles,
+  ArrowRight,
+  Wallet,
+  Bell
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
-import { bookingsService } from '../services/bookingsService';
 import confetti from 'canvas-confetti';
-import { Booking } from '../types';
+import { useApp } from '../context/AppContext';
 
 export const CheckoutModal: React.FC = () => {
   const {
@@ -25,68 +23,42 @@ export const CheckoutModal: React.FC = () => {
     checkoutSpace,
     currentUser,
     createBooking,
-    setActivePassBooking,
-    setCurrentView,
-    currency,
+    setActiveDigitalPassBooking,
+    setIsDigitalPassOpen,
+    checkoutPrefillSlot,
     formatPrice,
+    formatTime,
   } = useApp();
 
-  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'card' | 'transfer' | 'ussd'>('wallet');
-  const [selectedDate, setSelectedDate] = useState('Saturday, 22 August');
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState('10:00 AM');
-  const [durationHours, setDurationHours] = useState(3);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [duration, setDuration] = useState(2); // hours
+  const [date, setDate] = useState(todayStr);
+  const [startTime, setStartTime] = useState('10:00');
+  const [guests, setGuests] = useState(1);
+  const [remindMe, setRemindMe] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'flutterwave' | 'wallet'>('paystack');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isPaymentFailed, setIsPaymentFailed] = useState(false);
-  const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
+
+  useEffect(() => {
+    if (isCheckoutOpen && checkoutPrefillSlot) {
+      if (checkoutPrefillSlot.date) {
+        setDate(checkoutPrefillSlot.date);
+      }
+      if (checkoutPrefillSlot.startTime) {
+        setStartTime(checkoutPrefillSlot.startTime);
+      }
+    }
+  }, [isCheckoutOpen, checkoutPrefillSlot]);
 
   if (!isCheckoutOpen || !checkoutSpace) return null;
 
-  const subtotal = checkoutSpace.pricePerHour * durationHours;
-  const platformFee = 0;
-  const totalAmount = subtotal + platformFee;
+  const totalCost = checkoutSpace.pricePerHour * duration;
 
-  // Calculate natural end time
-  const getEndTime = (startTime: string, hours: number) => {
-    if (startTime.includes('10:00 AM')) return hours === 1 ? '11:00 AM' : hours === 2 ? '12:00 PM' : hours === 3 ? '1:00 PM' : '2:00 PM';
-    if (startTime.includes('12:00 PM')) return hours === 1 ? '1:00 PM' : hours === 2 ? '2:00 PM' : hours === 3 ? '3:00 PM' : '4:00 PM';
-    if (startTime.includes('02:00 PM') || startTime.includes('2:00 PM')) return hours === 1 ? '3:00 PM' : hours === 2 ? '4:00 PM' : hours === 3 ? '5:00 PM' : '6:00 PM';
-    if (startTime.includes('04:00 PM') || startTime.includes('4:00 PM')) return hours === 1 ? '5:00 PM' : hours === 2 ? '6:00 PM' : hours === 3 ? '7:00 PM' : '8:00 PM';
-    return `${hours} hrs access`;
-  };
-
-  const formattedEndTime = getEndTime(selectedTimeSlot, durationHours);
-
-  const handleConfirmPayment = () => {
-    setErrorMessage(null);
-    setIsPaymentFailed(false);
+  const handleConfirmPay = () => {
     setIsProcessing(true);
 
-    // 1. Authoritative availability / conflict protection check
-    const availability = bookingsService.checkBookingAvailability(
-      checkoutSpace.id,
-      selectedDate,
-      selectedTimeSlot,
-      durationHours
-    );
-
-    if (!availability.available) {
-      setIsProcessing(false);
-      setErrorMessage(availability.conflictMessage || 'That time has just been taken. Please choose another available time to continue.');
-      return;
-    }
-
-    // 2. Check wallet balance if wallet payment
-    if (paymentMethod === 'wallet' && currentUser.walletBalance < totalAmount) {
-      setIsProcessing(false);
-      setErrorMessage(`Insufficient wallet balance (${formatPrice(currentUser.walletBalance)}). Please choose Debit Card or top up your wallet.`);
-      return;
-    }
-
-    // 3. Complete payment & pass issuance
     setTimeout(() => {
-      setIsProcessing(false);
-      const booking = createBooking({
+      const newBooking = createBooking({
         spaceId: checkoutSpace.id,
         spaceTitle: checkoutSpace.title,
         spaceImage: checkoutSpace.featuredImage,
@@ -96,340 +68,245 @@ export const CheckoutModal: React.FC = () => {
         userName: currentUser.name,
         userEmail: currentUser.email,
         userPhone: currentUser.phone,
-        bookingType: 'hourly',
-        startDate: selectedDate,
-        startTime: selectedTimeSlot,
-        durationHours,
-        guestsCount: 1,
-        subtotal,
-        serviceFee: platformFee,
-        totalPrice: totalAmount,
-        currency: currency,
-        paymentStatus: 'paid',
-        paymentMethod,
-        paymentReference: `PSTK_${Math.floor(100000 + Math.random() * 900000)}`,
-        bookingStatus: 'confirmed',
+        date,
+        startTime,
+        durationHours: duration,
+        guestCount: guests,
+        totalAmount: totalCost,
+        currency: 'NGN',
+        status: 'confirmed',
+        hasReminder: remindMe,
+        paymentMethod: paymentMethod === 'wallet' ? 'wallet' : 'paystack',
+        paymentReference: `pstk_${Math.random().toString(36).substring(7)}`,
       });
 
-      setCreatedBooking(booking);
-
+      // Confetti celebration
       try {
         confetti({
           particleCount: 80,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#00C878', '#00E58B', '#FFFFFF'],
+          colors: ['#00C878', '#FFFFFF', '#141816'],
         });
       } catch (e) {
-        // Safe fallback
+        // Safe fallback if confetti canvas not ready
       }
-    }, 850);
+
+      setIsProcessing(false);
+      setIsCheckoutOpen(false);
+      setActiveDigitalPassBooking(newBooking);
+      setIsDigitalPassOpen(true);
+    }, 1000);
   };
 
-  const handleClose = () => {
-    setIsCheckoutOpen(false);
-    setCreatedBooking(null);
-    setErrorMessage(null);
-    setIsPaymentFailed(false);
-  };
+  const timeOptions = [
+    '08:00', '09:00', '10:00', '11:00', '12:00',
+    '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+  ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-      <div className="w-full max-w-lg bg-[#141816] rounded-2xl border border-[#232D28] shadow-2xl p-5 sm:p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150 my-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="relative w-full max-w-lg bg-[#141816] rounded-3xl border border-[#232D28] shadow-2xl p-6 space-y-6">
         
-        {/* State 1: Booking Confirmed (Payment Success) */}
-        {createdBooking ? (
-          <div className="text-center py-4 space-y-4">
-            <div className="w-14 h-14 rounded-full bg-[#00C878]/20 border border-[#00C878] flex items-center justify-center mx-auto text-[#00C878]">
-              <CheckCircle2 className="w-8 h-8" />
-            </div>
-            
-            <div>
-              <h3 className="text-xl font-bold text-[#F2F2F2]">Booking Confirmed</h3>
-              <p className="text-xs text-[#9EABA3] max-w-xs mx-auto mt-1">
-                Your space is booked. Your digital access pass is ready.
-              </p>
-            </div>
-
-            {/* Confirmed Details */}
-            <div className="p-4 rounded-xl bg-[#1A201D] border border-[#232D28] text-left space-y-2.5 text-xs">
-              <div className="flex justify-between items-center border-b border-[#232D28] pb-2">
-                <span className="text-[#9EABA3]">Space</span>
-                <span className="text-[#F2F2F2] font-semibold truncate max-w-[200px]">{checkoutSpace.title}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#9EABA3]">Date</span>
-                <span className="text-[#F2F2F2] font-semibold">{selectedDate}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#9EABA3]">Time</span>
-                <span className="text-[#F2F2F2] font-semibold">{selectedTimeSlot} – {formattedEndTime}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#9EABA3]">Duration</span>
-                <span className="text-[#F2F2F2] font-semibold">{durationHours} {durationHours === 1 ? 'hour' : 'hours'}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#9EABA3]">Amount Paid</span>
-                <span className="font-mono text-[#00C878] font-bold text-sm">₦{totalAmount.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#9EABA3]">Booking Reference</span>
-                <span className="font-mono text-[#9EABA3]">{createdBooking.id}</span>
-              </div>
-              <div className="flex justify-between items-center pt-1 border-t border-[#232D28]">
-                <span className="text-[#9EABA3]">Turnstile PIN</span>
-                <span className="font-mono text-[#00C878] font-bold text-sm">{createdBooking.passCode}</span>
-              </div>
-            </div>
-
-            {/* Action CTAs */}
-            <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  handleClose();
-                  setActivePassBooking(createdBooking);
-                }}
-                className="w-full sm:flex-1 py-3 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs shadow-lg flex items-center justify-center gap-1.5 transition-all"
-              >
-                <QrCode className="w-4 h-4" />
-                <span>View Digital Pass</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  handleClose();
-                  setCurrentView('explore');
-                }}
-                className="w-full sm:w-auto px-4 py-3 rounded-xl bg-[#161D19] border border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2] text-xs font-semibold"
-              >
-                Explore More Spaces
-              </button>
-            </div>
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-[#1E2522] pb-4">
+          <div>
+            <h3 className="text-lg font-bold text-[#F2F2F2]">Instant Pass Reservation</h3>
+            <p className="text-xs text-[#718079] mt-0.5">{checkoutSpace.title}</p>
           </div>
-        ) : isPaymentFailed ? (
-          /* State 2: Payment Failure State */
-          <div className="text-center py-4 space-y-4">
-            <div className="w-14 h-14 rounded-full bg-rose-500/20 border border-rose-500 flex items-center justify-center mx-auto text-rose-400">
-              <AlertCircle className="w-8 h-8" />
-            </div>
+          <button
+            type="button"
+            onClick={() => setIsCheckoutOpen(false)}
+            className="p-2 rounded-xl text-[#718079] hover:text-[#F2F2F2] hover:bg-[#18201B] transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-            <div>
-              <h3 className="text-lg font-bold text-[#F2F2F2]">Payment didn't go through</h3>
-              <p className="text-xs text-[#9EABA3] max-w-xs mx-auto mt-1">
-                Your booking hasn't been confirmed. Please try again.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsPaymentFailed(false);
-                  handleConfirmPayment();
-                }}
-                className="w-full sm:flex-1 py-3 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs shadow-lg"
-              >
-                Try Again
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsPaymentFailed(false)}
-                className="w-full sm:w-auto px-4 py-3 rounded-xl bg-[#161D19] border border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2] text-xs font-semibold"
-              >
-                Back to Booking
-              </button>
-            </div>
+        {/* Space Summary */}
+        <div className="flex items-center space-x-3 p-3 rounded-2xl bg-[#18201B] border border-[#232D28]">
+          <img
+            src={checkoutSpace.featuredImage}
+            alt={checkoutSpace.title}
+            className="w-16 h-16 rounded-xl object-cover"
+          />
+          <div className="flex-1 min-w-0">
+            <h4 className="text-xs font-bold text-[#F2F2F2] truncate">{checkoutSpace.title}</h4>
+            <p className="text-[11px] text-[#718079]">{checkoutSpace.neighborhood}, {checkoutSpace.city}</p>
+            <p className="text-xs font-mono font-bold text-[#00C878] mt-0.5">
+              {formatPrice(checkoutSpace.pricePerHour)} / hr
+            </p>
           </div>
-        ) : (
-          /* State 3: Review Your Booking & Payment */
-          <>
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#1E2522] pb-3">
-              <div>
-                <h3 className="text-base font-bold text-[#F2F2F2]">Review Your Booking</h3>
-                <p className="text-xs text-[#9EABA3]">{checkoutSpace.neighborhood}, {checkoutSpace.city}</p>
-              </div>
-              <button
-                type="button"
-                onClick={handleClose}
-                className="p-1.5 rounded-lg text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#1A231E]"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+        </div>
 
-            {/* Error Message */}
-            {errorMessage && (
-              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-xs text-rose-300 flex items-start gap-2 animate-in fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
-                <span>{errorMessage}</span>
-              </div>
-            )}
-
-            {/* Space Summary */}
-            <div className="p-3.5 rounded-xl bg-[#1A201D] border border-[#1E2522] flex items-center space-x-3">
-              <img
-                src={checkoutSpace.featuredImage}
-                alt={checkoutSpace.title}
-                className="w-14 h-14 rounded-lg object-cover"
+        {/* Date, Duration & Time Controls */}
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <label className="text-[11px] text-[#718079] font-semibold flex items-center space-x-1.5">
+              <Calendar className="w-3.5 h-3.5 text-[#00C878]" />
+              <span>Reservation Date</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={date}
+                min={todayStr}
+                onChange={(e) => setDate(e.target.value)}
+                className="flex-1 p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878] font-mono cursor-pointer"
               />
-              <div className="overflow-hidden">
-                <h4 className="text-xs font-bold text-[#F2F2F2] truncate">{checkoutSpace.title}</h4>
-                <p className="text-[11px] text-[#9EABA3] mt-0.5">{checkoutSpace.category} • {checkoutSpace.address}</p>
-                <div className="flex items-center space-x-1 text-[11px] text-[#00C878] mt-0.5 font-medium">
-                  <Zap className="w-3 h-3" />
-                  <span>24/7 Verified Solar Power</span>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setDate(todayStr)}
+                className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  date === todayStr
+                    ? 'bg-[#00C878] text-[#0D0D0D]'
+                    : 'bg-[#18201B] text-[#9EABA3] border border-[#232D28] hover:text-[#F2F2F2]'
+                }`}
+              >
+                Today
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-[11px] text-[#718079] font-semibold flex items-center space-x-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#00C878]" />
+                <span>Duration</span>
+              </label>
+              <select
+                value={duration}
+                onChange={(e) => setDuration(Number(e.target.value))}
+                className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878] cursor-pointer"
+              >
+                <option value={1}>1 Hour</option>
+                <option value={2}>2 Hours</option>
+                <option value={4}>4 Hours (Half-Day)</option>
+                <option value={8}>8 Hours (Full-Day)</option>
+              </select>
             </div>
 
-            {/* Schedule / Date Selection */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#9EABA3] flex items-center gap-1">
-                  <Calendar className="w-3 h-3 text-[#00C878]" />
-                  <span>Date</span>
-                </label>
-                <select
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#161D19] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
-                >
-                  <option value="Saturday, 22 August">Saturday, 22 August (Today)</option>
-                  <option value="Sunday, 23 August">Sunday, 23 August (Tomorrow)</option>
-                  <option value="Monday, 24 August">Monday, 24 August</option>
-                  <option value="Tuesday, 25 August">Tuesday, 25 August</option>
-                  <option value="Wednesday, 26 August">Wednesday, 26 August</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#9EABA3] flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-[#00C878]" />
-                  <span>Start Time</span>
-                </label>
-                <select
-                  value={selectedTimeSlot}
-                  onChange={(e) => setSelectedTimeSlot(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#161D19] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
-                >
-                  <option value="10:00 AM">10:00 AM</option>
-                  <option value="12:00 PM">12:00 PM</option>
-                  <option value="02:00 PM">02:00 PM</option>
-                  <option value="04:00 PM">04:00 PM</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Duration Selector */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-[#9EABA3]">Duration</label>
-                <span className="text-[11px] text-[#00C878] font-medium">{selectedTimeSlot} – {formattedEndTime}</span>
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {[1, 2, 3, 4].map((hrs) => (
-                  <button
-                    key={hrs}
-                    type="button"
-                    onClick={() => setDurationHours(hrs)}
-                    className={`py-2 rounded-xl text-xs font-bold transition-all border ${
-                      durationHours === hrs
-                        ? 'bg-[#00C878] text-[#0D0D0D] border-[#00C878]'
-                        : 'bg-[#161D19] border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2]'
-                    }`}
-                  >
-                    {hrs} {hrs === 1 ? 'hour' : 'hours'}
-                  </button>
+            <div className="space-y-1">
+              <label className="text-[11px] text-[#718079] font-semibold flex items-center space-x-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#00C878]" />
+                <span>Start Time</span>
+              </label>
+              <select
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878] cursor-pointer"
+              >
+                {timeOptions.map((t) => (
+                  <option key={t} value={t}>
+                    {formatTime(t)}
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
+          </div>
+        </div>
 
-            {/* Payment Method Selector */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-[#9EABA3]">Payment Method</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('wallet')}
-                  className={`p-3 rounded-xl text-left border flex items-center space-x-2.5 transition-all ${
-                    paymentMethod === 'wallet'
-                      ? 'bg-[#00C878]/15 border-[#00C878] text-[#00C878]'
-                      : 'bg-[#161D19] border-[#232D28] text-[#9EABA3]'
-                  }`}
-                >
-                  <Wallet className="w-4 h-4 shrink-0" />
-                  <div className="overflow-hidden">
-                    <p className="text-xs font-bold truncate">OFIS Wallet</p>
-                    <p className="text-[10px] text-[#718079]">{formatPrice(currentUser.walletBalance)}</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('card')}
-                  className={`p-3 rounded-xl text-left border flex items-center space-x-2.5 transition-all ${
-                    paymentMethod === 'card'
-                      ? 'bg-[#00C878]/15 border-[#00C878] text-[#00C878]'
-                      : 'bg-[#161D19] border-[#232D28] text-[#9EABA3]'
-                  }`}
-                >
-                  <CreditCard className="w-4 h-4 shrink-0" />
-                  <div className="overflow-hidden">
-                    <p className="text-xs font-bold truncate">Debit Card</p>
-                    <p className="text-[10px] text-[#718079]">Paystack / Bank Card</p>
-                  </div>
-                </button>
-              </div>
+        {/* Remind Me 30-Min Toggle */}
+        <div 
+          id="checkout-remind-toggle"
+          onClick={() => setRemindMe(!remindMe)}
+          className="flex items-center justify-between p-3 rounded-2xl bg-[#18201B] border border-[#232D28] hover:border-[#00C878]/30 transition-all cursor-pointer select-none"
+        >
+          <div className="flex items-center space-x-3">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+              remindMe ? 'bg-[#00C878]/20 text-[#00C878]' : 'bg-[#141816] text-[#718079]'
+            }`}>
+              <Bell className="w-4 h-4" />
             </div>
-
-            {/* Price Breakdown */}
-            <div className="p-3.5 rounded-xl bg-[#1A201D] space-y-1.5 text-xs">
-              <div className="flex justify-between text-[#9EABA3]">
-                <span>Space ({durationHours} hrs × {formatPrice(checkoutSpace.pricePerHour)})</span>
-                <span className="font-mono text-[#F2F2F2]">{formatPrice(subtotal)}</span>
+            <div>
+              <div className="text-xs font-bold text-[#F2F2F2] flex items-center gap-1.5">
+                <span>Remind Me</span>
+                <span className="text-[10px] font-mono text-[#00C878] bg-[#00C878]/10 px-1.5 py-0.2 rounded border border-[#00C878]/20">
+                  30m before
+                </span>
               </div>
-              <div className="flex justify-between text-[#9EABA3]">
-                <span>Service Fee</span>
-                <span className="text-[#00C878] font-semibold">{formatPrice(0)} (Free)</span>
-              </div>
-              <div className="pt-2 border-t border-[#232D28] flex justify-between items-center font-bold text-sm text-[#F2F2F2]">
-                <span>Total</span>
-                <span className="text-[#00C878] font-mono text-base font-extrabold">{formatPrice(totalAmount)}</span>
-              </div>
+              <p className="text-[10px] text-[#718079]">
+                Get a notification with access code at {formatTime(startTime)} (30 mins prior)
+              </p>
             </div>
+          </div>
 
-            {/* Confirm Payment CTA */}
+          <div className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ease-in-out ${
+            remindMe ? 'bg-[#00C878]' : 'bg-[#232D28]'
+          }`}>
+            <div className={`bg-[#0D0D0D] w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+              remindMe ? 'translate-x-5' : 'translate-x-0'
+            }`} />
+          </div>
+        </div>
+
+        {/* Payment Channels */}
+        <div className="space-y-2">
+          <label className="text-[11px] text-[#718079] font-semibold uppercase tracking-wider font-mono">
+            Payment Option
+          </label>
+          
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              disabled={isProcessing}
-              onClick={handleConfirmPayment}
-              className="w-full py-3.5 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-extrabold text-sm transition-all shadow-[0_4px_16px_rgba(0,200,120,0.3)] active:scale-95 flex items-center justify-center space-x-2 disabled:opacity-60"
+              onClick={() => setPaymentMethod('paystack')}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                paymentMethod === 'paystack'
+                  ? 'bg-[#00C878]/15 border-[#00C878] text-[#F2F2F2]'
+                  : 'bg-[#18201B] border-[#232D28] text-[#9EABA3]'
+              }`}
             >
-              {isProcessing ? (
-                <div className="flex flex-col items-center">
-                  <span>Processing your payment…</span>
-                  <span className="text-[11px] font-normal opacity-80">Please don't close this page.</span>
-                </div>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4" />
-                  <span>Pay {formatPrice(totalAmount)}</span>
-                </>
-              )}
+              <div className="text-xs font-bold">Paystack / Bank Card</div>
+              <p className="text-[10px] text-[#718079]">Mastercard, Visa, Verve</p>
             </button>
 
-            {/* Supporting Trust Copy */}
-            <div className="flex items-center justify-center space-x-2 text-[11px] text-[#718079]">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#00C878]" />
-              <span>Clear pricing • Secure payment • Instant booking</span>
-            </div>
-          </>
-        )}
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('wallet')}
+              className={`p-3 rounded-xl border text-left transition-all ${
+                paymentMethod === 'wallet'
+                  ? 'bg-[#00C878]/15 border-[#00C878] text-[#F2F2F2]'
+                  : 'bg-[#18201B] border-[#232D28] text-[#9EABA3]'
+              }`}
+            >
+              <div className="text-xs font-bold">OFIS Wallet</div>
+              <p className="text-[10px] text-[#718079]">₦{(currentUser?.walletBalanceNgn ?? 0).toLocaleString()} Avail.</p>
+            </button>
+          </div>
+        </div>
+
+        {/* Cost Breakdown */}
+        <div className="p-4 rounded-2xl bg-[#18201B] border border-[#232D28] space-y-2 text-xs">
+          <div className="flex justify-between text-[#718079]">
+            <span>Rate ({duration} hrs @ {formatPrice(checkoutSpace.pricePerHour)}/hr)</span>
+            <span className="text-[#F2F2F2]">{formatPrice(totalCost)}</span>
+          </div>
+          <div className="flex justify-between text-[#718079]">
+            <span>Power & High-Speed Internet Access</span>
+            <span className="text-[#00C878]">Included Free</span>
+          </div>
+          <div className="pt-2 border-t border-[#232D28] flex justify-between font-bold text-sm text-[#F2F2F2]">
+            <span>Total Pass Cost</span>
+            <span className="text-[#00C878] font-mono">{formatPrice(totalCost)}</span>
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <button
+          type="button"
+          disabled={isProcessing}
+          onClick={handleConfirmPay}
+          className="w-full py-3.5 rounded-2xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-extrabold text-sm shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-2"
+        >
+          {isProcessing ? (
+            <span>Securing Pass...</span>
+          ) : (
+            <>
+              <span>Authorize & Generate Digital Pass</span>
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
 
       </div>
     </div>

@@ -1,299 +1,364 @@
 import React from 'react';
 import { 
   X, 
-  Compass, 
-  MapPin, 
-  Ticket, 
+  User, 
   Building2, 
-  PlusCircle, 
   Sparkles, 
-  Shield, 
+  PlusCircle, 
+  CalendarCheck, 
+  Bookmark, 
+  Bell, 
+  Settings, 
   HelpCircle, 
-  PhoneCall, 
-  Settings,
-  ChevronRight,
-  Globe
+  LogOut, 
+  LogIn,
+  Zap, 
+  ShieldCheck, 
+  ChevronRight, 
+  RefreshCw, 
+  Activity, 
+  UserPlus,
+  ArrowLeftRight
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import ofisWordmark from '../assets/ofis-wordmark.png';
-import { POPULAR_CITIES, CATEGORY_METADATA } from '../mockData';
-import { SpaceCategory } from '../types';
+import { OFISWordmark } from './OFISWordmark';
 
 export const OfisNavigationDrawer: React.FC = () => {
   const {
-    isNavDrawerOpen,
-    setIsNavDrawerOpen,
-    currentView,
-    setCurrentView,
-    activeCategory,
-    setActiveCategory,
-    updateFilter,
-    setIsListSpaceOpen,
-    setIsAiAssistantOpen,
-    setIsSettingsOpen,
-    setIsAuthModalOpen,
+    isDrawerOpen,
+    setIsDrawerOpen,
     currentUser,
-    focusSearchInput,
-    currency,
-    setCurrency,
-    formatPrice,
+    switchUserRole,
+    setCurrentView,
+    setIsAuthModalOpen,
+    openAuthModal,
+    setIsListSpaceModalOpen,
+    setIsAiModalOpen,
+    setIsSettingsOpen,
+    setIsDiagnosticsModalOpen,
+    notifications,
+    markAllNotificationsRead,
+    unreadNotificationsCount,
+    signOut,
+    signIn,
+    isGuest,
+    comparedSpaceIds,
+    setIsCompareModalOpen,
   } = useApp();
 
-  if (!isNavDrawerOpen) return null;
+  if (!isDrawerOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
-        onClick={() => setIsNavDrawerOpen(false)}
+      <div 
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+        onClick={() => setIsDrawerOpen(false)}
       />
 
-      <div className="fixed inset-y-0 left-0 max-w-full flex">
-        <div className="w-screen max-w-sm bg-[#121714] border-r border-[#1E2522] shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-left duration-200">
-          
-          {/* Header */}
-          <div className="p-5 border-b border-[#1E2522] flex items-center justify-between">
-            <div>
-              <img
-                src={ofisWordmark}
-                alt="OFIS"
-                className="h-9 w-auto object-contain"
-              />
-              <p className="text-[9px] font-mono font-bold tracking-widest text-[#00C878] uppercase mt-1">
-                Nigeria's Physical Space Network
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsNavDrawerOpen(false)}
-              className="p-2 rounded-xl text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#1A231E] transition-all"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+      <div className="fixed inset-y-0 right-0 max-w-sm w-full bg-[#121614] border-l border-[#1E2522] shadow-2xl flex flex-col justify-between z-10">
+        
+        {/* Header */}
+        <div className="p-5 border-b border-[#1E2522] flex items-center justify-between">
+          <OFISWordmark size="sm" />
+          <button
+            type="button"
+            onClick={() => setIsDrawerOpen(false)}
+            className="p-2 rounded-xl text-[#718079] hover:text-[#F2F2F2] hover:bg-[#18201B] transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-          {/* Body */}
-          <div className="flex-1 px-4 py-5 space-y-6">
-            
-            {/* Primary Explore Navigation */}
-            <div className="space-y-1">
-              <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#718079] mb-2">
-                Explore Spaces
-              </p>
+        {/* Scrollable Content */}
+        <div className="p-5 overflow-y-auto space-y-6 flex-1">
+          
+          {/* User Card */}
+          <div className="p-4 rounded-2xl bg-[#18201B] border border-[#232D28] space-y-3">
+            <div className="flex items-center space-x-3">
+              <img
+                src={currentUser.avatar}
+                alt={currentUser.name}
+                className="w-12 h-12 rounded-full object-cover ring-2 ring-[#00C878]"
+              />
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-bold text-[#F2F2F2] truncate">{currentUser.name}</h4>
+                <p className="text-xs text-[#718079] truncate">{currentUser.email}</p>
+                <div className="flex items-center space-x-1.5 mt-1">
+                  <span className="px-2 py-0.5 rounded-md bg-[#00C878]/15 text-[#00C878] text-[10px] font-mono font-bold uppercase">
+                    {currentUser.role}
+                  </span>
+                  <span className="text-[10px] text-[#718079]">
+                    ₦{(currentUser?.walletBalanceNgn ?? 0).toLocaleString()} Balance
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-[#232D28] flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  switchUserRole(currentUser.role === 'user' ? 'host' : 'user');
+                }}
+                className="text-xs text-[#00C878] hover:underline font-semibold flex items-center space-x-1"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Switch to {currentUser.role === 'user' ? 'Host Mode' : 'Guest Mode'}</span>
+              </button>
               
               <button
                 type="button"
                 onClick={() => {
-                  focusSearchInput();
+                  setIsDrawerOpen(false);
+                  openAuthModal('profile');
                 }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  currentView === 'explore'
-                    ? 'bg-[#00C878]/10 text-[#00C878] font-bold border border-[#00C878]/30'
-                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19]'
-                }`}
+                className="text-xs text-[#9EABA3] hover:text-[#F2F2F2] cursor-pointer"
               >
-                <div className="flex items-center space-x-3">
-                  <Compass className="w-4 h-4" />
-                  <span>Spaces (Search & Browse)</span>
-                </div>
-                <ChevronRight className="w-4 h-4 opacity-60" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentView('map');
-                  setIsNavDrawerOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  currentView === 'map'
-                    ? 'bg-[#00C878]/10 text-[#00C878] font-bold border border-[#00C878]/30'
-                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19]'
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <MapPin className="w-4 h-4 text-[#00C878]" />
-                  <span>Around Me (Map View)</span>
-                </div>
-                <ChevronRight className="w-4 h-4 opacity-60" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentView('bookings');
-                  setIsNavDrawerOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  currentView === 'bookings'
-                    ? 'bg-[#00C878]/10 text-[#00C878] font-bold border border-[#00C878]/30'
-                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19]'
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <Ticket className="w-4 h-4" />
-                  <span>My Passes & Bookings</span>
-                </div>
-                <ChevronRight className="w-4 h-4 opacity-60" />
+                Manage Profile
               </button>
             </div>
 
-            {/* Reposted Dedicated Host Menu */}
-            <div className="space-y-1.5 p-3 rounded-2xl bg-[#141A17] border border-[#1E2722]">
-              <div className="flex items-center justify-between px-1 mb-1">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[#00C878]">
-                  Host Menu
-                </p>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#00C878]/15 text-[#00C878]">
-                  Host Earn ₦
-                </span>
-              </div>
-
-              {/* Host a space option */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsListSpaceOpen(true);
-                  setIsNavDrawerOpen(false);
-                }}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold text-[#0D0D0D] bg-[#00C878] hover:bg-[#00E58B] transition-all shadow-md active:scale-[0.99]"
-              >
-                <div className="flex items-center space-x-2.5">
-                  <PlusCircle className="w-4 h-4" />
-                  <span>Host a Space</span>
-                </div>
-                <ChevronRight className="w-4 h-4" />
-              </button>
-
-              {/* Host Portal & Management */}
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentView('host');
-                  setIsNavDrawerOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                  currentView === 'host'
-                    ? 'bg-[#00C878]/10 text-[#00C878] font-bold border border-[#00C878]/30'
-                    : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#1A221E]'
-                }`}
-              >
-                <div className="flex items-center space-x-2.5">
-                  <Building2 className="w-4 h-4" />
-                  <span>Host Portal & Dashboard</span>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-              </button>
-            </div>
-
-            {/* Quick Cities */}
-            <div>
-              <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#718079] mb-2">
-                Filter by City
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {POPULAR_CITIES.map(city => (
+            {/* Prominent Sign In / Sign Up / Sign Out Button inside User Card */}
+            <div className="pt-2 border-t border-[#232D28] space-y-2">
+              {isGuest ? (
+                <div className="grid grid-cols-2 gap-2">
                   <button
-                    key={city}
                     type="button"
+                    id="drawer-sign-in-btn"
                     onClick={() => {
-                      updateFilter('city', city);
-                      setCurrentView('explore');
-                      setIsNavDrawerOpen(false);
+                      setIsDrawerOpen(false);
+                      openAuthModal('login');
                     }}
-                    className="p-2 text-xs font-semibold text-left rounded-xl bg-[#161D19] hover:bg-[#1E2522] text-[#9EABA3] hover:text-[#00C878] transition-all border border-[#1E2522]"
+                    className="w-full py-2 px-3 rounded-xl bg-[#18201B] hover:bg-[#232D28] border border-[#232D28] text-[#F2F2F2] text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
                   >
-                    📍 {city}
+                    <LogIn className="w-3.5 h-3.5 text-[#718079]" />
+                    <span>Sign In</span>
                   </button>
-                ))}
-              </div>
-            </div>
 
-            {/* Actions & Tools */}
-            <div className="space-y-2 pt-2 border-t border-[#1E2522]">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAiAssistantOpen(true);
-                  setIsNavDrawerOpen(false);
-                }}
-                className="w-full flex items-center justify-center space-x-2 py-2.5 rounded-xl bg-[#161D19] border border-[#232D28] hover:border-[#00C878]/50 text-xs font-semibold text-[#00C878] transition-all"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Ask OFIS AI Concierge</span>
-              </button>
+                  <button
+                    type="button"
+                    id="drawer-sign-up-btn"
+                    onClick={() => {
+                      setIsDrawerOpen(false);
+                      openAuthModal('signup');
+                    }}
+                    className="w-full py-2 px-3 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer shadow-md"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Sign Up</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  id="drawer-sign-out-btn"
+                  onClick={() => {
+                    setIsDrawerOpen(false);
+                    signOut();
+                  }}
+                  className="w-full py-2 px-3 rounded-xl bg-[#2D1616] hover:bg-[#3D1A1A] border border-[#FF5C5C]/30 text-[#FF8585] hover:text-[#FF5C5C] text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4 text-[#FF5C5C]" />
+                  <span>Sign Out</span>
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Footer Profile status */}
-          <div className="p-4 border-t border-[#1E2522] bg-[#0E1210] space-y-3">
-            {/* Quick Currency Selector */}
-            <div className="flex items-center justify-between p-2 rounded-xl bg-[#161D19] border border-[#232D28]">
-              <span className="text-[11px] text-[#9EABA3] flex items-center gap-1.5 font-medium">
-                <Globe className="w-3.5 h-3.5 text-[#00C878]" />
-                <span>Currency</span>
-              </span>
-              <div className="flex items-center bg-[#101412] p-0.5 rounded-lg border border-[#1E2522] text-[10px] font-bold">
-                <button
-                  type="button"
-                  onClick={() => setCurrency('NGN')}
-                  className={`px-2 py-0.5 rounded transition-all ${
-                    currency === 'NGN'
-                      ? 'bg-[#00C878] text-[#0D0D0D]'
-                      : 'text-[#9EABA3] hover:text-[#F2F2F2]'
-                  }`}
-                >
-                  ₦ NGN
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCurrency('USD')}
-                  className={`px-2 py-0.5 rounded transition-all ${
-                    currency === 'USD'
-                      ? 'bg-[#00C878] text-[#0D0D0D]'
-                      : 'text-[#9EABA3] hover:text-[#F2F2F2]'
-                  }`}
-                >
-                  $ USD
-                </button>
-              </div>
-            </div>
+          {/* Navigation Links */}
+          <div className="space-y-1">
+            <p className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider px-2 pb-1">
+              Explore & Bookings
+            </p>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2.5">
-                {currentUser.avatarUrl && (
-                  <img
-                    src={currentUser.avatarUrl}
-                    alt={currentUser.name}
-                    className="w-8 h-8 rounded-lg object-cover ring-1 ring-[#00C878]/30"
-                  />
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentView('explore');
+                setIsDrawerOpen(false);
+              }}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
+            >
+              <div className="flex items-center space-x-3">
+                <Zap className="w-4 h-4 text-[#00C878]" />
+                <span>Explore Workspaces</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#718079]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentView('bookings');
+                setIsDrawerOpen(false);
+              }}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
+            >
+              <div className="flex items-center space-x-3">
+                <CalendarCheck className="w-4 h-4 text-[#00C878]" />
+                <span>My Active Bookings</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#718079]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentView('saved');
+                setIsDrawerOpen(false);
+              }}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
+            >
+              <div className="flex items-center space-x-3">
+                <Bookmark className="w-4 h-4 text-[#00C878]" />
+                <span>Saved Favorites</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#718079]" />
+            </button>
+
+            <button
+              type="button"
+              id="drawer-compare-spaces-btn"
+              onClick={() => {
+                setIsDrawerOpen(false);
+                setIsCompareModalOpen(true);
+              }}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
+            >
+              <div className="flex items-center space-x-3">
+                <ArrowLeftRight className="w-4 h-4 text-[#00C878]" />
+                <span>Compare Workspaces</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                {comparedSpaceIds.length > 0 && (
+                  <span className="px-2 py-0.5 rounded-md bg-[#00C878]/20 text-[#00C878] text-[10px] font-mono font-bold">
+                    {comparedSpaceIds.length}
+                  </span>
                 )}
-                <div>
-                  <p className="text-xs font-bold text-[#F2F2F2]">{currentUser.name}</p>
-                  <p className="text-[10px] text-[#00C878] font-medium">{formatPrice(currentUser.walletBalance)} Wallet</p>
-                </div>
+                <ChevronRight className="w-4 h-4 text-[#718079]" />
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSettingsOpen(true);
-                  setIsNavDrawerOpen(false);
-                }}
-                className="p-2 rounded-lg text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#161D19] transition-colors"
-                title="Settings"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsDrawerOpen(false);
+                setIsAiModalOpen(true);
+              }}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#00C878] transition-colors"
+            >
+              <div className="flex items-center space-x-3">
+                <Sparkles className="w-4 h-4 text-[#00C878]" />
+                <span>Ofis Assistant</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#718079]" />
+            </button>
+          </div>
+
+          {/* Host Operations */}
+          <div className="space-y-1">
+            <p className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider px-2 pb-1">
+              Host Operations
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsDrawerOpen(false);
+                setIsListSpaceModalOpen(true);
+              }}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
+            >
+              <div className="flex items-center space-x-3">
+                <PlusCircle className="w-4 h-4 text-[#00C878]" />
+                <span>List a New Hub / Space</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#718079]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                switchUserRole('host');
+                setIsDrawerOpen(false);
+              }}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
+            >
+              <div className="flex items-center space-x-3">
+                <Building2 className="w-4 h-4 text-[#00C878]" />
+                <span>Host Dashboard & Earnings</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#718079]" />
+            </button>
+          </div>
+
+          {/* Notifications Brief */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-2">
+              <p className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider">
+                Notifications ({unreadNotificationsCount})
+              </p>
+              {unreadNotificationsCount > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllNotificationsRead}
+                  className="text-[10px] text-[#00C878] hover:underline"
+                >
+                  Mark read
+                </button>
+              )}
             </div>
 
-            <div className="pt-2 border-t border-[#1A231E] flex items-center justify-between text-[10px] text-[#718079]">
-              <span className="font-mono font-semibold text-[#9EABA3]">OFIS v2.1.1</span>
-              <span>Lagos • Abuja • Port Harcourt</span>
-            </div>
+            {notifications.slice(0, 2).map(n => (
+              <div key={n.id} className="p-3 rounded-xl bg-[#18201B] border border-[#232D28] text-xs space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[#F2F2F2]">{n.title}</span>
+                  <span className="text-[10px] text-[#718079]">{n.timestamp}</span>
+                </div>
+                <p className="text-[#9EABA3] leading-relaxed">{n.message}</p>
+              </div>
+            ))}
           </div>
 
         </div>
+
+        {/* Footer */}
+        <div className="p-5 border-t border-[#1E2522] space-y-2.5">
+          {currentUser.role === 'host' && (
+            <button
+              type="button"
+              id="drawer-diagnostics-btn"
+              onClick={() => {
+                setIsDrawerOpen(false);
+                setIsDiagnosticsModalOpen(true);
+              }}
+              className="w-full flex items-center space-x-2 text-xs font-bold text-[#00C878] hover:text-[#00E58B] transition-colors cursor-pointer"
+            >
+              <Activity className="w-4 h-4 text-[#00C878]" />
+              <span>Run System Health Diagnostics</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            id="drawer-settings-btn"
+            onClick={() => {
+              setIsDrawerOpen(false);
+              setIsSettingsOpen(true);
+            }}
+            className="w-full flex items-center space-x-2 text-xs text-[#9EABA3] hover:text-[#F2F2F2] transition-colors cursor-pointer"
+          >
+            <Settings className="w-4 h-4" />
+            <span>Platform Settings & Clock</span>
+          </button>
+
+          <div className="text-[11px] text-[#718079] font-mono flex items-center justify-between pt-2 border-t border-[#1E2522]">
+            <span>OFIS Nigeria v2.0</span>
+            <span className="text-[#00C878]">● 100% Naira (₦) Ready</span>
+          </div>
+        </div>
+
       </div>
     </div>
   );

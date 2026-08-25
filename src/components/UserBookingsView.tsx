@@ -1,376 +1,283 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
-  Ticket, 
+  CalendarCheck, 
   MapPin, 
-  QrCode, 
   Clock, 
-  Calendar, 
-  Navigation, 
-  PhoneCall, 
-  MessageSquarePlus, 
-  AlertTriangle,
-  Compass,
+  QrCode, 
+  ChevronRight, 
+  AlertCircle, 
+  Zap, 
+  ArrowLeft,
+  XCircle,
+  Bell,
   CheckCircle2,
-  ChevronRight,
+  Check,
+  Star,
+  Plus,
   ShieldCheck,
-  Zap,
-  Eye
+  LogOut
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Booking } from '../types';
-import { reviewsService } from '../services/reviewsService';
+import { Booking, BookingLifecycleStatus } from '../types';
 
 export const UserBookingsView: React.FC = () => {
-  const { 
-    userBookings, 
-    setActivePassBooking, 
-    setSelectedBookingDetails,
-    cancelBooking, 
+  const {
+    bookings,
+    isLoadingBookings,
+    bookingsError,
+    refreshBookings,
+    cancelBooking,
+    setActiveDigitalPassBooking,
+    setIsDigitalPassOpen,
+    setActiveBookingDetails,
+    setIsBookingDetailsOpen,
     setCurrentView,
-    setContactHostData,
-    setDirectionsData,
-    setWriteReviewModalData,
-    currentUser,
     formatPrice,
+    formatTime,
+    toggleBookingReminder,
+    checkInGuest,
+    checkOutBooking,
+    setReviewSpace,
+    setIsWriteReviewOpen,
+    allSpaces,
   } = useApp();
 
-  const [selectedTab, setSelectedTab] = useState<'upcoming' | 'active' | 'completed' | 'cancelled' | 'all'>('all');
-
-  const upcomingBookings = userBookings.filter(b => b.bookingStatus === 'confirmed');
-  const activeBookings = userBookings.filter(b => b.bookingStatus === 'active');
-  const completedBookings = userBookings.filter(b => b.bookingStatus === 'completed');
-  const cancelledBookings = userBookings.filter(b => b.bookingStatus === 'cancelled');
-
-  const getFilteredBookings = () => {
-    switch (selectedTab) {
-      case 'upcoming':
-        return upcomingBookings;
+  const getStatusBadge = (status: BookingLifecycleStatus) => {
+    switch (status) {
+      case 'reserved':
+        return { label: 'Reserved', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' };
+      case 'confirmed':
+        return { label: 'Confirmed', className: 'bg-[#00C878]/15 text-[#00C878] border-[#00C878]/30' };
+      case 'ready_for_checkin':
+        return { label: 'Ready for Check-In', className: 'bg-blue-500/15 text-blue-400 border-blue-500/30' };
+      case 'checked_in':
+        return { label: 'Checked In', className: 'bg-[#00C878]/25 text-[#00C878] border-[#00C878]/40' };
+      case 'in_progress':
       case 'active':
-        return activeBookings;
+        return { label: 'In Progress', className: 'bg-[#00C878]/25 text-[#00C878] border-[#00C878]/40' };
       case 'completed':
-        return completedBookings;
+        return { label: 'Completed', className: 'bg-neutral-500/20 text-neutral-300 border-neutral-500/30' };
+      case 'reviewed':
+        return { label: 'Reviewed', className: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' };
       case 'cancelled':
-        return cancelledBookings;
+        return { label: 'Cancelled', className: 'bg-red-500/15 text-red-400 border-red-500/30' };
       default:
-        return userBookings;
+        return { label: status, className: 'bg-[#00C878]/15 text-[#00C878] border-[#00C878]/30' };
     }
   };
 
-  const filteredList = getFilteredBookings();
-
-  const getStatusBadge = (status: Booking['bookingStatus']) => {
-    switch (status) {
-      case 'confirmed':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#00C878]/15 text-[#00C878] border border-[#00C878]/30">Upcoming</span>;
-      case 'active':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#00C878] text-[#0D0D0D] animate-pulse">Active Now</span>;
-      case 'completed':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#232D28] text-[#9EABA3]">Completed</span>;
-      case 'cancelled':
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">Cancelled</span>;
+  const handleOpenReview = (b: Booking) => {
+    const space = allSpaces.find(s => s.id === b.spaceId);
+    if (space) {
+      setReviewSpace(space);
     }
+    setIsWriteReviewOpen(true);
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] pb-24 pt-6">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6">
-        
-        {/* Header */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="min-h-screen bg-[#0D0D0D] pb-32">
+      {/* Top Header */}
+      <div className="sticky top-16 z-30 bg-[#0D0D0D]/90 backdrop-blur-md border-b border-[#1E2522] py-4 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#00C878]/15 text-[#00C878] font-bold uppercase">
-                Client Workspace Hub
-              </span>
-            </div>
-            <h1 className="text-2xl font-bold text-[#F2F2F2] mt-1">My Space Passes & Bookings</h1>
-            <p className="text-xs text-[#9EABA3]">
-              Access your instant turnstile QR passes, reservations, and verified receipts.
-            </p>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#F2F2F2]">My Bookings & Access Passes</h1>
+            <p className="text-xs text-[#718079] mt-0.5">Manage turnstile passes, arrival check-in, duration extensions & reviews</p>
           </div>
 
           <button
             type="button"
             onClick={() => setCurrentView('explore')}
-            className="px-4 py-2 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto shadow-md transition-all"
+            className="px-3.5 py-2 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-bold hover:bg-[#00E58B] transition-all cursor-pointer"
           >
-            <Compass className="w-3.5 h-3.5" />
-            <span>Book New Space</span>
+            Find New Space
           </button>
         </div>
+      </div>
 
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-6 scrollbar-none border-b border-[#1E2522]">
-          {[
-            { id: 'all', label: 'All Bookings', count: userBookings.length },
-            { id: 'upcoming', label: 'Upcoming', count: upcomingBookings.length },
-            { id: 'active', label: 'Active', count: activeBookings.length },
-            { id: 'completed', label: 'Completed', count: completedBookings.length },
-            { id: 'cancelled', label: 'Cancelled', count: cancelledBookings.length },
-          ].map((tab) => (
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+        {bookingsError && (
+          <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-between text-xs text-red-400">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{bookingsError}</span>
+            </div>
             <button
-              key={tab.id}
               type="button"
-              onClick={() => setSelectedTab(tab.id as any)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150 ${
-                selectedTab === tab.id
-                  ? 'bg-[#17201B] text-[#00C878] border border-[#00C878]/40 shadow-sm'
-                  : 'text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#141816]'
-              }`}
+              onClick={() => refreshBookings()}
+              className="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 font-semibold cursor-pointer"
             >
-              <span>{tab.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                selectedTab === tab.id ? 'bg-[#00C878] text-[#0D0D0D]' : 'bg-[#232D28] text-[#718079]'
-              }`}>
-                {tab.count}
-              </span>
+              Retry
             </button>
-          ))}
-        </div>
+          </div>
+        )}
 
-        {/* Bookings List */}
-        {filteredList.length > 0 ? (
+        {isLoadingBookings ? (
           <div className="space-y-4">
-            {filteredList.map((booking) => {
-              const isConfirmed = booking.bookingStatus === 'confirmed';
-              const isActive = booking.bookingStatus === 'active';
-              const isCompleted = booking.bookingStatus === 'completed';
-              const isCancelled = booking.bookingStatus === 'cancelled';
-              const canReview = isCompleted && reviewsService.canUserReviewSpace(currentUser.id, booking.spaceId, userBookings).canReview;
+            {[1, 2, 3].map((idx) => (
+              <div key={idx} className="p-5 rounded-3xl bg-[#141816] border border-[#1E2522] h-28 animate-pulse flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-20 h-20 rounded-2xl bg-[#1E2522]" />
+                  <div className="space-y-2">
+                    <div className="w-32 h-4 bg-[#1E2522] rounded" />
+                    <div className="w-48 h-3 bg-[#1E2522] rounded" />
+                  </div>
+                </div>
+                <div className="w-24 h-8 bg-[#1E2522] rounded-xl" />
+              </div>
+            ))}
+          </div>
+        ) : bookings.length === 0 ? (
+          <div className="py-20 text-center space-y-4 max-w-md mx-auto">
+            <div className="w-16 h-16 rounded-2xl bg-[#141816] border border-[#232D28] flex items-center justify-center mx-auto text-[#718079]">
+              <CalendarCheck className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-bold text-[#F2F2F2]">No active passes</h3>
+            <p className="text-xs text-[#718079]">
+              You don’t have any workspace bookings yet. Discover verified hubs with guaranteed 24/7 power and high-speed internet.
+            </p>
+            <button
+              type="button"
+              onClick={() => setCurrentView('explore')}
+              className="px-5 py-2.5 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-bold"
+            >
+              Explore Spaces
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {bookings.map((b) => {
+              const isCancelled = b.status === 'cancelled';
+              const isCheckedIn = b.checkedIn && !b.checkedOut;
+              const isCompleted = b.checkedOut || b.status === 'completed';
+              const isReviewed = b.status === 'reviewed' || b.isReviewed;
+              const hasReminder = b.hasReminder ?? false;
+              const badge = getStatusBadge(b.status);
 
               return (
                 <div
-                  key={booking.id}
-                  className="bg-[#141816] rounded-2xl border border-[#1E2522] hover:border-[#2A3630] transition-colors p-4 sm:p-5 shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4"
+                  key={b.id}
+                  className="p-5 rounded-3xl bg-[#141816] border border-[#1E2522] hover:border-[#232D28] transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
                 >
-                  
-                  {/* Left: Thumbnail & Details */}
-                  <div className="flex items-start gap-4 min-w-0 flex-1">
+                  <div className="flex items-start sm:items-center space-x-4 min-w-0">
                     <img
-                      src={booking.spaceImage}
-                      alt={booking.spaceTitle}
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover shrink-0"
+                      src={b.spaceImage}
+                      alt={b.spaceTitle}
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover shrink-0"
                     />
-
-                    <div className="space-y-1.5 min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {getStatusBadge(booking.bookingStatus)}
-                        <span className="text-xs font-mono text-[#718079]">{booking.id}</span>
-                        <span className="text-[11px] text-[#00C878] font-semibold flex items-center gap-1">
-                          <Zap className="w-3 h-3" />
-                          <span>Solar Verified</span>
+                    <div className="space-y-1.5 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase border ${badge.className}`}>
+                          {badge.label}
                         </span>
+                        <span className="text-[10px] text-[#718079] font-mono">{b.id}</span>
+                        
+                        {!isCancelled && !isCompleted && !isReviewed && (
+                          <button
+                            type="button"
+                            onClick={() => toggleBookingReminder(b.id)}
+                            title={hasReminder ? "Reminder active (30m before). Click to disable." : "Click to set 30-min reminder"}
+                            className={`flex items-center space-x-1 px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+                              hasReminder
+                                ? 'bg-[#00C878]/15 text-[#00C878] border border-[#00C878]/30'
+                                : 'bg-[#18201B] text-[#718079] hover:text-[#F2F2F2] border border-[#232D28]'
+                            }`}
+                          >
+                            <Bell className="w-2.5 h-2.5" />
+                            <span>{hasReminder ? '30m Alert On' : '+ Remind Me'}</span>
+                          </button>
+                        )}
                       </div>
 
-                      <h3 className="text-sm sm:text-base font-bold text-[#F2F2F2] truncate">
-                        {booking.spaceTitle}
-                      </h3>
-
-                      <p className="text-xs text-[#9EABA3] flex items-center gap-1 truncate">
-                        <MapPin className="w-3.5 h-3.5 text-[#00C878] shrink-0" />
-                        <span className="truncate">{booking.spaceAddress}</span>
-                      </p>
-
-                      <div className="flex items-center gap-3 text-[11px] text-[#718079] pt-1 flex-wrap">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-[#00C878]" />
-                          <span className="text-[#F2F2F2] font-medium">{booking.startDate}</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-[#00C878]" />
-                          <span>{booking.startTime || 'Standard Access'} • {booking.durationHours} hrs</span>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right: Price & Contextual Actions */}
-                  <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between w-full lg:w-auto pt-3 lg:pt-0 border-t lg:border-t-0 border-[#1E2522] gap-3 shrink-0">
-                    
-                    {/* Price and Payment Status */}
-                    <div className="text-left lg:text-right">
-                      <div className="text-base font-extrabold text-[#00C878] font-mono">
-                        {formatPrice(booking.totalPrice)}
-                      </div>
-                      <div className="text-[10px] text-[#718079] capitalize">
-                        {booking.paymentStatus === 'paid' ? 'Paid via OFIS Gateway' : `${booking.paymentStatus} status`}
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                      <h3 className="text-sm sm:text-base font-bold text-[#F2F2F2] truncate">{b.spaceTitle}</h3>
                       
-                      {/* View Booking Details (Universal) */}
-                      <button
-                        type="button"
-                        onClick={() => setSelectedBookingDetails(booking)}
-                        className="px-3 py-1.5 rounded-lg bg-[#161D19] hover:bg-[#1C2420] border border-[#232D28] text-xs font-semibold text-[#9EABA3] hover:text-[#F2F2F2] flex items-center gap-1 transition-colors"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Details</span>
-                      </button>
-
-                      {/* Digital Pass (for Upcoming & Active) */}
-                      {(isConfirmed || isActive) && (
-                        <button
-                          type="button"
-                          onClick={() => setActivePassBooking(booking)}
-                          className="px-3 py-1.5 rounded-lg bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs flex items-center gap-1.5 shadow-md transition-all active:scale-95"
-                        >
-                          <QrCode className="w-3.5 h-3.5" />
-                          <span>Digital Pass</span>
-                        </button>
-                      )}
-
-                      {/* Directions */}
-                      <button
-                        type="button"
-                        onClick={() => setDirectionsData({
-                          address: booking.spaceAddress,
-                          city: booking.spaceCity,
-                          title: booking.spaceTitle
-                        })}
-                        className="p-1.5 rounded-lg bg-[#161D19] border border-[#232D28] text-[#9EABA3] hover:text-[#00C878] transition-colors"
-                        title="Get directions"
-                        aria-label="Get directions"
-                      >
-                        <Navigation className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* Contact Host */}
-                      <button
-                        type="button"
-                        onClick={() => setContactHostData({
-                          hostName: 'Space Concierge',
-                          spaceTitle: booking.spaceTitle,
-                          phone: '+234 803 456 7890',
-                          email: 'concierge@ofis.ng'
-                        })}
-                        className="p-1.5 rounded-lg bg-[#161D19] border border-[#232D28] text-[#9EABA3] hover:text-[#00C878] transition-colors"
-                        title="Contact Host"
-                        aria-label="Contact Host"
-                      >
-                        <PhoneCall className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* Leave Review (Completed) */}
-                      {isCompleted && canReview && (
-                        <button
-                          type="button"
-                          onClick={() => setWriteReviewModalData({
-                            spaceId: booking.spaceId,
-                            spaceTitle: booking.spaceTitle
-                          })}
-                          className="px-3 py-1.5 rounded-lg bg-[#00C878]/15 border border-[#00C878]/40 hover:bg-[#00C878] hover:text-[#0D0D0D] text-[#00C878] text-xs font-semibold flex items-center gap-1 transition-all"
-                        >
-                          <MessageSquarePlus className="w-3.5 h-3.5" />
-                          <span>Leave Review</span>
-                        </button>
-                      )}
-
-                      {/* Cancel (Upcoming only) */}
-                      {isConfirmed && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm('Cancel this booking and refund ₦' + booking.totalPrice.toLocaleString() + ' to your OFIS wallet?')) {
-                              cancelBooking(booking.id);
-                            }
-                          }}
-                          className="px-2 py-1.5 rounded-lg bg-[#1A1616] border border-rose-500/20 text-xs text-rose-400 hover:bg-rose-950/30 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      )}
-
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#9EABA3]">
+                        <span>{b.date}</span>
+                        <span>•</span>
+                        <span>
+                          {formatTime(b.startTime)} – {formatTime(b.endTime || '17:00')} ({b.durationHours} hrs)
+                        </span>
+                        <span>•</span>
+                        <span className="font-mono text-[#00C878]">{formatPrice(b.totalAmount)}</span>
+                      </div>
                     </div>
-
                   </div>
 
+                  {/* Actions Bar */}
+                  <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end pt-3 md:pt-0 border-t md:border-t-0 border-[#1E2522]">
+                    {/* Check In Action Button */}
+                    {!b.checkedIn && !isCancelled && !isCompleted && !isReviewed && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const res = checkInGuest(b.id);
+                          if (res.success) {
+                            setActiveDigitalPassBooking(b);
+                            setIsDigitalPassOpen(true);
+                          }
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-[#18201B] hover:bg-[#232D28] text-[#00C878] text-xs font-bold flex items-center space-x-1.5 border border-[#00C878]/40 shadow-sm cursor-pointer active:scale-95"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Check In</span>
+                      </button>
+                    )}
+
+                    {/* Digital Pass Button */}
+                    {!isCancelled && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveDigitalPassBooking(b);
+                          setIsDigitalPassOpen(true);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] text-xs font-bold flex items-center space-x-1.5 shadow-md active:scale-95 cursor-pointer"
+                      >
+                        <QrCode className="w-4 h-4" />
+                        <span>Digital Pass</span>
+                      </button>
+                    )}
+
+                    {/* Review Space Button for completed bookings */}
+                    {isCompleted && !isReviewed && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenReview(b)}
+                        className="px-3.5 py-2 rounded-xl bg-[#18201B] hover:bg-[#232D28] text-xs font-bold text-amber-400 border border-amber-400/30 flex items-center space-x-1.5 cursor-pointer"
+                      >
+                        <Star className="w-3.5 h-3.5 fill-amber-400" />
+                        <span>Review</span>
+                      </button>
+                    )}
+
+                    {/* Details modal button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveBookingDetails(b);
+                        setIsBookingDetailsOpen(true);
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-[#18201B] hover:bg-[#232D28] text-xs font-semibold text-[#F2F2F2] border border-[#232D28] cursor-pointer"
+                    >
+                      Details
+                    </button>
+
+                    {/* Cancel booking option */}
+                    {!b.checkedIn && !isCancelled && !isCompleted && !isReviewed && (
+                      <button
+                        type="button"
+                        onClick={() => cancelBooking(b.id)}
+                        className="p-2 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                        title="Cancel reservation"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
-        ) : (
-          /* Polished Empty States with Required Copy */
-          <div className="text-center py-16 bg-[#141816] rounded-2xl border border-[#1E2522] p-8 space-y-4">
-            <Ticket className="w-12 h-12 text-[#718079] mx-auto opacity-40" />
-            
-            {selectedTab === 'upcoming' && (
-              <>
-                <h3 className="text-base font-bold text-[#F2F2F2]">Your next workspace is waiting.</h3>
-                <p className="text-xs text-[#9EABA3] max-w-sm mx-auto">
-                  Book quiet executive desks, podcast studios, or team meeting rooms with verified solar backup.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('explore')}
-                  className="px-4 py-2.5 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-bold shadow-md hover:bg-[#00E58B] transition-all"
-                >
-                  Explore spaces
-                </button>
-              </>
-            )}
-
-            {selectedTab === 'completed' && (
-              <>
-                <h3 className="text-base font-bold text-[#F2F2F2]">Your completed bookings will appear here.</h3>
-                <p className="text-xs text-[#9EABA3] max-w-sm mx-auto">
-                  Once your work sessions finish, you can leave verified reviews and download receipts here.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('explore')}
-                  className="px-4 py-2.5 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-bold shadow-md hover:bg-[#00E58B] transition-all"
-                >
-                  Browse spaces
-                </button>
-              </>
-            )}
-
-            {selectedTab === 'active' && (
-              <>
-                <h3 className="text-base font-bold text-[#F2F2F2]">No active access sessions right now.</h3>
-                <p className="text-xs text-[#9EABA3] max-w-sm mx-auto">
-                  When you check in at a partner turnstile, your live timer and access controls appear here.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('explore')}
-                  className="px-4 py-2.5 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-bold shadow-md hover:bg-[#00E58B] transition-all"
-                >
-                  Explore spaces
-                </button>
-              </>
-            )}
-
-            {selectedTab === 'cancelled' && (
-              <>
-                <h3 className="text-base font-bold text-[#F2F2F2]">No cancelled bookings.</h3>
-                <p className="text-xs text-[#9EABA3] max-w-sm mx-auto">
-                  All your reservations are in good standing.
-                </p>
-              </>
-            )}
-
-            {selectedTab === 'all' && (
-              <>
-                <h3 className="text-base font-bold text-[#F2F2F2]">No bookings recorded</h3>
-                <p className="text-xs text-[#9EABA3] max-w-sm mx-auto">
-                  Book your first workspace to receive an instant digital QR pass.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('explore')}
-                  className="px-4 py-2.5 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-bold shadow-md hover:bg-[#00E58B] transition-all"
-                >
-                  Explore spaces
-                </button>
-              </>
-            )}
-          </div>
         )}
-
       </div>
     </div>
   );

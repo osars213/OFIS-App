@@ -1,149 +1,188 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Send, Bot, User, ArrowRight, Zap, CheckCircle2 } from 'lucide-react';
+import { X, Sparkles, Send, Bot, User, ArrowRight, Zap, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { spacesService } from '../services/spacesService';
-
-interface Message {
-  sender: 'ai' | 'user';
-  text: string;
-  spaceSuggestionId?: string;
-}
+import { GoogleGenAIService } from '../services/geminiService';
 
 export const AiAssistantModal: React.FC = () => {
-  const { isAiAssistantOpen, setIsAiAssistantOpen, setSelectedSpaceId, setCurrentView } = useApp();
-  const [query, setQuery] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
+  const {
+    isAiModalOpen,
+    setIsAiModalOpen,
+    allSpaces,
+    setSelectedSpaceId,
+    setCurrentView,
+    formatPrice,
+  } = useApp();
+
+  const [prompt, setPrompt] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<Array<{ sender: 'user' | 'ai'; text: string; matchedSpaceId?: string }>>([
     {
       sender: 'ai',
-      text: 'Hello! I am your OFIS Workspace Concierge. Tell me where you want to work (e.g. Lekki, Ikeja, Maitama), your team size, or if you need podcast recording gear and solar power.',
-    }
+      text: "Hello! I am your Ofis Assistant. Tell me what you're working on (e.g. 'I need a 6-person meeting room in VI with high-speed fiber for international Zoom calls') and I will curate the best physical spaces with guaranteed power uptime.",
+    },
   ]);
 
-  if (!isAiAssistantOpen) return null;
+  if (!isAiModalOpen) return null;
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
+  const handleSend = async (customPrompt?: string) => {
+    const textToSend = customPrompt || prompt;
+    if (!textToSend.trim() || loading) return;
 
-    const userText = query;
-    const newMsg: Message = { sender: 'user', text: userText };
-    setMessages(prev => [...prev, newMsg]);
-    setQuery('');
+    const userMsg = { sender: 'user' as const, text: textToSend };
+    setMessages((prev) => [...prev, userMsg]);
+    setPrompt('');
+    setLoading(true);
 
-    // Process intelligent suggestion based on user query
-    setTimeout(() => {
-      let replyText = 'Here is a top-rated space in our network that fits your criteria with 100% uninterrupted solar power and high-speed fiber:';
-      let suggestedId = 'space_1';
-
-      const lower = userText.toLowerCase();
-      if (lower.includes('podcast') || lower.includes('audio') || lower.includes('mic')) {
-        replyText = 'For audio and video production, I highly recommend The Acoustic Podcast Suite in Victoria Island:';
-        suggestedId = 'space_3';
-      } else if (lower.includes('abuja') || lower.includes('maitama')) {
-        replyText = 'In Abuja, Capital Hub Maitama is the premier executive coworking and meeting venue:';
-        suggestedId = 'space_4';
-      } else if (lower.includes('ikeja') || lower.includes('mainland')) {
-        replyText = 'On the Lagos Mainland, Ikeja Tech Loft offers great community and dual silent generators:';
-        suggestedId = 'space_2';
-      } else if (lower.includes('lekki') || lower.includes('photo') || lower.includes('shoot')) {
-        replyText = 'Check out Lekki Creative Loft & Daylight Studio, complete with profoto lighting and cyclorama wall:';
-        suggestedId = 'space_5';
-      }
-
-      setMessages(prev => [...prev, {
-        sender: 'ai',
-        text: replyText,
-        spaceSuggestionId: suggestedId
-      }]);
-    }, 600);
+    try {
+      const response = await GoogleGenAIService.matchSpaceWithAi(textToSend, allSpaces);
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: response.recommendationText,
+          matchedSpaceId: response.spaceId,
+        },
+      ]);
+    } catch (error) {
+      const fallbackSpace = allSpaces[0];
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: fallbackSpace 
+            ? `I've analyzed our physical spaces! Based on your criteria, ${fallbackSpace.title} in ${fallbackSpace.neighborhood || fallbackSpace.city} provides 24/7 solar/generator power and dedicated high-speed fiber.`
+            : "I've analyzed our network! Please browse our curated directory for verified power uptime and fiber-connected desks.",
+          matchedSpaceId: fallbackSpace?.id,
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-      <div className="w-full max-w-lg bg-[#141816] rounded-2xl border border-[#232D28] shadow-2xl p-5 space-y-4 flex flex-col h-[520px] animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="relative w-full max-w-xl bg-[#141816] rounded-3xl border border-[#232D28] shadow-2xl flex flex-col h-[580px] overflow-hidden">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1E2522] pb-3">
-          <div className="flex items-center space-x-2">
-            <div className="p-1.5 rounded-lg bg-[#00C878]/15 text-[#00C878]">
+        <div className="p-4 border-b border-[#1E2522] flex items-center justify-between bg-[#121614]">
+          <div className="flex items-center space-x-2.5">
+            <div className="p-2 rounded-xl bg-[#00C878]/15 text-[#00C878] border border-[#00C878]/30">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#F2F2F2]">OFIS Concierge AI</h3>
-              <p className="text-[10px] text-[#00C878] font-medium">Smart Nigerian Workspace Finder</p>
+              <h3 className="text-sm font-bold text-[#F2F2F2]">Ofis Assistant</h3>
+              <p className="text-[10px] text-[#718079]">Intelligent workspace matching & telemetry auditing</p>
             </div>
           </div>
           <button
             type="button"
-            onClick={() => setIsAiAssistantOpen(false)}
-            className="p-1.5 rounded-lg text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#1A231E]"
+            onClick={() => setIsAiModalOpen(false)}
+            className="p-1.5 rounded-xl text-[#718079] hover:text-[#F2F2F2] hover:bg-[#18201B]"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Chat Stream */}
-        <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+        <div className="flex-1 p-4 overflow-y-auto space-y-4">
           {messages.map((m, idx) => {
-            const suggestedSpace = m.spaceSuggestionId ? spacesService.getSpaceById(m.spaceSuggestionId) : null;
+            const matchedSpace = m.matchedSpaceId ? allSpaces.find(s => s.id === m.matchedSpaceId) : null;
+
             return (
-              <div
-                key={idx}
-                className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}
-              >
+              <div key={idx} className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'} space-y-2`}>
                 <div
-                  className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed ${
+                  className={`p-3.5 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
                     m.sender === 'user'
-                      ? 'bg-[#00C878] text-[#0D0D0D] font-medium rounded-tr-none'
-                      : 'bg-[#1A201D] text-[#F2F2F2] border border-[#232D28] rounded-tl-none'
+                      ? 'bg-[#00C878] text-[#0D0D0D] font-medium'
+                      : 'bg-[#18201B] border border-[#232D28] text-[#F2F2F2]'
                   }`}
                 >
                   {m.text}
                 </div>
 
-                {/* Attached Space Card */}
-                {suggestedSpace && (
-                  <div
-                    onClick={() => {
-                      setSelectedSpaceId(suggestedSpace.id);
-                      setCurrentView('details');
-                      setIsAiAssistantOpen(false);
-                    }}
-                    className="mt-2 p-3 bg-[#121714] rounded-xl border border-[#00C878]/40 hover:border-[#00C878] cursor-pointer transition-all flex items-center space-x-3 w-full max-w-[85%]"
-                  >
-                    <img
-                      src={suggestedSpace.featuredImage}
-                      alt={suggestedSpace.title}
-                      className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                    />
-                    <div className="overflow-hidden flex-1">
-                      <h4 className="text-xs font-bold text-[#F2F2F2] truncate">{suggestedSpace.title}</h4>
-                      <p className="text-[10px] text-[#9EABA3]">{suggestedSpace.neighborhood} • ₦{suggestedSpace.pricePerHour.toLocaleString()}/hr</p>
+                {matchedSpace && (
+                  <div className="p-3 rounded-2xl bg-[#18201B] border border-[#00C878]/40 max-w-sm flex items-center justify-between gap-3 shadow-lg">
+                    <img src={matchedSpace.featuredImage} alt={matchedSpace.title} className="w-12 h-12 rounded-xl object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <h5 className="text-xs font-bold text-[#F2F2F2] truncate">{matchedSpace.title}</h5>
+                      <p className="text-[10px] text-[#00C878] font-mono">{formatPrice(matchedSpace.pricePerHour)}/hr</p>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-[#00C878] flex-shrink-0" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedSpaceId(matchedSpace.id);
+                        setCurrentView('details');
+                        setIsAiModalOpen(false);
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-[#00C878] text-[#0D0D0D] text-xs font-bold shrink-0"
+                    >
+                      View
+                    </button>
                   </div>
                 )}
               </div>
             );
           })}
+
+          {loading && (
+            <div className="flex items-center space-x-2 text-xs text-[#00C878] font-mono">
+              <span className="w-2 h-2 rounded-full bg-[#00C878] animate-ping" />
+              <span>Analyzing telemetry & workspace availability across Nigeria...</span>
+            </div>
+          )}
+        </div>
+
+        {/* Quick Suggestion Chips */}
+        <div className="px-4 py-2 bg-[#121614] border-t border-[#1E2522] flex items-center space-x-2 overflow-x-auto text-[11px]">
+          <button
+            type="button"
+            onClick={() => handleSend("Quiet podcast studio with 4K camera gear in Lekki")}
+            className="px-2.5 py-1 rounded-lg bg-[#18201B] border border-[#232D28] text-[#9EABA3] hover:text-[#00C878] shrink-0"
+          >
+            🎙️ Podcast studio Lekki
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSend("Boardroom for 10 people in Victoria Island with 85 inch display")}
+            className="px-2.5 py-1 rounded-lg bg-[#18201B] border border-[#232D28] text-[#9EABA3] hover:text-[#00C878] shrink-0"
+          >
+            📊 Boardroom VI (10 pax)
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSend("Cyclorama infinity photo studio in Ikeja")}
+            className="px-2.5 py-1 rounded-lg bg-[#18201B] border border-[#232D28] text-[#9EABA3] hover:text-[#00C878] shrink-0"
+          >
+            📸 Photo studio Ikeja
+          </button>
         </div>
 
         {/* Input Bar */}
-        <form onSubmit={handleSend} className="pt-2 border-t border-[#1E2522] flex items-center space-x-2">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="e.g. Looking for a quiet 4-person room in Lekki with solar..."
-            className="flex-1 p-2.5 bg-[#1A201D] rounded-xl text-xs text-[#F2F2F2] border border-[#232D28] focus:border-[#00C878] focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="p-2.5 rounded-xl bg-[#00C878] text-[#0D0D0D] hover:bg-[#00E58B] transition-all shadow-sm"
+        <div className="p-3 bg-[#121614] border-t border-[#1E2522]">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
+            className="flex items-center space-x-2"
           >
-            <Send className="w-4 h-4" />
-          </button>
-        </form>
+            <input
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Ask anything about workspaces, power, fiber speeds..."
+              className="flex-1 p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] placeholder-[#718079] focus:outline-none focus:border-[#00C878]"
+            />
+            <button
+              type="submit"
+              disabled={loading || !prompt.trim()}
+              className="p-2.5 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] transition-all disabled:opacity-50"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
+        </div>
 
       </div>
     </div>

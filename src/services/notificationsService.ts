@@ -1,97 +1,64 @@
 import { AppNotification } from '../types';
-import { storageService } from './storageService';
+import { storage } from './storageService';
 
-const NOTIFICATIONS_KEY = 'ofis_notifications';
+const NOTIFICATIONS_KEY = 'app_notifications';
 
 const INITIAL_NOTIFICATIONS: AppNotification[] = [
   {
-    id: 'notif_1',
-    userId: 'user_tunde',
-    type: 'booking_confirmed',
-    title: 'Booking Confirmed • Access Pass Ready',
-    message: 'Your desk at The Foundry Executive Desk & Lounge is confirmed. Tap to view your turnstile QR code.',
+    id: 'notif-1',
+    title: 'Booking Confirmed!',
+    message: 'Your pass for The Hive Coworking (Desk 01) is ready. Use access code #8921*.',
+    type: 'booking',
     timestamp: '10 mins ago',
     read: false,
-    bookingId: 'OFIS-BK-78921',
-    spaceId: 'space_1',
-    reference: 'OFIS-BK-78921',
+    bookingId: 'OFIS-BK-8921',
   },
   {
-    id: 'notif_2',
-    userId: 'user_tunde',
-    type: 'payment_confirmed',
-    title: 'Payment Confirmed',
-    message: '₦14,000 paid via OFIS Wallet for 4 hours at The Foundry.',
-    timestamp: '12 mins ago',
-    read: false,
-    bookingId: 'OFIS-BK-78921',
-    reference: 'PSTK_OFIS_78921',
-  },
-  {
-    id: 'notif_3',
-    userId: 'user_tunde',
-    type: 'host_verification_update',
-    title: 'Solar Power Audit Verified',
-    message: 'All workspaces in Victoria Island & Ikoyi have 24/7 continuous solar+inverter monitoring.',
-    timestamp: '2 hours ago',
+    id: 'notif-2',
+    title: 'Power Guarantee Verified',
+    message: 'All 7 hubs in Victoria Island & Ikoyi operating at 100% hybrid generator uptime.',
+    type: 'system',
+    timestamp: '1 hour ago',
     read: true,
-    spaceId: 'space_1',
-  },
-  {
-    id: 'notif_4',
-    userId: 'user_chioma',
-    type: 'booking_confirmed',
-    title: 'New Guest Reservation',
-    message: 'Tunde Adebayo booked 4 hours at The Foundry Executive Desk & Lounge.',
-    timestamp: '10 mins ago',
-    read: false,
-    bookingId: 'OFIS-BK-78921',
-    spaceId: 'space_1',
-  },
-  {
-    id: 'notif_5',
-    userId: 'user_chioma',
-    type: 'listing_published',
-    title: 'Space Listing Live',
-    message: 'The Foundry Executive Desk & Lounge is verified and now receiving instant bookings.',
-    timestamp: '1 day ago',
-    read: true,
-    spaceId: 'space_1',
   }
 ];
 
 export const notificationsService = {
-  getNotifications(userId: string): AppNotification[] {
-    const stored = storageService.getItem<AppNotification[]>(NOTIFICATIONS_KEY, INITIAL_NOTIFICATIONS);
-    return stored.filter(n => n.userId === userId || !userId);
+  getNotifications: (): AppNotification[] => {
+    return storage.get<AppNotification[]>(NOTIFICATIONS_KEY, INITIAL_NOTIFICATIONS);
   },
 
-  getUnreadCount(userId: string): number {
-    const notifs = this.getNotifications(userId);
-    return notifs.filter(n => !n.read).length;
-  },
-
-  markAsRead(notificationId: string): void {
-    const stored = storageService.getItem<AppNotification[]>(NOTIFICATIONS_KEY, INITIAL_NOTIFICATIONS);
-    const updated = stored.map(n => n.id === notificationId ? { ...n, read: true } : n);
-    storageService.setItem(NOTIFICATIONS_KEY, updated);
-  },
-
-  markAllAsRead(userId: string): void {
-    const stored = storageService.getItem<AppNotification[]>(NOTIFICATIONS_KEY, INITIAL_NOTIFICATIONS);
-    const updated = stored.map(n => n.userId === userId ? { ...n, read: true } : n);
-    storageService.setItem(NOTIFICATIONS_KEY, updated);
-  },
-
-  addNotification(notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>): AppNotification {
+  addNotification: (notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'> & { timestamp?: string; read?: boolean }): AppNotification[] => {
+    const list = notificationsService.getNotifications();
     const newNotif: AppNotification = {
-      ...notification,
-      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      timestamp: 'Just now',
-      read: false,
+      id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: notif.timestamp || 'Just now',
+      read: notif.read ?? false,
+      ...notif,
     };
-    const stored = storageService.getItem<AppNotification[]>(NOTIFICATIONS_KEY, INITIAL_NOTIFICATIONS);
-    storageService.setItem(NOTIFICATIONS_KEY, [newNotif, ...stored]);
-    return newNotif;
+    const updated = [newNotif, ...list];
+    storage.set(NOTIFICATIONS_KEY, updated);
+    return updated;
+  },
+
+  removeNotificationByBookingIdAndType: (bookingId: string, type: 'reminder' | 'booking' | 'system' | 'payment'): AppNotification[] => {
+    const list = notificationsService.getNotifications();
+    const updated = list.filter(n => !(n.bookingId === bookingId && n.type === type));
+    storage.set(NOTIFICATIONS_KEY, updated);
+    return updated;
+  },
+
+  markAsRead: (id: string): AppNotification[] => {
+    const list = notificationsService.getNotifications();
+    const item = list.find(n => n.id === id);
+    if (item) item.read = true;
+    storage.set(NOTIFICATIONS_KEY, list);
+    return list;
+  },
+
+  markAllAsRead: (): AppNotification[] => {
+    const list = notificationsService.getNotifications().map(n => ({ ...n, read: true }));
+    storage.set(NOTIFICATIONS_KEY, list);
+    return list;
   }
 };

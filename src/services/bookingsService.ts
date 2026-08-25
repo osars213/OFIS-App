@@ -1,278 +1,405 @@
-import { Booking } from '../types';
-import { storageService } from './storageService';
-import { notificationsService } from './notificationsService';
+import { Booking, BookingLifecycleStatus, BookingExtensionRecord, HostMessage } from '../types';
+import { storage } from './storageService';
+import { getSupabaseClient, isSupabaseConfigured, mapDbBookingToBooking, mapBookingToDbBooking } from './supabaseClient';
 
 const BOOKINGS_KEY = 'user_bookings';
+const OFFLINE_PASSES_KEY = 'ofis_offline_passes_cache';
+const HOST_MESSAGES_KEY = 'ofis_host_messages';
+
+export function calculateEndTime(startTime: string, durationHours: number): string {
+  if (!startTime) return '17:00';
+  const parts = startTime.split(':');
+  const h = parseInt(parts[0], 10) || 9;
+  const m = parseInt(parts[1], 10) || 0;
+  const totalMinutes = h * 60 + m + Math.round(durationHours * 60);
+  const endH = Math.floor(totalMinutes / 60) % 24;
+  const endM = totalMinutes % 60;
+  return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+}
 
 const INITIAL_BOOKINGS: Booking[] = [
   {
-    id: 'OFIS-BK-78921',
-    spaceId: 'space_1',
-    spaceTitle: 'The Foundry Executive Desk & Lounge',
-    spaceImage: 'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=600&auto=format&fit=crop&q=80',
-    spaceAddress: '14 Karimu Kotun St, Victoria Island, Lagos',
+    id: 'OFIS-BK-8921',
+    spaceId: 'space-vi-hive',
+    spaceTitle: 'The Hive Coworking & Tech Hub',
+    spaceImage: 'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=1200&auto=format&fit=crop&q=80',
+    spaceAddress: '14B Karimu Kotun Street, Victoria Island, Lagos',
     spaceCity: 'Lagos',
-    userId: 'user_tunde',
-    userName: 'Tunde Adebayo',
-    userEmail: 'tunde@ofis.ng',
-    userPhone: '+234 803 456 7890',
-    bookingType: 'hourly',
-    startDate: 'Tomorrow',
-    startTime: '10:00 AM',
-    endTime: '2:00 PM',
+    userId: 'user-001',
+    userName: 'Babatunde Adeyemi',
+    userEmail: 'tunde.adeyemi@paystack.com',
+    userPhone: '+234 802 345 6789',
+    date: 'Today',
+    startTime: '09:00',
+    endTime: '13:00',
     durationHours: 4,
-    selectedSeats: ['Desk 01 (Window View)'],
-    guestsCount: 1,
-    subtotal: 14000,
-    serviceFee: 0,
-    totalPrice: 14000,
+    selectedSeatId: 'desk-01',
+    selectedSeatLabel: 'Desk 01 (Window View)',
+    guestCount: 1,
+    totalAmount: 14000,
     currency: 'NGN',
-    paymentStatus: 'paid',
-    paymentReference: 'PSTK_OFIS_78921',
-    paymentMethod: 'wallet',
-    bookingStatus: 'confirmed',
-    passCode: 'OFIS-8492',
-    qrCodeValue: 'OFIS:VI:PASS:78921:TUNDE:2026',
-    wifiSsid: 'Foundry-Executive-5G',
-    wifiPassword: 'solar-power-never-sleeps',
-    accessInstructions: 'Scan QR at turnstile barrier. Take elevator to 3rd floor reception.',
-    createdAt: 'Today, 2:15 PM'
+    status: 'checked_in',
+    checkedIn: true,
+    checkedInAt: '2025-03-01T09:05:00Z',
+    qrCodeValue: 'OFIS-PASS-8921-TUNDE-HIVE',
+    digitalPassCode: 'OFIS-8921-OK',
+    paymentMethod: 'paystack',
+    paymentReference: 'pstk_ref_992817462',
+    createdAt: '2025-02-28T10:00:00Z',
+    wifiSsid: 'Hive-VI-Guest-WiFi',
+    wifiPassword: 'hiveworkpass2025',
+    accessDoorCode: '#8921*',
+    offlineCached: true,
+    hostApprovalStatus: 'approved',
   },
   {
-    id: 'OFIS-BK-91204',
-    spaceId: 'space_3',
-    spaceTitle: 'Acoustic Sound & Podcast Suite',
-    spaceImage: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&auto=format&fit=crop&q=80',
-    spaceAddress: '5 Admiralty Way, Lekki Phase 1, Lagos',
+    id: 'OFIS-BK-9104',
+    spaceId: 'space-vi-hive',
+    spaceTitle: 'The Hive Coworking & Tech Hub',
+    spaceImage: 'https://images.unsplash.com/photo-1527192491265-7e15c55b1ed2?w=1200&auto=format&fit=crop&q=80',
+    spaceAddress: '14B Karimu Kotun Street, Victoria Island, Lagos',
     spaceCity: 'Lagos',
-    userId: 'user_tunde',
-    userName: 'Tunde Adebayo',
-    userEmail: 'tunde@ofis.ng',
-    userPhone: '+234 803 456 7890',
-    bookingType: 'hourly',
-    startDate: 'Today',
-    startTime: '1:00 PM',
-    endTime: '4:00 PM',
-    durationHours: 3,
-    selectedSeats: ['Studio Console Desk A'],
-    guestsCount: 2,
-    subtotal: 18000,
-    serviceFee: 0,
-    totalPrice: 18000,
-    currency: 'NGN',
-    paymentStatus: 'paid',
-    paymentReference: 'PSTK_OFIS_91204',
-    paymentMethod: 'card',
-    bookingStatus: 'active',
-    passCode: 'OFIS-3319',
-    qrCodeValue: 'OFIS:PODCAST:PASS:91204:TUNDE',
-    wifiSsid: 'Lekki-Studio-Sound-Pro',
-    wifiPassword: 'zero-noise-guaranteed',
-    accessInstructions: 'Direct studio access at Ground Floor Door B. Studio tech is on standby.',
-    createdAt: 'Today, 11:30 AM'
-  },
-  {
-    id: 'OFIS-BK-45182',
-    spaceId: 'space_2',
-    spaceTitle: 'The Hive Innovation Hub & Boardroom',
-    spaceImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop&q=80',
-    spaceAddress: '22 Glover Road, Ikoyi, Lagos',
-    spaceCity: 'Lagos',
-    userId: 'user_tunde',
-    userName: 'Tunde Adebayo',
-    userEmail: 'tunde@ofis.ng',
-    userPhone: '+234 803 456 7890',
-    bookingType: 'hourly',
-    startDate: 'Yesterday',
-    startTime: '2:00 PM',
-    endTime: '5:00 PM',
-    durationHours: 3,
-    selectedSeats: ['Boardroom Suite B'],
-    guestsCount: 6,
-    subtotal: 21000,
-    serviceFee: 0,
-    totalPrice: 21000,
-    currency: 'NGN',
-    paymentStatus: 'paid',
-    paymentReference: 'PSTK_OFIS_45182',
-    paymentMethod: 'wallet',
-    bookingStatus: 'completed',
-    passCode: 'OFIS-1904',
-    qrCodeValue: 'OFIS:HIVE:PASS:45182:COMPLETED',
-    wifiSsid: 'Hive-Ikoyi-Fiber-HighSpeed',
-    wifiPassword: 'grow-with-solar',
-    accessInstructions: 'Completed stay. Security access expired.',
-    createdAt: 'Yesterday, 1:45 PM'
-  },
-  {
-    id: 'OFIS-BK-33910',
-    spaceId: 'space_4',
-    spaceTitle: 'Ventures Park Maitama Cowork',
-    spaceImage: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&auto=format&fit=crop&q=80',
-    spaceAddress: '12 Nile Street, Maitama, Abuja',
-    spaceCity: 'Abuja',
-    userId: 'user_tunde',
-    userName: 'Tunde Adebayo',
-    userEmail: 'tunde@ofis.ng',
-    userPhone: '+234 803 456 7890',
-    bookingType: 'hourly',
-    startDate: 'Last Week',
-    startTime: '9:00 AM',
-    endTime: '1:00 PM',
+    userId: 'user-002',
+    userName: 'Amina Bello',
+    userEmail: 'amina.bello@flutterwave.com',
+    userPhone: '+234 803 112 3344',
+    date: 'Today',
+    startTime: '14:00',
+    endTime: '18:00',
     durationHours: 4,
-    selectedSeats: ['Hot Desk 12'],
-    guestsCount: 1,
-    subtotal: 12000,
-    serviceFee: 0,
-    totalPrice: 12000,
+    selectedSeatId: 'desk-04',
+    selectedSeatLabel: 'Desk 04 (Quiet Zone)',
+    guestCount: 1,
+    totalAmount: 14000,
     currency: 'NGN',
-    paymentStatus: 'refunded',
-    paymentReference: 'PSTK_OFIS_33910_REF',
+    status: 'ready_for_checkin',
+    qrCodeValue: 'OFIS-PASS-9104-AMINA',
+    digitalPassCode: 'OFIS-9104-AM',
+    paymentMethod: 'flutterwave',
+    paymentReference: 'flw_ref_88291039',
+    createdAt: '2025-03-01T07:30:00Z',
+    wifiSsid: 'Hive-VI-Guest-WiFi',
+    wifiPassword: 'hiveworkpass2025',
+    accessDoorCode: '#9104*',
+    offlineCached: true,
+    hostApprovalStatus: 'approved',
+  },
+  {
+    id: 'OFIS-BK-9240',
+    spaceId: 'space-ikoyi-brass',
+    spaceTitle: 'Brass & Granite Executive Suites',
+    spaceImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop&q=80',
+    spaceAddress: '5 Glover Road, Ikoyi, Lagos',
+    spaceCity: 'Lagos',
+    userId: 'user-003',
+    userName: 'Chinedu Okonkwo',
+    userEmail: 'chinedu.o@moniepoint.com',
+    userPhone: '+234 809 778 8990',
+    date: 'Tomorrow',
+    startTime: '10:00',
+    endTime: '16:00',
+    durationHours: 6,
+    selectedSeatId: 'room-exec-02',
+    selectedSeatLabel: 'Executive Boardroom (6-Pax)',
+    guestCount: 4,
+    totalAmount: 48000,
+    currency: 'NGN',
+    status: 'confirmed',
+    qrCodeValue: 'OFIS-PASS-9240-CHINEDU',
+    digitalPassCode: 'OFIS-9240-CO',
     paymentMethod: 'wallet',
-    bookingStatus: 'cancelled',
-    passCode: 'OFIS-0000',
-    qrCodeValue: 'OFIS:CANCELLED:33910',
-    accessInstructions: 'Booking was cancelled and refunded to wallet.',
-    createdAt: 'Last week, 8:00 AM'
-  }
+    paymentReference: 'wlt_ref_1092837',
+    createdAt: '2025-03-01T08:15:00Z',
+    wifiSsid: 'Brass-Ikoyi-VIP-Fiber',
+    wifiPassword: 'brassvipfibre2025',
+    accessDoorCode: '#9240*',
+    offlineCached: true,
+    hostApprovalStatus: 'approved',
+  },
 ];
 
 export const bookingsService = {
-  getAllBookings(): Booking[] {
-    return storageService.getItem<Booking[]>(BOOKINGS_KEY, INITIAL_BOOKINGS);
+  getBookings: (): Booking[] => {
+    // If Supabase is configured, do not show fictional mock bookings
+    const defaultBookings = isSupabaseConfigured() ? [] : INITIAL_BOOKINGS;
+    return storage.get<Booking[]>(BOOKINGS_KEY, defaultBookings);
   },
 
-  getUserBookings(userId: string): Booking[] {
-    const all = this.getAllBookings();
-    return all.filter(b => b.userId === userId || !userId);
-  },
+  fetchBookingsAsync: async (userId?: string): Promise<{ bookings: Booking[]; source: 'supabase' | 'cache' }> => {
+    const client = getSupabaseClient();
+    if (client) {
+      try {
+        let query = client.from('bookings').select('*').order('created_at', { ascending: false });
+        if (userId && !userId.startsWith('guest')) {
+          query = query.eq('user_id', userId);
+        }
 
-  getHostBookings(hostSpaceIds: string[]): Booking[] {
-    const all = this.getAllBookings();
-    return all.filter(b => hostSpaceIds.includes(b.spaceId));
-  },
-
-  getBookingById(bookingId: string): Booking | undefined {
-    const all = this.getAllBookings();
-    return all.find(b => b.id === bookingId);
-  },
-
-  /**
-   * Conflict Detection:
-   * Checks whether the selected space is already booked during the requested date and time slot.
-   */
-  checkBookingAvailability(
-    spaceId: string, 
-    startDate: string, 
-    startTime?: string,
-    durationHours?: number
-  ): { available: boolean; conflictMessage?: string } {
-    const all = this.getAllBookings();
-    
-    // Check if there's any conflicting confirmed/active booking on the exact space, date, and time
-    const conflict = all.find(b => 
-      b.spaceId === spaceId &&
-      (b.bookingStatus === 'confirmed' || b.bookingStatus === 'active') &&
-      b.startDate.toLowerCase() === startDate.toLowerCase() &&
-      startTime && b.startTime &&
-      b.startTime.toLowerCase() === startTime.toLowerCase()
-    );
-
-    if (conflict) {
-      return {
-        available: false,
-        conflictMessage: 'This space is no longer available for your selected time. Please choose another time.'
-      };
+        const { data, error } = await query;
+        if (!error && data) {
+          if (data.length > 0) {
+            const mapped: Booking[] = data.map(mapDbBookingToBooking);
+            storage.set(BOOKINGS_KEY, mapped);
+            return { bookings: mapped, source: 'supabase' };
+          } else {
+            // Live Supabase query returned 0 bookings for this user.
+            // Do NOT inject mock bookings into production view.
+            storage.set(BOOKINGS_KEY, []);
+            return { bookings: [], source: 'supabase' };
+          }
+        }
+      } catch (err) {
+        console.warn('[bookingsService] Error fetching bookings from Supabase:', err);
+      }
     }
 
-    return { available: true };
+    const fallbackBookings = isSupabaseConfigured() ? [] : INITIAL_BOOKINGS;
+    const cached = storage.get<Booking[]>(BOOKINGS_KEY, fallbackBookings);
+    return { bookings: cached, source: 'cache' };
   },
 
-  createBooking(booking: Omit<Booking, 'id' | 'createdAt' | 'passCode' | 'qrCodeValue'>): Booking {
-    const id = `OFIS-BK-${Math.floor(10000 + Math.random() * 90000)}`;
-    const passCode = `OFIS-${Math.floor(1000 + Math.random() * 9000)}`;
-    const qrCodeValue = `OFIS:PASS:${id}:${passCode}`;
-    
+  getBookingById: (id: string): Booking | undefined => {
+    const bookings = bookingsService.getBookings();
+    return bookings.find(b => b.id === id);
+  },
+
+  createBooking: (data: Omit<Booking, 'id' | 'qrCodeValue' | 'digitalPassCode' | 'createdAt'>): Booking => {
+    const bookings = bookingsService.getBookings();
+    const uniqueSuffix = Math.floor(1000 + Math.random() * 9000);
+    const bookingId = `OFIS-BK-${uniqueSuffix}`;
+
     const newBooking: Booking = {
-      ...booking,
-      id,
-      passCode,
-      qrCodeValue,
-      subtotal: booking.subtotal || booking.totalPrice,
-      serviceFee: booking.serviceFee || 0,
-      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', Today',
-      wifiSsid: 'OFIS-HighSpeed-Mesh',
-      wifiPassword: 'connect-to-grow',
-      accessInstructions: 'Show your QR digital pass at entrance turnstiles or security barrier.'
+      ...data,
+      id: bookingId,
+      endTime: data.endTime || calculateEndTime(data.startTime, data.durationHours),
+      status: 'confirmed',
+      qrCodeValue: `OFIS-PASS-${uniqueSuffix}-${data.userName.replace(/\s+/g, '').toUpperCase()}`,
+      digitalPassCode: `OFIS-${uniqueSuffix}-${data.userName.slice(0, 2).toUpperCase()}`,
+      createdAt: new Date().toISOString(),
+      offlineCached: true,
+      wifiSsid: data.wifiSsid || 'OFIS_Guest_HighSpeed',
+      wifiPassword: data.wifiPassword || 'ofisconnect2025',
+      accessDoorCode: data.accessDoorCode || `#${uniqueSuffix}*`,
     };
 
-    const existing = this.getAllBookings();
-    storageService.setItem(BOOKINGS_KEY, [newBooking, ...existing]);
+    bookings.unshift(newBooking);
+    storage.set(BOOKINGS_KEY, bookings);
 
-    // Dispatch notification
-    notificationsService.addNotification({
-      userId: newBooking.userId,
-      type: 'booking_confirmed',
-      title: 'Booking Confirmed • Access Pass Ready',
-      message: `Your booking for ${newBooking.spaceTitle} is confirmed. Pass code: ${newBooking.passCode}`,
-      bookingId: newBooking.id,
-      spaceId: newBooking.spaceId,
-      reference: newBooking.id
-    });
-
-    notificationsService.addNotification({
-      userId: newBooking.userId,
-      type: 'payment_confirmed',
-      title: 'Payment Confirmed',
-      message: `₦${newBooking.totalPrice.toLocaleString()} paid via ${newBooking.paymentMethod || 'wallet'} for ${newBooking.spaceTitle}.`,
-      bookingId: newBooking.id,
-      reference: newBooking.paymentReference || newBooking.id
-    });
+    // Sync to Supabase in background
+    const client = getSupabaseClient();
+    if (client) {
+      const dbPayload = mapBookingToDbBooking(newBooking);
+      client.from('bookings').insert(dbPayload).then(({ error }) => {
+        if (error) console.warn('[bookingsService] Note inserting booking into Supabase:', error.message);
+      });
+    }
 
     return newBooking;
   },
 
-  cancelBooking(bookingId: string): void {
-    const existing = this.getAllBookings();
-    let cancelledBooking: Booking | null = null;
+  cancelBooking: (bookingId: string): void => {
+    const bookings = bookingsService.getBookings();
+    const index = bookings.findIndex(b => b.id === bookingId);
+    if (index !== -1) {
+      bookings[index].status = 'cancelled';
+      storage.set(BOOKINGS_KEY, bookings);
 
-    const updated = existing.map(b => {
-      if (b.id === bookingId) {
-        cancelledBooking = b;
-        return { 
-          ...b, 
-          bookingStatus: 'cancelled' as const,
-          paymentStatus: 'refunded' as const
-        };
+      const client = getSupabaseClient();
+      if (client) {
+        client.from('bookings').update({ status: 'cancelled', booking_status: 'cancelled' }).eq('id', bookingId).then(({ error }) => {
+          if (error) console.warn('[bookingsService] Note updating booking cancellation in Supabase:', error.message);
+        });
       }
-      return b;
-    });
-
-    storageService.setItem(BOOKINGS_KEY, updated);
-
-    if (cancelledBooking) {
-      notificationsService.addNotification({
-        userId: (cancelledBooking as Booking).userId,
-        type: 'booking_cancelled',
-        title: 'Booking Cancelled',
-        message: `Your booking for ${(cancelledBooking as Booking).spaceTitle} has been cancelled. Funds returned to your wallet.`,
-        bookingId,
-        spaceId: (cancelledBooking as Booking).spaceId,
-      });
     }
   },
 
-  completeBooking(bookingId: string): void {
-    const existing = this.getAllBookings();
-    const updated = existing.map(b => {
-      if (b.id === bookingId) {
-        return { 
-          ...b, 
-          bookingStatus: 'completed' as const
-        };
+  approveBooking: (bookingId: string): { success: boolean; message: string; booking?: Booking } => {
+    const bookings = bookingsService.getBookings();
+    const target = bookings.find(b => b.id === bookingId);
+    if (!target) return { success: false, message: 'Booking not found' };
+
+    target.status = 'confirmed';
+    target.hostApprovalStatus = 'approved';
+    storage.set(BOOKINGS_KEY, bookings);
+
+    const client = getSupabaseClient();
+    if (client) {
+      client.from('bookings').update({ status: 'confirmed', booking_status: 'confirmed' }).eq('id', bookingId);
+    }
+
+    return { success: true, message: 'Booking approved', booking: target };
+  },
+
+  cancelBookingWithReason: (bookingId: string, reason: string): { success: boolean; message: string; booking?: Booking } => {
+    const bookings = bookingsService.getBookings();
+    const target = bookings.find(b => b.id === bookingId);
+    if (!target) return { success: false, message: 'Booking not found' };
+
+    target.status = 'cancelled';
+    target.cancellationReason = reason;
+    storage.set(BOOKINGS_KEY, bookings);
+
+    const client = getSupabaseClient();
+    if (client) {
+      client.from('bookings').update({ status: 'cancelled', booking_status: 'cancelled', cancellation_reason: reason }).eq('id', bookingId);
+    }
+
+    return { success: true, message: 'Booking cancelled', booking: target };
+  },
+
+  checkInBooking: (bookingIdOrCode: string): { success: boolean; message: string; booking?: Booking } => {
+    const bookings = bookingsService.getBookings();
+    const cleanSearch = bookingIdOrCode.trim().toUpperCase();
+
+    const target = bookings.find(
+      b =>
+        b.id.toUpperCase() === cleanSearch ||
+        b.digitalPassCode.toUpperCase() === cleanSearch ||
+        b.qrCodeValue.toUpperCase() === cleanSearch ||
+        cleanSearch.includes(b.id.toUpperCase()) ||
+        cleanSearch.includes(b.digitalPassCode.toUpperCase())
+    );
+
+    if (!target) {
+      return { success: false, message: `Pass or Booking code "${bookingIdOrCode}" not found.` };
+    }
+
+    target.checkedIn = true;
+    target.checkedInAt = new Date().toISOString();
+    target.status = 'checked_in';
+    storage.set(BOOKINGS_KEY, bookings);
+
+    const client = getSupabaseClient();
+    if (client) {
+      client.from('bookings').update({ checked_in: true, checked_in_at: target.checkedInAt, status: 'checked_in' }).eq('id', target.id);
+    }
+
+    return { success: true, message: `Checked in successfully for ${target.spaceTitle}`, booking: target };
+  },
+
+  requestEarlyAccess: (bookingId: string): { success: boolean; message: string; booking?: Booking } => {
+    const bookings = bookingsService.getBookings();
+    const target = bookings.find(b => b.id === bookingId);
+    if (!target) return { success: false, message: 'Booking not found' };
+
+    target.earlyAccessRequested = true;
+    target.earlyAccessGranted = true;
+    storage.set(BOOKINGS_KEY, bookings);
+
+    return { success: true, message: 'Early access granted', booking: target };
+  },
+
+  extendBooking: (
+    bookingId: string,
+    additionalHours: number,
+    hourlyRate: number,
+    paymentMethod: 'paystack' | 'flutterwave' | 'wallet' | 'card' = 'wallet'
+  ): { success: boolean; message: string; booking?: Booking } => {
+    const bookings = bookingsService.getBookings();
+    const target = bookings.find(b => b.id === bookingId);
+    if (!target) return { success: false, message: 'Booking not found' };
+
+    const extensionCost = Math.round(hourlyRate * additionalHours);
+    target.durationHours += additionalHours;
+    target.totalAmount += extensionCost;
+    target.endTime = calculateEndTime(target.startTime, target.durationHours);
+
+    const extensionRecord: BookingExtensionRecord = {
+      id: `ext-${Date.now()}`,
+      durationHours: additionalHours,
+      costNgn: extensionCost,
+      timestamp: new Date().toISOString(),
+      paymentMethod,
+    };
+    target.extensionHistory = [...(target.extensionHistory || []), extensionRecord];
+
+    storage.set(BOOKINGS_KEY, bookings);
+
+    const client = getSupabaseClient();
+    if (client) {
+      client.from('bookings').update({
+        duration_hours: target.durationHours,
+        total_amount: target.totalAmount,
+        end_time: target.endTime,
+      }).eq('id', target.id);
+    }
+
+    return { success: true, message: `Extended by +${additionalHours} hour(s)`, booking: target };
+  },
+
+  checkOutBooking: (bookingId: string): { success: boolean; message: string; booking?: Booking } => {
+    const bookings = bookingsService.getBookings();
+    const target = bookings.find(b => b.id === bookingId);
+    if (!target) return { success: false, message: 'Booking not found' };
+
+    target.checkedOut = true;
+    target.checkedOutAt = new Date().toISOString();
+    target.status = 'completed';
+    storage.set(BOOKINGS_KEY, bookings);
+
+    const client = getSupabaseClient();
+    if (client) {
+      client.from('bookings').update({
+        checked_out: true,
+        checked_out_at: target.checkedOutAt,
+        status: 'completed',
+      }).eq('id', target.id);
+    }
+
+    return { success: true, message: `Checked out from ${target.spaceTitle}`, booking: target };
+  },
+
+  markReviewed: (bookingId: string): void => {
+    const bookings = bookingsService.getBookings();
+    const target = bookings.find(b => b.id === bookingId);
+    if (target) {
+      target.isReviewed = true;
+      target.status = 'reviewed';
+      storage.set(BOOKINGS_KEY, bookings);
+
+      const client = getSupabaseClient();
+      if (client) {
+        client.from('bookings').update({ is_reviewed: true, status: 'reviewed' }).eq('id', bookingId);
       }
-      return b;
-    });
-    storageService.setItem(BOOKINGS_KEY, updated);
-  }
+    }
+  },
+
+  updateBookingReminder: (bookingId: string, hasReminder: boolean): void => {
+    const bookings = bookingsService.getBookings();
+    const target = bookings.find(b => b.id === bookingId);
+    if (target) {
+      target.hasReminder = hasReminder;
+      storage.set(BOOKINGS_KEY, bookings);
+
+      const client = getSupabaseClient();
+      if (client) {
+        client.from('bookings').update({ has_reminder: hasReminder }).eq('id', bookingId);
+      }
+    }
+  },
+
+  getHostMessages: (): HostMessage[] => {
+    return storage.get<HostMessage[]>(HOST_MESSAGES_KEY, [
+      {
+        id: 'msg-1',
+        senderId: 'host-1',
+        senderName: 'Funke Akindele (The Hive Host)',
+        senderRole: 'host',
+        content: 'Welcome! High-speed WiFi credentials and turnstile passcode are available on your Digital Pass.',
+        timestamp: '10 mins ago',
+      },
+    ]);
+  },
+
+  sendHostMessage: (msg: Omit<HostMessage, 'id' | 'timestamp'>): HostMessage => {
+    const current = bookingsService.getHostMessages();
+    const created: HostMessage = {
+      ...msg,
+      id: `msg-${Date.now()}`,
+      timestamp: 'Just now',
+      isRead: true,
+    };
+    const updated = [created, ...current];
+    storage.set(HOST_MESSAGES_KEY, updated);
+    return created;
+  },
 };

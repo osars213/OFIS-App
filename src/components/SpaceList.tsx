@@ -1,38 +1,141 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   MapPin, 
   Zap, 
   Wifi, 
-  VolumeX, 
   Star, 
   Heart, 
   ShieldCheck, 
   ChevronRight, 
-  SlidersHorizontal,
-  Clock,
-  Sparkles,
+  Clock, 
   Users,
-  CheckCircle2,
-  Laptop,
-  Camera,
-  Mic,
-  Briefcase,
-  Compass
+  Compass,
+  Building2,
+  Presentation
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
-import { POPULAR_CITIES, CATEGORY_METADATA } from '../mockData';
 import { SpaceCategory } from '../types';
+import { SpaceTypeSlider } from './SpaceTypeSlider';
+import { SmartSearchDrawer } from './SmartSearchDrawer';
+import { RecommendedSection } from './RecommendedSection';
+import { ContinueBrowsingSection } from './ContinueBrowsingSection';
+import { BookAgainSection } from './BookAgainSection';
+import { WorkspaceCard } from './WorkspaceCard';
+
+const PIDGIN_GREETINGS = [
+  'Twale my great boss🙌🏼',
+  'Special hailings my Oga',
+  'I throway Salute Boss',
+  'I dey with you 100% Boss'
+];
+
+interface GreetingLocale {
+  code: 'en' | 'yo' | 'ig' | 'ha' | 'pcm';
+  langName: string;
+  getGreeting: (hour: number, randomPidgin?: string) => string;
+  formatName: (rawFirstName: string) => string;
+}
+
+const GREETING_LOCALES: GreetingLocale[] = [
+  {
+    code: 'en',
+    langName: 'English',
+    getGreeting: (hour) => {
+      if (hour >= 4 && hour < 12) return 'Good Morning';
+      if (hour >= 12 && hour < 17) return 'Good Afternoon';
+      return 'Good Evening';
+    },
+    formatName: (name) => name || 'Tunde',
+  },
+  {
+    code: 'yo',
+    langName: 'Yorùbá',
+    getGreeting: (hour) => {
+      if (hour >= 4 && hour < 12) return 'Ẹ kú àárọ̀';
+      if (hour >= 12 && hour < 17) return 'Ẹ kú ọ̀sán';
+      return 'Ẹ kú ìrọ̀lẹ́';
+    },
+    formatName: (name) => {
+      if (/tunde/i.test(name)) return 'Túndé';
+      if (/babatunde/i.test(name)) return 'Bábátúndé';
+      if (/adeyemi/i.test(name)) return 'Adéyẹmí';
+      if (/funke/i.test(name)) return 'Fúnkẹ́';
+      if (/babajide/i.test(name)) return 'Bàbájídé';
+      if (/guest|explorer/i.test(name)) return 'Olùwòye';
+      return name || 'Túndé';
+    }
+  },
+  {
+    code: 'ig',
+    langName: 'Igbo',
+    getGreeting: (hour) => {
+      if (hour >= 4 && hour < 12) return 'Ụtụtụ ọma';
+      if (hour >= 12 && hour < 17) return 'Ehihie ọma';
+      return 'Mgbede ọma';
+    },
+    formatName: (name) => {
+      if (/chidi/i.test(name)) return 'Chìdí';
+      if (/emeka/i.test(name)) return 'Èméká';
+      if (/guest|explorer/i.test(name)) return 'Onye nchọpụta';
+      return name || 'Tunde';
+    }
+  },
+  {
+    code: 'ha',
+    langName: 'Hausa',
+    getGreeting: (hour) => {
+      if (hour >= 4 && hour < 12) return 'Ina kwana';
+      if (hour >= 12 && hour < 17) return 'Barka da rana';
+      return 'Barka da yamma';
+    },
+    formatName: (name) => {
+      if (/amina/i.test(name)) return 'Amīna';
+      if (/guest|explorer/i.test(name)) return 'Mai bincike';
+      return name || 'Tunde';
+    }
+  },
+  {
+    code: 'pcm',
+    langName: 'Pidgin',
+    getGreeting: (_hour, randomPidgin) => {
+      return randomPidgin || 'Twale my great boss🙌🏼';
+    },
+    formatName: (name) => name || 'Tunde',
+  }
+];
+
+const getCategoryBadge = (cat: SpaceCategory): string => {
+  switch (cat) {
+    case 'coworking':
+    case 'private_office':
+      return 'WORK';
+    case 'photography':
+      return 'CREATE';
+    case 'meeting':
+      return 'MEET';
+    case 'podcast':
+      return 'RECORD';
+    case 'event':
+      return 'MEET';
+    default:
+      return 'SPACE';
+  }
+};
 
 export const SpaceList: React.FC = () => {
   const {
+    currentUser,
     spaces,
+    allSpaces,
+    isLoadingSpaces,
+    spacesError,
+    refreshSpaces,
     filters,
-    updateFilter,
     resetFilters,
-    activeCategory,
-    setActiveCategory,
     setSelectedSpaceId,
+    currentView,
     setCurrentView,
     savedSpaceIds,
     toggleSaveSpace,
@@ -42,439 +145,240 @@ export const SpaceList: React.FC = () => {
     formatPrice,
   } = useApp();
 
-  const [locationStatus, setLocationStatus] = useState<'idle' | 'granted' | 'denied'>('idle');
+  const isSavedView = currentView === 'saved';
+  const displayedSpaces = isSavedView 
+    ? allSpaces.filter(s => savedSpaceIds.includes(s.id))
+    : spaces;
 
-  const handleLocationRequest = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        () => {
-          setLocationStatus('granted');
-          updateFilter('city', 'Lagos');
-          updateFilter('searchQuery', 'Victoria Island');
-        },
-        () => {
-          setLocationStatus('denied');
-          updateFilter('city', 'Lagos');
-        }
-      );
-    } else {
-      setLocationStatus('denied');
-    }
-  };
+  // Language cycle: switches every 5 seconds, alternating with English
+  const [cycleStep, setCycleStep] = useState(0);
+  const [randomPidginIndex, setRandomPidginIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCycleStep((prev) => {
+        const next = prev + 1;
+        setRandomPidginIndex(Math.floor(Math.random() * PIDGIN_GREETINGS.length));
+        return next;
+      });
+    }, 5000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const indigenousLocales = GREETING_LOCALES.slice(1);
+  const isEnglish = cycleStep % 2 === 0;
+  const currentLocale = isEnglish 
+    ? GREETING_LOCALES[0] 
+    : indigenousLocales[Math.floor((cycleStep % (2 * indigenousLocales.length)) / 2) % indigenousLocales.length];
+
+  const hour = new Date().getHours();
+  const baseFirstName = currentUser && currentUser.id !== 'guest' && currentUser.id !== 'guest-user' && currentUser.name 
+    ? currentUser.name.split(' ')[0] 
+    : '';
+
+  const localizedName = baseFirstName ? currentLocale.formatName(baseFirstName) : '';
+  const currentPidginPhrase = PIDGIN_GREETINGS[randomPidginIndex];
+  const greetingPhrase = currentLocale.getGreeting(hour, currentPidginPhrase);
+  
+  const greetingText = currentLocale.code === 'pcm'
+    ? (localizedName ? `${greetingPhrase}, ${localizedName}` : greetingPhrase)
+    : (localizedName ? `${greetingPhrase}, ${localizedName}` : `${greetingPhrase}!`);
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] pb-24">
+    <div className="min-h-screen bg-[#0D0D0D] pb-24 transition-colors">
       
       {/* ========================================================================= */}
-      {/* 1. HERO SECTION: BRANDING & HEADLINE WITH SEAMLESS EVOLVING TOP ARC       */}
+      {/* 1. HERO SECTION: BRANDING & REVOLVING ARC WITH GREETING & SEARCH          */}
       {/* ========================================================================= */}
-      <section className="relative pt-10 sm:pt-14 pb-10 px-4 sm:px-6 lg:px-8 border-b border-[#1E2522] bg-gradient-to-b from-[#141A17] via-[#0E1310] to-[#0D0D0D] overflow-hidden">
+      <section className="relative pt-12 sm:pt-16 pb-14 sm:pb-16 px-4 sm:px-6 lg:px-8 border-b border-[#1E2522] bg-[#0D0D0D] overflow-hidden transition-colors">
         
-        {/* Seamless Horizon Top Evolving Arc Beam */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[2px] seamless-horizon-arc pointer-events-none z-20" />
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-[600px] h-32 bg-[#00C878]/15 rounded-[100%] blur-3xl pointer-events-none -z-0 animate-ambient-pulse" />
-
-        {/* Seamless Revolving Ambient Background Glow Orb */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] sm:w-[750px] sm:h-[750px] bg-[conic-gradient(from_0deg,#00C878_0deg,transparent_60deg,transparent_180deg,#00C878_240deg,transparent_300deg,#00C878_360deg)] opacity-15 blur-3xl animate-revolving-glow pointer-events-none -z-0" />
+        {/* Architectural Revolving Arc Signature Metaphor */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] sm:w-[540px] sm:h-[540px] md:w-[700px] md:h-[700px] pointer-events-none -z-0">
+          <div className="ofis-hero-arc-outer w-[310px] h-[310px] sm:w-[500px] sm:h-[500px] md:w-[670px] md:h-[670px]" />
+          <div className="ofis-hero-arc-inner w-[230px] h-[230px] sm:w-[370px] sm:h-[370px] md:w-[500px] md:h-[500px]" />
+          <div className="ofis-hero-arc-conic w-[270px] h-[270px] sm:w-[440px] sm:h-[440px] md:w-[600px] md:h-[600px] opacity-15" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 sm:w-80 sm:h-80 bg-[#00C878]/5 rounded-full blur-3xl" />
+        </div>
         
-        <div className="relative z-10 max-w-6xl mx-auto text-center space-y-5">
+        <div className="relative z-10 max-w-3xl mx-auto text-center space-y-6 sm:space-y-7">
           
-          {/* Overline Positioning with Seamless Revolving Glow Border */}
-          <div className="inline-flex relative p-[1px] rounded-full overflow-hidden shadow-lg group">
-            {/* Seamless Revolving Border Beam */}
-            <div className="absolute inset-[-150%] seamless-top-arc pointer-events-none opacity-90" />
-            <div className="relative inline-flex items-center space-x-2 sm:space-x-3 px-4 sm:px-5 py-1.5 rounded-full bg-[#141816] text-xs font-mono font-bold tracking-wider text-[#00C878] uppercase">
-              <span>Work. Meet. Create. Record</span>
+          {/* Hero Greeting with Dynamic Language Interchange Every 10 Seconds */}
+          <div className="space-y-1.5 sm:space-y-2 bg-transparent max-w-lg mx-auto">
+            <div className="min-h-[24px] flex items-center justify-center">
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={`${currentLocale.code}-${localizedName}-${cycleStep}`}
+                  initial={{ opacity: 0, y: 3 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -3 }}
+                  transition={{ duration: 0.35, ease: 'easeOut' }}
+                  className="text-sm sm:text-base font-bold text-[#00C878] tracking-normal"
+                >
+                  {greetingText}
+                </motion.p>
+              </AnimatePresence>
             </div>
+            <p className="text-lg sm:text-2xl text-[#F2F2F2] font-semibold tracking-tight">
+              What workspace do you need today?
+            </p>
           </div>
 
-          {/* Core Hero Headline */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#F2F2F2] max-w-4xl mx-auto leading-[1.15]">
-            Find the right space. <br className="hidden sm:block" />
-            <span className="text-[#00C878]">Book it when you need it.</span>
-          </h1>
+          {/* Primary Expandable Smart Search & Filter Drawer (Refined with Sliders) */}
+          <SmartSearchDrawer />
 
-          {/* Supporting Copy */}
-          <p className="max-w-2xl mx-auto text-sm sm:text-base text-[#9EABA3] font-normal leading-relaxed">
-            Book inspiring workspaces, studios, meeting rooms and creative spaces across Nigeria — by the hour or by the day.
-          </p>
+          {/* Prominent Four Words Concept */}
+          <div className="pt-1 flex items-center justify-center space-x-2 sm:space-x-4 text-xs sm:text-sm font-mono font-bold tracking-widest text-[#F2F2F2] uppercase">
+            <span className="text-[#00C878]">WORK</span>
+            <span className="text-[#35433C]">•</span>
+            <span className="text-[#00C878]">CREATE</span>
+            <span className="text-[#35433C]">•</span>
+            <span className="text-[#00C878]">MEET</span>
+            <span className="text-[#35433C]">•</span>
+            <span className="text-[#00C878]">RECORD</span>
+          </div>
 
-          {/* Trust Benefits Bar */}
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-y-2 gap-x-4 sm:gap-x-6 text-xs text-[#718079]">
+          {/* Concise Trust Points */}
+          <div className="pt-1 flex flex-wrap items-center justify-center gap-y-2 gap-x-4 sm:gap-x-6 text-xs text-[#718079]">
             <div className="flex items-center space-x-1.5">
-              <ShieldCheck className="w-4 h-4 text-[#00C878]" />
-              <span className="text-[#9EABA3]">Verified Spaces</span>
+              <ShieldCheck className="w-3.5 h-3.5 text-[#00C878]" />
+              <span className="text-[#9EABA3] font-medium">Verified Spaces</span>
             </div>
             <span className="text-[#232D28] hidden sm:inline">•</span>
             <div className="flex items-center space-x-1.5">
-              <Zap className="w-4 h-4 text-[#00C878]" />
-              <span className="text-[#9EABA3]">24/7 Power</span>
+              <Wifi className="w-3.5 h-3.5 text-[#00C878]" />
+              <span className="text-[#9EABA3] font-medium">Fast Internet</span>
             </div>
             <span className="text-[#232D28] hidden sm:inline">•</span>
             <div className="flex items-center space-x-1.5">
-              <Wifi className="w-4 h-4 text-[#00C878]" />
-              <span className="text-[#9EABA3]">Fast Internet</span>
-            </div>
-            <span className="text-[#232D28] hidden sm:inline">•</span>
-            <div className="flex items-center space-x-1.5">
-              <span className="w-4 h-4 rounded-full bg-[#00C878]/15 text-[#00C878] font-bold text-xs flex items-center justify-center leading-none">
-                {currency === 'USD' ? '$' : '₦'}
+              <span className="w-3.5 h-3.5 rounded-full bg-[#00C878]/15 text-[#00C878] font-bold text-[10px] flex items-center justify-center leading-none">
+                ₦
               </span>
-              <span className="text-[#9EABA3]">Clear Pricing</span>
+              <span className="text-[#9EABA3] font-medium">Clear Pricing</span>
             </div>
             <span className="text-[#232D28] hidden sm:inline">•</span>
             <div className="flex items-center space-x-1.5">
-              <Clock className="w-4 h-4 text-[#00C878]" />
-              <span className="text-[#9EABA3]">Instant Booking Hourly & Daily Pass</span>
+              <Zap className="w-3.5 h-3.5 text-[#00C878]" />
+              <span className="text-[#9EABA3] font-medium">24/7 Redundant Power</span>
             </div>
           </div>
-
-          {/* ========================================================================= */}
-          {/* SEARCH & DISCOVERY BAR - PROMINENTLY VISIBLE IMMEDIATELY ON APP LAUNCH    */}
-          {/* ========================================================================= */}
-          <div id="spaces-discovery-section" className="pt-6 max-w-5xl mx-auto text-left">
-            <div className="relative p-[1px] rounded-2xl overflow-hidden shadow-2xl group">
-              {/* Ambient Revolving Glow Beam */}
-              <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0_320deg,rgba(0,200,120,0.6)_360deg)] animate-revolving-glow pointer-events-none opacity-70 group-hover:opacity-100 transition-opacity" />
-              
-              <div className="relative bg-[#141816] p-3.5 sm:p-5 rounded-2xl border border-[#232D28]">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                
-                {/* Query Input */}
-                <div className="md:col-span-5 relative flex items-center">
-                  <Search className="w-4 h-4 absolute left-3.5 text-[#9EABA3]" />
-                  <input
-                    id="main-search-input"
-                    type="text"
-                    value={filters.searchQuery}
-                    onChange={(e) => updateFilter('searchQuery', e.target.value)}
-                    placeholder="Search spaces, areas or cities"
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#1A201D] rounded-xl text-xs sm:text-sm text-[#F2F2F2] placeholder-[#718079] border border-transparent focus:border-[#00C878] focus:outline-none transition-all"
-                  />
-                </div>
-
-                {/* City Selector */}
-                <div className="md:col-span-3 relative flex items-center">
-                  <MapPin className="w-4 h-4 absolute left-3.5 text-[#00C878]" />
-                  <select
-                    value={filters.city}
-                    onChange={(e) => updateFilter('city', e.target.value)}
-                    className="w-full pl-10 pr-8 py-2.5 bg-[#1A201D] rounded-xl text-xs sm:text-sm text-[#F2F2F2] border border-transparent focus:border-[#00C878] focus:outline-none appearance-none cursor-pointer"
-                  >
-                    <option value="All Cities">All African Cities</option>
-                    {POPULAR_CITIES.map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Power & Internet Filter Toggles */}
-                <div className="md:col-span-4 flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => updateFilter('needsBackupPower', !filters.needsBackupPower)}
-                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all border ${
-                      filters.needsBackupPower
-                        ? 'bg-[#00C878]/15 border-[#00C878] text-[#00C878]'
-                        : 'bg-[#1A201D] border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2]'
-                    }`}
-                  >
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>24/7 Power</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => updateFilter('needsHighSpeedInternet', !filters.needsHighSpeedInternet)}
-                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all border ${
-                      filters.needsHighSpeedInternet
-                        ? 'bg-[#00C878]/15 border-[#00C878] text-[#00C878]'
-                        : 'bg-[#1A201D] border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2]'
-                    }`}
-                  >
-                    <Wifi className="w-3.5 h-3.5" />
-                    <span>Fast Internet</span>
-                  </button>
-                </div>
-
-              </div>
-
-              {/* Quick Geolocation & Popular Area Shortlinks */}
-              <div className="mt-3 pt-3 border-t border-[#1E2522] flex flex-wrap items-center justify-between gap-2 text-xs text-[#9EABA3]">
-                <button
-                  type="button"
-                  onClick={handleLocationRequest}
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#1A201D] hover:bg-[#202723] text-[#00C878] border border-[#232D28] hover:border-[#00C878]/40 transition-all font-semibold"
-                >
-                  <MapPin className="w-3.5 h-3.5 text-[#00C878]" />
-                  <span>
-                    {locationStatus === 'granted'
-                      ? 'Spaces Near You'
-                      : locationStatus === 'denied'
-                      ? 'Choose Your Location'
-                      : 'Find Spaces Near Me'}
-                  </span>
-                </button>
-
-                <div className="flex items-center space-x-2 flex-wrap">
-                  <span className="text-[#718079]">Key African Hubs:</span>
-                  {['Lagos', 'Nairobi', 'Sandton', 'Accra', 'Cape Town', 'Cairo', 'Kigali'].map((area) => (
-                    <button
-                      key={area}
-                      type="button"
-                      onClick={() => updateFilter('searchQuery', area)}
-                      className="hover:text-[#00C878] underline-offset-2 hover:underline transition-colors"
-                    >
-                      {area}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* 4. CATEGORY FILTER TABS                                                   */}
+      {/* 2. SMART PERSONALIZED RECOMMENDATIONS & BROWSING HISTORY                  */}
       {/* ========================================================================= */}
-      <section className="sticky top-16 sm:top-[68px] z-30 bg-[#0D0D0D]/90 backdrop-blur-md border-y border-[#1E2522] py-3 px-4 sm:px-6 lg:px-8 overflow-x-auto no-scrollbar">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center space-x-2 sm:space-x-3 overflow-x-auto no-scrollbar">
-            {CATEGORY_METADATA.map((cat) => {
-              const isActive = activeCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setActiveCategory(cat.id as SpaceCategory | 'all')}
-                  className={`whitespace-nowrap px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 border ${
-                    isActive
-                      ? 'bg-[#00C878] text-[#0D0D0D] border-[#00C878] shadow-[0_2px_12px_rgba(0,200,120,0.3)]'
-                      : 'bg-[#141816] text-[#9EABA3] hover:text-[#F2F2F2] border-[#1E2522] hover:border-[#35433C]'
-                  }`}
-                >
-                  <span>{cat.label}</span>
-                </button>
-              );
-            })}
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-10">
+        {/* Recommended For You */}
+        <RecommendedSection />
 
-          <button
-            type="button"
-            onClick={() => setCurrentView('map')}
-            className="hidden md:flex items-center space-x-1.5 text-xs font-bold text-[#00C878] hover:text-[#00E58B] shrink-0"
-          >
-            <Compass className="w-3.5 h-3.5" />
-            <span>Around Me</span>
-          </button>
-        </div>
-      </section>
+        {/* Continue Browsing Carousel (Hides if no history) */}
+        <ContinueBrowsingSection />
+
+        {/* Book Again Quick Re-Reservation (Hides if no previous bookings) */}
+        <BookAgainSection />
+      </div>
 
       {/* ========================================================================= */}
-      {/* 5. MAIN SPACES GRID (DISCOVER → COMPARE → BOOK)                           */}
+      {/* 3. CURATED SPACES EXPLORATION (FOUR PILLARS)                              */}
       {/* ========================================================================= */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <SpaceTypeSlider />
+
+      {/* ========================================================================= */}
+      {/* 4. SEARCH RESULTS & AVAILABLE SPACES GRID                                 */}
+      {/* ========================================================================= */}
+      <section id="spaces-results-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         
         {/* Results Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#1E2522]">
           <div>
-            <h2 className="text-lg font-bold text-[#F2F2F2] flex items-center space-x-2">
-              <span>Available Spaces</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-[#1A231E] border border-[#232D28] text-[#00C878] font-mono">
-                {spaces.length} verified
-              </span>
+            <h2 className="text-xl sm:text-2xl font-bold text-[#F2F2F2] tracking-tight">
+              {isSavedView
+                ? 'Saved Workspaces'
+                : filters.category !== 'all' 
+                ? `${filters.category.replace('_', ' ').toUpperCase()} Spaces` 
+                : filters.city !== 'All Cities' 
+                ? `Workspaces in ${filters.city}` 
+                : 'All Available Workspaces'}
             </h2>
-            <p className="text-xs text-[#9EABA3] mt-0.5">Explore physical spaces across Nigeria by the hour or day</p>
+            <p className="text-xs sm:text-sm text-[#718079] mt-1">
+              {isSavedView
+                ? `You have saved ${displayedSpaces.length} workspace${displayedSpaces.length === 1 ? '' : 's'} to your favorites`
+                : `Showing ${displayedSpaces.length} vetted high-performance spaces ready for instant booking`}
+            </p>
           </div>
 
           <div className="flex items-center space-x-3">
-            <select
-              value={filters.sortBy}
-              onChange={(e) => updateFilter('sortBy', e.target.value as any)}
-              className="bg-[#141816] border border-[#232D28] text-xs text-[#9EABA3] rounded-xl px-3 py-2 focus:outline-none focus:border-[#00C878]"
-            >
-              <option value="recommended">Sort: Recommended</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="rating">Highest Rated</option>
-              <option value="popular">Most Popular</option>
-            </select>
+            {isSavedView ? (
+              <button
+                type="button"
+                onClick={() => setCurrentView('explore')}
+                className="px-4 py-2 rounded-xl bg-[#141816] hover:bg-[#1A201D] border border-[#232D28] text-xs font-semibold text-[#00C878] flex items-center space-x-2 transition-all hover:border-[#00C878]/40"
+              >
+                <span>Browse All Spaces</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setCurrentView('map')}
+                className="px-4 py-2 rounded-xl bg-[#141816] hover:bg-[#1A201D] border border-[#232D28] text-xs font-semibold text-[#F2F2F2] flex items-center space-x-2 transition-all hover:border-[#00C878]/40"
+              >
+                <Compass className="w-4 h-4 text-[#00C878]" />
+                <span>Around Me</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Spaces Grid */}
-        {spaces.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {spaces.map((space) => {
-              const isSaved = savedSpaceIds.includes(space.id);
-              return (
-                <div
-                  key={space.id}
-                  id={`space-card-${space.id}`}
-                  className="group bg-[#141816] rounded-2xl border border-[#1E2522] hover:border-[#00C878]/50 overflow-hidden shadow-lg transition-all duration-200 flex flex-col justify-between"
-                >
-                  {/* Card Image */}
-                  <div 
-                    className="relative aspect-[16/10] overflow-hidden bg-[#1A201D] cursor-pointer" 
-                    onClick={() => {
-                      setSelectedSpaceId(space.id);
-                      setCurrentView('details');
-                    }}
-                  >
-                    <img
-                      src={space.featuredImage}
-                      alt={space.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
-
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#141816] via-transparent to-black/30" />
-
-                    {/* Top Badges */}
-                    <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-                      <span className="px-2.5 py-1 rounded-lg bg-[#0D0D0D]/80 backdrop-blur-md border border-[#232D28] text-[11px] font-bold text-[#00C878] flex items-center space-x-1">
-                        <Zap className="w-3 h-3 text-[#00C878]" />
-                        <span>{space.backupPowerType.split(' ')[0]} Power</span>
-                      </span>
-                      {space.isSuperhost && (
-                        <span className="px-2 py-1 rounded-lg bg-[#00C878] text-[#0D0D0D] text-[10px] font-black uppercase tracking-wider">
-                          Superhost
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Favorite Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleSaveSpace(space.id);
-                      }}
-                      className="absolute top-3 right-3 p-2 rounded-xl bg-[#0D0D0D]/80 backdrop-blur-md border border-[#232D28] text-[#F2F2F2] hover:text-[#00C878] transition-all"
-                      aria-label="Save to favorites"
-                    >
-                      <Heart className={`w-4 h-4 ${isSaved ? 'fill-[#00C878] text-[#00C878]' : ''}`} />
-                    </button>
-
-                    {/* Location Pill */}
-                    <div className="absolute bottom-3 left-3 flex items-center space-x-1 text-xs text-[#F2F2F2] bg-[#0D0D0D]/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-[#232D28]">
-                      <MapPin className="w-3.5 h-3.5 text-[#00C878]" />
-                      <span className="font-semibold">{space.neighborhood}, {space.city}</span>
-                    </div>
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                    <div>
-                      {/* Rating & Capacity */}
-                      <div className="flex items-center justify-between text-xs text-[#9EABA3] mb-1.5">
-                        <div className="flex items-center space-x-1 text-[#F2F2F2]">
-                          <Star className="w-3.5 h-3.5 fill-[#00C878] text-[#00C878]" />
-                          <span className="font-bold">{space.rating}</span>
-                          <span className="text-[#718079]">({space.reviewsCount})</span>
-                        </div>
-                        <div className="flex items-center space-x-1 text-[#9EABA3]">
-                          <Users className="w-3.5 h-3.5" />
-                          <span>Up to {space.capacity} people</span>
-                        </div>
-                      </div>
-
-                      {/* Title */}
-                      <h3
-                        onClick={() => {
-                          setSelectedSpaceId(space.id);
-                          setCurrentView('details');
-                        }}
-                        className="text-base font-bold text-[#F2F2F2] hover:text-[#00C878] cursor-pointer transition-colors line-clamp-1"
-                      >
-                        {space.title}
-                      </h3>
-
-                      <p className="text-xs text-[#9EABA3] line-clamp-2 mt-1 font-normal leading-relaxed">
-                        {space.tagline}
-                      </p>
-                    </div>
-
-                    {/* Amenities tags */}
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {space.amenities.slice(0, 3).map((a, i) => (
-                        <span key={i} className="text-[10px] px-2 py-0.5 rounded-md bg-[#1A201D] text-[#9EABA3] border border-[#1E2522]">
-                          {a}
-                        </span>
-                      ))}
-                      {space.amenities.length > 3 && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#1A201D] text-[#718079]">
-                          +{space.amenities.length - 3}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Price & Booking Button */}
-                    <div className="pt-3 border-t border-[#1E2522] flex items-center justify-between">
-                      <div>
-                        <div className="text-[11px] text-[#718079] font-medium">Rate</div>
-                        <div className="flex items-baseline space-x-1">
-                          <span className="text-base font-black text-[#00C878] font-mono">
-                            {formatPrice(space.pricePerHour)}
-                          </span>
-                          <span className="text-xs text-[#9EABA3]">/ hr</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedSpaceId(space.id);
-                            setCurrentView('details');
-                          }}
-                          className="px-3 py-2 rounded-xl text-xs font-semibold text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#1A201D] border border-[#232D28] transition-all"
-                        >
-                          Details
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCheckoutSpace(space);
-                            setIsCheckoutOpen(true);
-                          }}
-                          className="px-4 py-2 rounded-xl text-xs font-bold text-[#0D0D0D] bg-[#00C878] hover:bg-[#00E58B] transition-all shadow-md active:scale-95 flex items-center space-x-1"
-                        >
-                          <span>Book Space</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-
-                  </div>
+        {isLoadingSpaces ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-8">
+            {[1, 2, 3, 4, 5, 6].map((idx) => (
+              <div key={idx} className="rounded-3xl bg-[#141816] border border-[#1E2522] h-80 animate-pulse p-4 flex flex-col justify-between">
+                <div className="w-full h-44 bg-[#1E2522] rounded-2xl" />
+                <div className="space-y-2 pt-3">
+                  <div className="w-2/3 h-4 bg-[#1E2522] rounded" />
+                  <div className="w-1/2 h-3 bg-[#1E2522] rounded" />
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
-        ) : (
-          <div className="py-20 text-center bg-[#141816] rounded-2xl border border-[#1E2522] p-8 space-y-4">
-            <Search className="w-12 h-12 text-[#718079] mx-auto opacity-50" />
-            <h3 className="text-lg font-bold text-[#F2F2F2]">No spaces found here</h3>
-            <p className="text-xs text-[#9EABA3] max-w-sm mx-auto">
-              Try another area or clear your filters.
+        ) : displayedSpaces.length === 0 ? (
+          <div className="py-20 text-center space-y-4 max-w-md mx-auto">
+            <div className="w-16 h-16 rounded-2xl bg-[#141816] border border-[#232D28] flex items-center justify-center mx-auto text-[#718079]">
+              {isSavedView ? <Heart className="w-8 h-8 text-[#00C878]" /> : <Search className="w-8 h-8" />}
+            </div>
+            <h3 className="text-lg font-bold text-[#F2F2F2]">
+              {isSavedView ? 'No saved workspaces yet' : 'No matching workspaces found'}
+            </h3>
+            <p className="text-xs text-[#718079] leading-relaxed">
+              {isSavedView
+                ? 'Tap the heart icon on any workspace card to save it for quick access later.'
+                : 'Try adjusting your capacity, price range, or clearing internet/amenity filters to explore other available hubs.'}
             </p>
             <button
               type="button"
-              onClick={resetFilters}
-              className="px-5 py-2.5 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-bold hover:bg-[#00E58B] transition-all"
+              onClick={isSavedView ? () => setCurrentView('explore') : resetFilters}
+              className="px-5 py-2.5 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-bold hover:bg-[#00E58B] transition-all cursor-pointer"
             >
-              Reset All Filters
+              {isSavedView ? 'Explore Workspaces' : 'Reset Filters'}
             </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-8">
+            {displayedSpaces.map((space) => (
+              <WorkspaceCard
+                key={space.id}
+                space={space}
+                layout="grid"
+              />
+            ))}
           </div>
         )}
 
-      </main>
+      </section>
 
     </div>
   );
 };
-

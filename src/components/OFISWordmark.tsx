@@ -1,87 +1,57 @@
-import React from 'react';
-import ofisWordmark from '../assets/ofis-wordmark.png';
+import React, { useState } from 'react';
 
-export type OFISWordmarkSize = 'xs' | 'sm' | 'small' | 'md' | 'medium' | 'lg' | 'large' | 'xl';
-
-export interface OFISWordmarkProps {
+interface OFISWordmarkProps {
   className?: string;
-  size?: OFISWordmarkSize;
-  iconOnly?: boolean;
-  animated?: boolean;
-  onClick?: () => void;
+  size?: 'sm' | 'md' | 'lg' | 'hero';
+  showTagline?: boolean;
 }
 
 export const OFISWordmark: React.FC<OFISWordmarkProps> = ({
   className = '',
   size = 'md',
-  iconOnly = false,
-  animated = false,
-  onClick,
+  showTagline = false,
 }) => {
-  const normalizedSize: 'xs' | 'sm' | 'md' | 'lg' | 'xl' = ((): 'xs' | 'sm' | 'md' | 'lg' | 'xl' => {
-    if (size === 'small' || size === 'sm') return 'sm';
-    if (size === 'xs') return 'xs';
-    if (size === 'large' || size === 'lg') return 'lg';
-    if (size === 'xl') return 'xl';
-    return 'md';
-  })();
+  const [imageError, setImageError] = useState(false);
 
-  const sizeClasses = {
-    xs: {
-      imgClass: 'h-6 sm:h-7 w-auto object-contain',
-      iconClass: 'h-6 w-6 object-contain',
-    },
-    sm: {
-      imgClass: 'h-7 sm:h-8 w-auto object-contain',
-      iconClass: 'h-8 w-8 object-contain',
-    },
-    md: {
-      imgClass: 'h-10 sm:h-11 w-auto object-contain',
-      iconClass: 'h-10 w-10 object-contain',
-    },
-    lg: {
-      imgClass: 'h-12 sm:h-14 md:h-16 w-auto object-contain',
-      iconClass: 'h-14 w-14 object-contain',
-    },
-    xl: {
-      imgClass: 'h-16 sm:h-20 md:h-24 w-auto object-contain',
-      iconClass: 'h-20 w-20 object-contain',
-    },
-  }[normalizedSize];
+  const getDimensions = () => {
+    switch (size) {
+      case 'sm':
+        return { height: 'h-6 sm:h-7', text: 'text-lg', dot: 'text-lg', sub: 'text-[9px]' };
+      case 'lg':
+        return { height: 'h-10 sm:h-12', text: 'text-2xl sm:text-3xl', dot: 'text-2xl sm:text-3xl', sub: 'text-xs' };
+      case 'hero':
+        return { height: 'h-14 sm:h-16', text: 'text-4xl sm:text-5xl', dot: 'text-4xl sm:text-5xl', sub: 'text-sm' };
+      case 'md':
+      default:
+        return { height: 'h-8 sm:h-9', text: 'text-xl sm:text-2xl', dot: 'text-xl sm:text-2xl', sub: 'text-[10px]' };
+    }
+  };
 
-  if (iconOnly) {
-    return (
-      <div
-        id="ofis-icon-container"
-        className={`inline-flex items-center justify-center ${className} ${onClick ? 'cursor-pointer' : ''}`}
-        onClick={onClick}
-      >
-        <img
-          src="/ofis-icon.png"
-          alt="OFIS"
-          className={`${sizeClasses.iconClass} block select-none ${animated ? 'transition-transform duration-300 hover:scale-105' : ''}`}
-        />
-      </div>
-    );
-  }
+  const dims = getDimensions();
 
   return (
-    <div
-      id="ofis-wordmark-container"
-      className={`inline-flex items-center justify-center ${className} ${onClick ? 'cursor-pointer' : ''}`}
-      onClick={onClick}
-      aria-label="OFIS"
-      title="OFIS"
-    >
-      <img
-        src={ofisWordmark}
-        alt="OFIS"
-        className={`${sizeClasses.imgClass} block select-none ${
-          animated ? 'transition-transform duration-200 hover:scale-[1.02]' : ''
-        }`}
-      />
+    <div className={`inline-flex items-center space-x-2 select-none ${className}`}>
+      {!imageError ? (
+        <img
+          src="/ofis-logo.png"
+          alt="OFIS Logo"
+          className={`${dims.height} w-auto object-contain`}
+          onError={() => setImageError(true)}
+        />
+      ) : (
+        <div className="flex items-center space-x-1">
+          <span className={`font-black tracking-tighter text-[#F2F2F2] font-mono ${dims.text}`}>
+            OFIS
+          </span>
+          <span className={`font-black text-[#00C878] ${dims.dot}`}>•</span>
+        </div>
+      )}
+
+      {showTagline && (
+        <span className={`text-[#718079] font-medium hidden sm:inline ${dims.sub}`}>
+          Physical Spaces
+        </span>
+      )}
     </div>
   );
 };
-
-export default OFISWordmark;
