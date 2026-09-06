@@ -167,13 +167,17 @@ export const bookingsService = {
     const uniqueSuffix = Math.floor(1000 + Math.random() * 9000);
     const bookingId = `OFIS-BK-${uniqueSuffix}`;
 
+    const safeName = String(data.userName || 'Guest').trim();
+    const cleanName = safeName.replace(/\s+/g, '').toUpperCase() || 'GUEST';
+    const initials = safeName.slice(0, 2).toUpperCase() || 'GU';
+
     const newBooking: Booking = {
       ...data,
       id: bookingId,
       endTime: data.endTime || calculateEndTime(data.startTime, data.durationHours),
       status: 'confirmed',
-      qrCodeValue: `OFIS-PASS-${uniqueSuffix}-${data.userName.replace(/\s+/g, '').toUpperCase()}`,
-      digitalPassCode: `OFIS-${uniqueSuffix}-${data.userName.slice(0, 2).toUpperCase()}`,
+      qrCodeValue: `OFIS-PASS-${uniqueSuffix}-${cleanName}`,
+      digitalPassCode: `OFIS-${uniqueSuffix}-${initials}`,
       createdAt: new Date().toISOString(),
       offlineCached: true,
       wifiSsid: data.wifiSsid || 'OFIS_Guest_HighSpeed',
@@ -290,22 +294,54 @@ export const bookingsService = {
 
   extendBooking: (
     bookingId: string,
-    additionalHours: number,
-    hourlyRate: number,
+    options: { additionalHours?: number; additionalDays?: number } | number,
+    unitRate: number,
     paymentMethod: 'paystack' | 'flutterwave' | 'wallet' | 'card' = 'wallet'
   ): { success: boolean; message: string; booking?: Booking } => {
     const bookings = bookingsService.getBookings();
     const target = bookings.find(b => b.id === bookingId);
     if (!target) return { success: false, message: 'Booking not found' };
 
-    const extensionCost = Math.round(hourlyRate * additionalHours);
-    target.durationHours += additionalHours;
-    target.totalAmount += extensionCost;
-    target.endTime = calculateEndTime(target.startTime, target.durationHours);
+    let addHours = 0;
+    let addDays = 0;
+
+    if (typeof options === 'number') {
+      addHours = options;
+    } else {
+      addHours = options.additionalHours || 0;
+      addDays = options.additionalDays || 0;
+    }
+
+    let extensionCost = 0;
+    let message = '';
+
+    if (addDays > 0) {
+      extensionCost = Math.round(unitRate * addDays);
+      target.extendedDays = (target.extendedDays || 0) + addDays;
+      target.extendedDaysCount = (target.extendedDaysCount || 1) + addDays;
+      target.totalAmount += extensionCost;
+
+      // Compute new end date
+      const baseDate = target.endDate ? new Date(target.endDate) : new Date(target.date);
+      baseDate.setDate(baseDate.getDate() + addDays);
+      target.endDate = baseDate.toISOString().split('T')[0];
+      target.isMultiDayPass = true;
+
+      message = `Pass extended by +${addDays} day(s) until ${target.endDate}`;
+    } else {
+      extensionCost = Math.round(unitRate * addHours);
+      target.durationHours += addHours;
+      target.extendedHours = (target.extendedHours || 0) + addHours;
+      target.totalAmount += extensionCost;
+      target.endTime = calculateEndTime(target.startTime, target.durationHours);
+
+      message = `Session extended by +${addHours} hour(s) until ${target.endTime}`;
+    }
 
     const extensionRecord: BookingExtensionRecord = {
       id: `ext-${Date.now()}`,
-      durationHours: additionalHours,
+      durationHours: addHours,
+      extendedDays: addDays > 0 ? addDays : undefined,
       costNgn: extensionCost,
       timestamp: new Date().toISOString(),
       paymentMethod,
@@ -323,7 +359,7 @@ export const bookingsService = {
       }).eq('id', target.id);
     }
 
-    return { success: true, message: `Extended by +${additionalHours} hour(s)`, booking: target };
+    return { success: true, message, booking: target };
   },
 
   checkOutBooking: (bookingId: string): { success: boolean; message: string; booking?: Booking } => {

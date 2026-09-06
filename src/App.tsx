@@ -21,14 +21,30 @@ import { WriteReviewModal } from './components/WriteReviewModal';
 import { EditSpaceModal } from './components/EditSpaceModal';
 import { HostPayoutModal } from './components/HostPayoutModal';
 import { DiagnosticsModal } from './components/DiagnosticsModal';
+import { AdminVerificationModal } from './components/AdminVerificationModal';
+import { EmailVerificationModal } from './components/EmailVerificationModal';
+import { InfoModal } from './components/InfoModal';
 import { CompareFloatingBar } from './components/compare/CompareFloatingBar';
 import { WorkspaceCompareModal } from './components/compare/WorkspaceCompareModal';
+import { LogoGalleryModal, LogoConcept } from './components/LogoGalleryModal';
+import { AppSplashScreen } from './components/AppSplashScreen';
 
 export const App: React.FC = () => {
-  const { currentView, currentUser } = useApp();
+  const { 
+    currentView, 
+    currentUser, 
+    isInfoModalOpen, 
+    setIsInfoModalOpen, 
+    infoModalTab, 
+    setIsListSpaceModalOpen,
+    isLogoGalleryOpen,
+    setIsLogoGalleryOpen,
+    selectedLogoConceptId,
+    setSelectedLogoConceptId
+  } = useApp();
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-[#F2F2F2] flex flex-col font-sans selection:bg-[#00C878] selection:text-[#0D0D0D]">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#111827] text-[#111827] dark:text-[#F9FAFB] flex flex-col font-sans selection:bg-[#16A34A] selection:text-white transition-colors duration-150">
       {/* Top Navbar */}
       <Navbar />
 
@@ -56,6 +72,12 @@ export const App: React.FC = () => {
 
       {/* Navigation & Global Modals */}
       <OfisNavigationDrawer />
+      <InfoModal 
+        isOpen={isInfoModalOpen} 
+        onClose={() => setIsInfoModalOpen(false)} 
+        initialTab={infoModalTab}
+        onBecomeHost={() => setIsListSpaceModalOpen(true)}
+      />
       <WorkspaceCompareModal />
       <CheckoutModal />
       <DigitalPassModal />
@@ -64,12 +86,24 @@ export const App: React.FC = () => {
       <EditSpaceModal />
       <HostPayoutModal />
       <DiagnosticsModal />
+      <AdminVerificationModal />
+      <EmailVerificationModal />
       <AiAssistantModal />
       <OfisAuthModal />
       <SettingsModal />
       <DirectionsModal />
       <ContactHostModal />
       <WriteReviewModal />
+      <LogoGalleryModal
+        isOpen={isLogoGalleryOpen}
+        onClose={() => setIsLogoGalleryOpen(false)}
+        selectedConceptId={selectedLogoConceptId}
+        onSelectConcept={(concept: LogoConcept) => {
+          setSelectedLogoConceptId(concept.id);
+        }}
+      />
+      {/* App Load-Up Splash Screen with Breathing Logo Emblem */}
+      <AppSplashScreen />
     </div>
   );
 };

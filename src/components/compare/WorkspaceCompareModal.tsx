@@ -33,6 +33,7 @@ import { compareService } from '../../services/compareService';
 import { Space } from '../../types';
 import { SavedComparisonsSection } from './SavedComparisonsSection';
 import { getSpaceAvailability } from '../../utils/availability';
+import { getSpacePricing } from '../../utils/pricing';
 
 export const WorkspaceCompareModal: React.FC = () => {
   const {
@@ -456,30 +457,47 @@ export const WorkspaceCompareModal: React.FC = () => {
                             </div>
 
                             {/* Section 1: PRICING */}
-                            <div className="space-y-2 pt-2 border-t border-[#232D28]">
-                              <div className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider">
-                                Rates &amp; Pricing
-                              </div>
-                              <div className="flex items-baseline justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
-                                <span className="text-xs text-[#9EABA3]">Hourly Rate</span>
-                                <div className="flex items-center space-x-1.5">
-                                  {isLowestPrice && (
-                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#00C878]/20 text-[#00C878] uppercase">
-                                      Lowest
+                            {(() => {
+                              const spacePricing = getSpacePricing(space);
+                              return (
+                                <div className="space-y-2 pt-2 border-t border-[#232D28]">
+                                  <div className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider">
+                                    Rates &amp; Pricing
+                                  </div>
+                                  <div className="flex items-baseline justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
+                                    <span className="text-xs text-[#9EABA3]">
+                                      {spacePricing.basis === 'person' ? 'Per Person' : 'Base Rate'}
                                     </span>
+                                    <div className="flex items-center space-x-1.5">
+                                      {isLowestPrice && (
+                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#00C878]/20 text-[#00C878] uppercase">
+                                          Lowest
+                                        </span>
+                                      )}
+                                      <span className="text-sm font-mono font-bold text-[#00C878]">
+                                        {formatPrice(spacePricing.rate)}/{spacePricing.period}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {space.pricePerDay && spacePricing.period === 'hour' && (
+                                    <div className="flex items-baseline justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
+                                      <span className="text-xs text-[#9EABA3]">Full Day Pass</span>
+                                      <span className="text-xs font-mono font-bold text-[#F2F2F2]">
+                                        {formatPrice(space.pricePerDay)}/day
+                                      </span>
+                                    </div>
                                   )}
-                                  <span className="text-sm font-mono font-bold text-[#00C878]">
-                                    {formatPrice(space.pricePerHour)}/hr
-                                  </span>
+                                  {spacePricing.sessionDurationHours && (
+                                    <div className="flex items-baseline justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
+                                      <span className="text-xs text-[#9EABA3]">Session Duration</span>
+                                      <span className="text-xs font-mono font-bold text-[#00C878]">
+                                        {spacePricing.sessionDurationHours} hours / block
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
-                              </div>
-                              <div className="flex items-baseline justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
-                                <span className="text-xs text-[#9EABA3]">Full Day Pass</span>
-                                <span className="text-xs font-mono font-bold text-[#F2F2F2]">
-                                  {formatPrice(space.pricePerDay || space.pricePerHour * 8)}/day
-                                </span>
-                              </div>
-                            </div>
+                              );
+                            })()}
 
                             {/* Section 2: PERFORMANCE SPECS */}
                             <div className="space-y-2 pt-2 border-t border-[#232D28]">
@@ -560,7 +578,7 @@ export const WorkspaceCompareModal: React.FC = () => {
                               <div className="grid grid-cols-2 gap-1.5 text-xs">
                                 {/* Parking */}
                                 <div className={`p-2 rounded-xl flex items-center space-x-1.5 border ${
-                                  (space.amenities || []).some(a => a.toLowerCase().includes('parking'))
+                                  (space.amenities || []).some(a => a && a.toLowerCase().includes('parking'))
                                     ? 'bg-[#121E18] text-[#00C878] border-[#00C878]/30'
                                     : 'bg-[#141816] text-[#718079] border-[#232D28]'
                                 }`}>
@@ -570,7 +588,7 @@ export const WorkspaceCompareModal: React.FC = () => {
 
                                 {/* Air Conditioning */}
                                 <div className={`p-2 rounded-xl flex items-center space-x-1.5 border ${
-                                  (space.amenities || []).some(a => a.toLowerCase().includes('ac') || a.toLowerCase().includes('air') || a.toLowerCase().includes('conditioning'))
+                                  (space.amenities || []).some(a => a && (a.toLowerCase().includes('ac') || a.toLowerCase().includes('air') || a.toLowerCase().includes('conditioning')))
                                     ? 'bg-[#121E18] text-[#00C878] border-[#00C878]/30'
                                     : 'bg-[#141816] text-[#718079] border-[#232D28]'
                                 }`}>
@@ -580,7 +598,7 @@ export const WorkspaceCompareModal: React.FC = () => {
 
                                 {/* Coffee */}
                                 <div className={`p-2 rounded-xl flex items-center space-x-1.5 border ${
-                                  (space.amenities || []).some(a => a.toLowerCase().includes('coffee') || a.toLowerCase().includes('tea') || a.toLowerCase().includes('cafe'))
+                                  (space.amenities || []).some(a => a && (a.toLowerCase().includes('coffee') || a.toLowerCase().includes('tea') || a.toLowerCase().includes('cafe')))
                                     ? 'bg-[#121E18] text-[#00C878] border-[#00C878]/30'
                                     : 'bg-[#141816] text-[#718079] border-[#232D28]'
                                 }`}>
@@ -590,7 +608,7 @@ export const WorkspaceCompareModal: React.FC = () => {
 
                                 {/* Accessibility */}
                                 <div className={`p-2 rounded-xl flex items-center space-x-1.5 border ${
-                                  (space.amenities || []).some(a => a.toLowerCase().includes('access') || a.toLowerCase().includes('wheelchair') || a.toLowerCase().includes('elevator') || a.toLowerCase().includes('ramp'))
+                                  (space.amenities || []).some(a => a && (a.toLowerCase().includes('access') || a.toLowerCase().includes('wheelchair') || a.toLowerCase().includes('elevator') || a.toLowerCase().includes('ramp')))
                                     ? 'bg-[#121E18] text-[#00C878] border-[#00C878]/30'
                                     : 'bg-[#141816] text-[#718079] border-[#232D28]'
                                 }`}>

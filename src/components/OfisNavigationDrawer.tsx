@@ -1,24 +1,21 @@
 import React from 'react';
 import { 
   X, 
-  User, 
-  Building2, 
-  Sparkles, 
-  PlusCircle, 
-  CalendarCheck, 
-  Bookmark, 
-  Bell, 
-  Settings, 
+  Info, 
   HelpCircle, 
-  LogOut, 
-  LogIn,
-  Zap, 
+  Headphones, 
+  Mail, 
+  AlertTriangle, 
   ShieldCheck, 
-  ChevronRight, 
-  RefreshCw, 
-  Activity, 
-  UserPlus,
-  ArrowLeftRight
+  FileText, 
+  Building2, 
+  Handshake, 
+  Star, 
+  Share2, 
+  ChevronRight,
+  Settings,
+  Sun,
+  Palette
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { OFISWordmark } from './OFISWordmark';
@@ -27,335 +24,296 @@ export const OfisNavigationDrawer: React.FC = () => {
   const {
     isDrawerOpen,
     setIsDrawerOpen,
-    currentUser,
-    switchUserRole,
-    setCurrentView,
-    setIsAuthModalOpen,
-    openAuthModal,
+    openInfoModal,
     setIsListSpaceModalOpen,
-    setIsAiModalOpen,
     setIsSettingsOpen,
-    setIsDiagnosticsModalOpen,
-    notifications,
-    markAllNotificationsRead,
-    unreadNotificationsCount,
-    signOut,
-    signIn,
-    isGuest,
-    comparedSpaceIds,
-    setIsCompareModalOpen,
+    setIsLogoGalleryOpen,
+    theme,
   } = useApp();
 
   if (!isDrawerOpen) return null;
+
+  const handleOpenInfo = (tab: 'about' | 'faq' | 'help' | 'support' | 'report' | 'privacy' | 'terms' | 'partner' | 'rate' | 'share') => {
+    setIsDrawerOpen(false);
+    openInfoModal(tab);
+  };
+
+  const handleBecomeHost = () => {
+    setIsDrawerOpen(false);
+    setIsListSpaceModalOpen(true);
+  };
+
+  const handleOpenSettings = () => {
+    setIsDrawerOpen(false);
+    setIsSettingsOpen(true);
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
         onClick={() => setIsDrawerOpen(false)}
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-sm w-full bg-[#121614] border-l border-[#1E2522] shadow-2xl flex flex-col justify-between z-10">
+      {/* Drawer on the LEFT side */}
+      <div className="fixed inset-y-0 left-0 max-w-sm w-full bg-white dark:bg-[#111827] border-r border-[#E5E7EB] dark:border-[#374151] shadow-2xl flex flex-col justify-between z-10 animate-in slide-in-from-left duration-250 ease-out transition-colors">
         
         {/* Header */}
-        <div className="p-5 border-b border-[#1E2522] flex items-center justify-between">
-          <OFISWordmark size="sm" />
+        <div className="p-4 sm:p-5 border-b border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between bg-[#F8FAFC] dark:bg-[#1F2937]">
+          <OFISWordmark size="md" />
           <button
             type="button"
+            id="drawer-close-btn"
             onClick={() => setIsDrawerOpen(false)}
-            className="p-2 rounded-xl text-[#718079] hover:text-[#F2F2F2] hover:bg-[#18201B] transition-colors"
+            className="p-2 rounded-xl text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] hover:bg-[#E2E8F0] dark:hover:bg-[#374151] transition-colors cursor-pointer"
+            aria-label="Close menu"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="p-5 overflow-y-auto space-y-6 flex-1">
+        {/* Informational & Secondary Navigation Content */}
+        <div className="p-5 overflow-y-auto space-y-6 flex-1 text-sm">
           
-          {/* User Card */}
-          <div className="p-4 rounded-2xl bg-[#18201B] border border-[#232D28] space-y-3">
-            <div className="flex items-center space-x-3">
-              <img
-                src={currentUser.avatar}
-                alt={currentUser.name}
-                className="w-12 h-12 rounded-full object-cover ring-2 ring-[#00C878]"
-              />
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold text-[#F2F2F2] truncate">{currentUser.name}</h4>
-                <p className="text-xs text-[#718079] truncate">{currentUser.email}</p>
-                <div className="flex items-center space-x-1.5 mt-1">
-                  <span className="px-2 py-0.5 rounded-md bg-[#00C878]/15 text-[#00C878] text-[10px] font-mono font-bold uppercase">
-                    {currentUser.role}
-                  </span>
-                  <span className="text-[10px] text-[#718079]">
-                    ₦{(currentUser?.walletBalanceNgn ?? 0).toLocaleString()} Balance
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-[#232D28] flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  switchUserRole(currentUser.role === 'user' ? 'host' : 'user');
-                }}
-                className="text-xs text-[#00C878] hover:underline font-semibold flex items-center space-x-1"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Switch to {currentUser.role === 'user' ? 'Host Mode' : 'Guest Mode'}</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDrawerOpen(false);
-                  openAuthModal('profile');
-                }}
-                className="text-xs text-[#9EABA3] hover:text-[#F2F2F2] cursor-pointer"
-              >
-                Manage Profile
-              </button>
-            </div>
-
-            {/* Prominent Sign In / Sign Up / Sign Out Button inside User Card */}
-            <div className="pt-2 border-t border-[#232D28] space-y-2">
-              {isGuest ? (
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    id="drawer-sign-in-btn"
-                    onClick={() => {
-                      setIsDrawerOpen(false);
-                      openAuthModal('login');
-                    }}
-                    className="w-full py-2 px-3 rounded-xl bg-[#18201B] hover:bg-[#232D28] border border-[#232D28] text-[#F2F2F2] text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
-                  >
-                    <LogIn className="w-3.5 h-3.5 text-[#718079]" />
-                    <span>Sign In</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    id="drawer-sign-up-btn"
-                    onClick={() => {
-                      setIsDrawerOpen(false);
-                      openAuthModal('signup');
-                    }}
-                    className="w-full py-2 px-3 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer shadow-md"
-                  >
-                    <UserPlus className="w-3.5 h-3.5" />
-                    <span>Sign Up</span>
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  id="drawer-sign-out-btn"
-                  onClick={() => {
-                    setIsDrawerOpen(false);
-                    signOut();
-                  }}
-                  className="w-full py-2 px-3 rounded-xl bg-[#2D1616] hover:bg-[#3D1A1A] border border-[#FF5C5C]/30 text-[#FF8585] hover:text-[#FF5C5C] text-xs font-bold flex items-center justify-center space-x-2 transition-all cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4 text-[#FF5C5C]" />
-                  <span>Sign Out</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Navigation Links */}
+          {/* Section 0: Preferences & Theme */}
           <div className="space-y-1">
-            <p className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider px-2 pb-1">
-              Explore & Bookings
+            <p className="text-[11px] font-mono font-bold uppercase text-[#6B7280] dark:text-[#9CA3AF] tracking-wider px-2 pb-1">
+              Preferences & System
             </p>
 
             <button
               type="button"
-              onClick={() => {
-                setCurrentView('explore');
-                setIsDrawerOpen(false);
-              }}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
+              id="drawer-settings-btn"
+              onClick={handleOpenSettings}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F1F5F9] dark:hover:bg-[#1F2937] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer border border-[#E5E7EB] dark:border-[#374151] bg-[#F8FAFC] dark:bg-[#1F2937]/50"
             >
               <div className="flex items-center space-x-3">
-                <Zap className="w-4 h-4 text-[#00C878]" />
-                <span>Explore Workspaces</span>
+                <div className="p-1 rounded-lg bg-[#DCFCE7] dark:bg-[#16A34A]/20 text-[#16A34A]">
+                  <Settings className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="font-bold">Settings & Appearance</div>
+                  <div className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] font-normal">
+                    Theme: {theme === 'system' ? 'System Default' : theme === 'dark' ? 'Dark Mode' : 'Light Mode'} • Currency
+                  </div>
+                </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#718079]" />
+              <ChevronRight className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                setCurrentView('bookings');
-                setIsDrawerOpen(false);
-              }}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
-            >
-              <div className="flex items-center space-x-3">
-                <CalendarCheck className="w-4 h-4 text-[#00C878]" />
-                <span>My Active Bookings</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#718079]" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setCurrentView('saved');
-                setIsDrawerOpen(false);
-              }}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
-            >
-              <div className="flex items-center space-x-3">
-                <Bookmark className="w-4 h-4 text-[#00C878]" />
-                <span>Saved Favorites</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#718079]" />
-            </button>
-
-            <button
-              type="button"
-              id="drawer-compare-spaces-btn"
+              id="drawer-logos-btn"
               onClick={() => {
                 setIsDrawerOpen(false);
-                setIsCompareModalOpen(true);
+                setIsLogoGalleryOpen(true);
               }}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-emerald-500/10 dark:hover:bg-emerald-500/20 text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 mt-1.5"
             >
               <div className="flex items-center space-x-3">
-                <ArrowLeftRight className="w-4 h-4 text-[#00C878]" />
-                <span>Compare Workspaces</span>
+                <div className="p-1 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                  <Palette className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <div className="font-bold text-emerald-700 dark:text-emerald-400 flex items-center space-x-1.5">
+                    <span>10 Logo Concepts</span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-emerald-500 text-white font-mono">NEW</span>
+                  </div>
+                  <div className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] font-normal">
+                    Preview & switch handmade brand designs
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center space-x-1.5">
-                {comparedSpaceIds.length > 0 && (
-                  <span className="px-2 py-0.5 rounded-md bg-[#00C878]/20 text-[#00C878] text-[10px] font-mono font-bold">
-                    {comparedSpaceIds.length}
-                  </span>
-                )}
-                <ChevronRight className="w-4 h-4 text-[#718079]" />
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setIsDrawerOpen(false);
-                setIsAiModalOpen(true);
-              }}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#00C878] transition-colors"
-            >
-              <div className="flex items-center space-x-3">
-                <Sparkles className="w-4 h-4 text-[#00C878]" />
-                <span>Ofis Assistant</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#718079]" />
+              <ChevronRight className="w-4 h-4 text-emerald-500" />
             </button>
           </div>
 
-          {/* Host Operations */}
+          {/* Section 1: Overview & Community */}
           <div className="space-y-1">
-            <p className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider px-2 pb-1">
-              Host Operations
+            <p className="text-[11px] font-mono font-bold uppercase text-[#6B7280] dark:text-[#9CA3AF] tracking-wider px-2 pb-1">
+              About & Community
             </p>
 
             <button
               type="button"
-              onClick={() => {
-                setIsDrawerOpen(false);
-                setIsListSpaceModalOpen(true);
-              }}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
+              id="drawer-about-btn"
+              onClick={() => handleOpenInfo('about')}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F1F5F9] dark:hover:bg-[#1F2937] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer"
             >
               <div className="flex items-center space-x-3">
-                <PlusCircle className="w-4 h-4 text-[#00C878]" />
-                <span>List a New Hub / Space</span>
+                <Info className="w-4 h-4 text-[#16A34A]" />
+                <span>About OFIS</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#718079]" />
+              <ChevronRight className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                switchUserRole('host');
-                setIsDrawerOpen(false);
-              }}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#18201B] text-xs font-semibold text-[#F2F2F2] transition-colors"
+              id="drawer-faq-btn"
+              onClick={() => handleOpenInfo('faq')}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F1F5F9] dark:hover:bg-[#1F2937] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer"
             >
               <div className="flex items-center space-x-3">
-                <Building2 className="w-4 h-4 text-[#00C878]" />
-                <span>Host Dashboard & Earnings</span>
+                <HelpCircle className="w-4 h-4 text-[#16A34A]" />
+                <span>Frequently Asked Questions (FAQ)</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#718079]" />
+              <ChevronRight className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+            </button>
+
+            <button
+              type="button"
+              id="drawer-help-centre-btn"
+              onClick={() => handleOpenInfo('help')}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F1F5F9] dark:hover:bg-[#1F2937] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center space-x-3">
+                <Headphones className="w-4 h-4 text-[#16A34A]" />
+                <span>Help Centre</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
             </button>
           </div>
 
-          {/* Notifications Brief */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-2">
-              <p className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider">
-                Notifications ({unreadNotificationsCount})
-              </p>
-              {unreadNotificationsCount > 0 && (
-                <button
-                  type="button"
-                  onClick={markAllNotificationsRead}
-                  className="text-[10px] text-[#00C878] hover:underline"
-                >
-                  Mark read
-                </button>
-              )}
-            </div>
+          {/* Section 2: Support & Assistance */}
+          <div className="space-y-1">
+            <p className="text-[11px] font-mono font-bold uppercase text-[#6B7280] dark:text-[#9CA3AF] tracking-wider px-2 pb-1">
+              Support & Inquiries
+            </p>
 
-            {notifications.slice(0, 2).map(n => (
-              <div key={n.id} className="p-3 rounded-xl bg-[#18201B] border border-[#232D28] text-xs space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-[#F2F2F2]">{n.title}</span>
-                  <span className="text-[10px] text-[#718079]">{n.timestamp}</span>
-                </div>
-                <p className="text-[#9EABA3] leading-relaxed">{n.message}</p>
+            <button
+              type="button"
+              id="drawer-contact-support-btn"
+              onClick={() => handleOpenInfo('support')}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F1F5F9] dark:hover:bg-[#1F2937] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center space-x-3">
+                <Mail className="w-4 h-4 text-[#16A34A]" />
+                <span>Contact Support</span>
               </div>
-            ))}
+              <ChevronRight className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+            </button>
+
+            <button
+              type="button"
+              id="drawer-report-problem-btn"
+              onClick={() => handleOpenInfo('report')}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F1F5F9] dark:hover:bg-[#1F2937] text-xs font-semibold text-[#D97706] dark:text-[#F59E0B] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center space-x-3">
+                <AlertTriangle className="w-4 h-4 text-[#D97706] dark:text-[#F59E0B]" />
+                <span>Report a Problem</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+            </button>
+          </div>
+
+          {/* Section 3: Host & Partner Network */}
+          <div className="space-y-1">
+            <p className="text-[11px] font-mono font-bold uppercase text-[#6B7280] dark:text-[#9CA3AF] tracking-wider px-2 pb-1">
+              Hosts & Partnerships
+            </p>
+
+            <button
+              type="button"
+              id="drawer-become-host-btn"
+              onClick={handleBecomeHost}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#DCFCE7] dark:hover:bg-[#16A34A]/20 text-xs font-bold text-[#16A34A] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center space-x-3">
+                <Building2 className="w-4 h-4 text-[#16A34A]" />
+                <span>Become a Host</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#16A34A]" />
+            </button>
+
+            <button
+              type="button"
+              id="drawer-partner-btn"
+              onClick={() => handleOpenInfo('partner')}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F1F5F9] dark:hover:bg-[#1F2937] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center space-x-3">
+                <Handshake className="w-4 h-4 text-[#16A34A]" />
+                <span>Partner With OFIS</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+            </button>
+          </div>
+
+          {/* Section 4: Engagement & Feedback */}
+          <div className="space-y-1">
+            <p className="text-[11px] font-mono font-bold uppercase text-[#6B7280] dark:text-[#9CA3AF] tracking-wider px-2 pb-1">
+              Community & Growth
+            </p>
+
+            <button
+              type="button"
+              id="drawer-rate-app-btn"
+              onClick={() => handleOpenInfo('rate')}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F1F5F9] dark:hover:bg-[#1F2937] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center space-x-3">
+                <Star className="w-4 h-4 text-[#F59E0B]" />
+                <span>Rate the App</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+            </button>
+
+            <button
+              type="button"
+              id="drawer-share-ofis-btn"
+              onClick={() => handleOpenInfo('share')}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F1F5F9] dark:hover:bg-[#1F2937] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center space-x-3">
+                <Share2 className="w-4 h-4 text-[#16A34A]" />
+                <span>Share OFIS</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+            </button>
+          </div>
+
+          {/* Section 5: Legal & Policy */}
+          <div className="space-y-1">
+            <p className="text-[11px] font-mono font-bold uppercase text-[#6B7280] dark:text-[#9CA3AF] tracking-wider px-2 pb-1">
+              Legal & Trust
+            </p>
+
+            <button
+              type="button"
+              id="drawer-privacy-policy-btn"
+              onClick={() => handleOpenInfo('privacy')}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F1F5F9] dark:hover:bg-[#1F2937] text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center space-x-3">
+                <ShieldCheck className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+                <span>Privacy Policy</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+            </button>
+
+            <button
+              type="button"
+              id="drawer-terms-btn"
+              onClick={() => handleOpenInfo('terms')}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#F1F5F9] dark:hover:bg-[#1F2937] text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center space-x-3">
+                <FileText className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+                <span>Terms of Service</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
+            </button>
           </div>
 
         </div>
 
         {/* Footer */}
-        <div className="p-5 border-t border-[#1E2522] space-y-2.5">
-          {currentUser.role === 'host' && (
-            <button
-              type="button"
-              id="drawer-diagnostics-btn"
-              onClick={() => {
-                setIsDrawerOpen(false);
-                setIsDiagnosticsModalOpen(true);
-              }}
-              className="w-full flex items-center space-x-2 text-xs font-bold text-[#00C878] hover:text-[#00E58B] transition-colors cursor-pointer"
-            >
-              <Activity className="w-4 h-4 text-[#00C878]" />
-              <span>Run System Health Diagnostics</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            id="drawer-settings-btn"
-            onClick={() => {
-              setIsDrawerOpen(false);
-              setIsSettingsOpen(true);
-            }}
-            className="w-full flex items-center space-x-2 text-xs text-[#9EABA3] hover:text-[#F2F2F2] transition-colors cursor-pointer"
-          >
-            <Settings className="w-4 h-4" />
-            <span>Platform Settings & Clock</span>
-          </button>
-
-          <div className="text-[11px] text-[#718079] font-mono flex items-center justify-between pt-2 border-t border-[#1E2522]">
-            <span>OFIS Nigeria v2.0</span>
-            <span className="text-[#00C878]">● 100% Naira (₦) Ready</span>
+        <div className="p-5 border-t border-[#E5E7EB] dark:border-[#374151] bg-[#F8FAFC] dark:bg-[#1F2937]">
+          <div className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] font-mono flex items-center justify-between">
+            <span>OFIS Nigeria</span>
+            <span className="text-[#16A34A] font-bold">● Verified Workspaces</span>
           </div>
         </div>
 

@@ -86,10 +86,10 @@ export const SpaceTypeSlider: React.FC = () => {
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
       <div className="flex items-center justify-between pb-4">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-[#F2F2F2] tracking-tight">
+          <h2 className="text-lg sm:text-xl font-bold text-[#111827] dark:text-[#F9FAFB] tracking-tight">
             Curated Space Pillars
           </h2>
-          <p className="text-xs text-[#718079] mt-0.5">
+          <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
             Explore spaces engineered for performance across Nigeria
           </p>
         </div>
@@ -98,7 +98,7 @@ export const SpaceTypeSlider: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveCategory('all')}
-            className="text-xs text-[#00C878] hover:underline font-semibold flex items-center space-x-1"
+            className="text-xs text-[#16A34A] hover:underline font-semibold flex items-center space-x-1"
           >
             <span>Show all</span>
             <ArrowRight className="w-3 h-3" />
@@ -122,10 +122,10 @@ export const SpaceTypeSlider: React.FC = () => {
                   target.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
-              className={`group relative rounded-2xl overflow-hidden text-left border transition-all duration-200 aspect-[4/5] flex flex-col justify-between p-3.5 sm:p-4 ${
+              className={`group relative rounded-2xl overflow-hidden text-left border transition-all duration-200 aspect-[4/5] flex flex-col justify-between p-3.5 sm:p-4 shadow-xs ${
                 isSelected 
-                  ? 'border-[#00C878] ring-2 ring-[#00C878]/30' 
-                  : 'border-[#1E2522] hover:border-[#35433C]'
+                  ? 'border-[#16A34A] ring-2 ring-[#16A34A]/30' 
+                  : 'border-[#E5E7EB] dark:border-[#374151] hover:border-[#16A34A]/50'
               }`}
             >
               {/* Background Image */}
@@ -134,15 +134,15 @@ export const SpaceTypeSlider: React.FC = () => {
                 alt={type.label}
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
 
               {/* Pillar Badge */}
               <div className="relative z-10 flex items-center justify-between w-full">
-                <span className="px-2 py-0.5 rounded-md bg-[#0D0D0D]/80 backdrop-blur-md border border-[#232D28] text-[9px] font-mono font-bold tracking-wider text-[#00C878]">
+                <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md border border-white/20 text-[9px] font-mono font-bold tracking-wider text-[#4ADE80]">
                   {type.pillar}
                 </span>
                 <div className={`p-1.5 rounded-lg backdrop-blur-md transition-colors ${
-                  isSelected ? 'bg-[#00C878] text-[#0D0D0D]' : 'bg-[#0D0D0D]/80 text-[#F2F2F2]'
+                  isSelected ? 'bg-[#16A34A] text-white' : 'bg-black/60 text-white'
                 }`}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>
@@ -150,10 +150,10 @@ export const SpaceTypeSlider: React.FC = () => {
 
               {/* Title & Specs */}
               <div className="relative z-10 space-y-1">
-                <h3 className="text-xs sm:text-sm font-bold text-[#F2F2F2] leading-tight">
+                <h3 className="text-xs sm:text-sm font-bold text-white leading-tight">
                   {type.label}
                 </h3>
-                <p className="text-[10px] text-[#9EABA3] font-mono">
+                <p className="text-[10px] text-gray-200 font-mono">
                   {type.count} Spaces Available
                 </p>
               </div>

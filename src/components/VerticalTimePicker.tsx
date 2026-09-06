@@ -77,31 +77,31 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
           exit={{ opacity: 0, scale: 0.94, y: 16 }}
           transition={{ duration: 0.22, ease: [0.2, 0.0, 0, 1.0] }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-sm rounded-3xl bg-[#121614] border border-[#232D28] shadow-2xl overflow-hidden flex flex-col max-h-[82vh]"
+          className="relative w-full max-w-sm rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] shadow-2xl overflow-hidden flex flex-col max-h-[82vh]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#1E2522] bg-[#151B17]">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB] dark:border-[#374151] bg-[#F8FAFC] dark:bg-[#111827]">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-xl bg-[#00C878]/15 border border-[#00C878]/30 flex items-center justify-center text-[#00C878]">
+              <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] dark:bg-[#16A34A]/20 border border-[#16A34A]/30 flex items-center justify-center text-[#16A34A]">
                 <Clock className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[#F2F2F2]">Select Start Time</h3>
-                <p className="text-[11px] text-[#718079] font-mono">30-minute intervals</p>
+                <h3 className="text-sm font-bold text-[#111827] dark:text-[#F9FAFB]">Select Start Time</h3>
+                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] font-mono">30-minute intervals</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-2">
               {/* Format Toggle Pill */}
-              <div className="flex items-center bg-[#0D0D0D] p-0.5 rounded-lg border border-[#232D28]">
+              <div className="flex items-center bg-[#F1F5F9] dark:bg-[#111827] p-0.5 rounded-lg border border-[#E5E7EB] dark:border-[#374151]">
                 <button
                   type="button"
                   id="picker-time-format-12h"
                   onClick={() => setTimeFormat('12h')}
-                  className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
                     timeFormat === '12h'
-                      ? 'bg-[#00C878] text-[#0D0D0D]'
-                      : 'text-[#718079] hover:text-[#F2F2F2]'
+                      ? 'bg-[#16A34A] text-white shadow-2xs'
+                      : 'text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB]'
                   }`}
                 >
                   12h
@@ -110,10 +110,10 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
                   type="button"
                   id="picker-time-format-24h"
                   onClick={() => setTimeFormat('24h')}
-                  className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all ${
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
                     timeFormat === '24h'
-                      ? 'bg-[#00C878] text-[#0D0D0D]'
-                      : 'text-[#718079] hover:text-[#F2F2F2]'
+                      ? 'bg-[#16A34A] text-white shadow-2xs'
+                      : 'text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB]'
                   }`}
                 >
                   24h
@@ -123,7 +123,7 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-xl text-[#718079] hover:text-[#F2F2F2] hover:bg-[#1E2522] transition-colors"
+                className="p-2 rounded-xl text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] transition-colors cursor-pointer"
                 aria-label="Close time picker"
               >
                 <X className="w-4 h-4" />
@@ -132,9 +132,9 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
           </div>
 
           {/* Current Selection Badge Banner */}
-          <div className="px-5 py-2.5 bg-[#18201B] border-b border-[#1E2522] flex items-center justify-between">
-            <span className="text-xs text-[#9EABA3] font-medium">Currently Selected:</span>
-            <span className="text-xs font-mono font-bold text-[#00C878] bg-[#00C878]/10 px-2.5 py-0.5 rounded-lg border border-[#00C878]/25">
+          <div className="px-5 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border-b border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between">
+            <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF] font-medium">Currently Selected:</span>
+            <span className="text-xs font-mono font-bold text-[#16A34A] bg-[#DCFCE7] dark:bg-[#16A34A]/20 px-2.5 py-0.5 rounded-lg border border-[#16A34A]/30">
               {formatTime(selectedTime)}
             </span>
           </div>
@@ -158,18 +158,18 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
                     onSelectTime(item.id);
                     onClose();
                   }}
-                  className={`w-full snap-center flex items-center justify-between px-4 py-3 rounded-2xl text-left transition-all duration-150 ${
+                  className={`w-full snap-center flex items-center justify-between px-4 py-3 rounded-2xl text-left transition-all duration-150 cursor-pointer ${
                     isSelected
-                      ? 'bg-[#00C878] text-[#0D0D0D] font-bold shadow-lg scale-[1.01]'
-                      : 'bg-[#18201B]/70 hover:bg-[#1E2522] text-[#E0E6E2] hover:text-[#F2F2F2] border border-transparent hover:border-[#2A3730]'
+                      ? 'bg-[#16A34A] text-white font-bold shadow-md scale-[1.01]'
+                      : 'bg-white dark:bg-[#111827] hover:bg-[#F8FAFC] dark:hover:bg-[#374151] text-[#111827] dark:text-[#F9FAFB] border border-[#E5E7EB] dark:border-[#374151]'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
-                    <span className={`text-base font-mono font-bold tracking-wide ${isSelected ? 'text-[#0D0D0D]' : 'text-[#F2F2F2]'}`}>
+                    <span className={`text-base font-mono font-bold tracking-wide ${isSelected ? 'text-white' : 'text-[#111827] dark:text-[#F9FAFB]'}`}>
                       {displayLabel}
                     </span>
                     {item.periodNote && (
-                      <span className={`text-[10px] uppercase font-mono tracking-wider ${isSelected ? 'text-[#0D0D0D]/75 font-semibold' : 'text-[#718079]'}`}>
+                      <span className={`text-[10px] uppercase font-mono tracking-wider ${isSelected ? 'text-white/80 font-semibold' : 'text-[#6B7280] dark:text-[#9CA3AF]'}`}>
                         {item.periodNote}
                       </span>
                     )}
@@ -177,11 +177,11 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
 
                   <div className="flex items-center space-x-1.5">
                     {isSelected ? (
-                      <span className="w-6 h-6 rounded-full bg-[#0D0D0D] text-[#00C878] flex items-center justify-center">
+                      <span className="w-6 h-6 rounded-full bg-white text-[#16A34A] flex items-center justify-center">
                         <Check className="w-3.5 h-3.5 stroke-[3]" />
                       </span>
                     ) : (
-                      <ChevronRight className="w-4 h-4 text-[#43524B] opacity-40" />
+                      <ChevronRight className="w-4 h-4 text-[#9CA3AF] opacity-50" />
                     )}
                   </div>
                 </button>
@@ -190,14 +190,14 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
           </div>
 
           {/* Footer with Quick Preset & Done */}
-          <div className="p-4 border-t border-[#1E2522] bg-[#151B17] flex items-center justify-between gap-3">
+          <div className="p-4 border-t border-[#E5E7EB] dark:border-[#374151] bg-[#F8FAFC] dark:bg-[#111827] flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => {
                 onSelectTime('any');
                 onClose();
               }}
-              className="px-3 py-2 rounded-xl text-xs font-semibold text-[#9EABA3] hover:text-[#F2F2F2] hover:bg-[#1E2522] transition-colors"
+              className="px-3 py-2 rounded-xl text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] transition-colors cursor-pointer"
             >
               Reset to Any Time
             </button>
@@ -205,7 +205,7 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs shadow-md transition-all active:scale-95 flex items-center space-x-1.5"
+              className="px-5 py-2 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center space-x-1.5 cursor-pointer"
             >
               <span>Done</span>
             </button>

@@ -75,8 +75,8 @@ export const compareService = {
         else baseScore -= 5;
       }
       // City match
-      if (filters.city !== 'All Cities') {
-        if (space.city.toLowerCase() === filters.city.toLowerCase()) baseScore += 3;
+      if (filters.city && filters.city !== 'All Cities' && space.city) {
+        if ((space.city || '').toLowerCase() === (filters.city || '').toLowerCase()) baseScore += 3;
         else baseScore -= 6;
       }
       // Price range
@@ -160,12 +160,12 @@ export const compareService = {
     const highestRatedSpace = [...spaces].sort((a, b) => b.rating - a.rating)[0];
 
     // 1. Price advantage
-    if (minPriceSpace && spaces.length >= 2 && minPriceSpace.pricePerHour < spaces.find(s => s.id !== minPriceSpace.id)!.pricePerHour) {
+    if (minPriceSpace && spaces.length >= 2 && minPriceSpace.pricePerHour < (spaces.find(s => s.id !== minPriceSpace.id)?.pricePerHour || Infinity)) {
       differences.push({
         spaceId: minPriceSpace.id,
         spaceTitle: minPriceSpace.title,
         category: 'pricing',
-        highlightText: `${minPriceSpace.title} is the most affordable at ₦${minPriceSpace.pricePerHour.toLocaleString()}/hr.`,
+        highlightText: `${minPriceSpace.title} is the most affordable at ₦${(minPriceSpace.pricePerHour || 0).toLocaleString()}/hr.`,
         isAdvantage: true,
       });
     }
@@ -243,8 +243,10 @@ export const compareService = {
     
     let text = `⚡ OFIS Workspace Comparison:\n\n`;
     spaces.forEach((s, idx) => {
+      const perHour = s.pricePerHour || 0;
+      const perDay = s.pricePerDay || perHour * 8;
       text += `${idx + 1}. ${s.title} (${s.neighborhood}, ${s.city})\n`;
-      text += `   • Rate: ₦${s.pricePerHour.toLocaleString()}/hr (₦${(s.pricePerDay || s.pricePerHour * 8).toLocaleString()}/day)\n`;
+      text += `   • Rate: ₦${perHour.toLocaleString()}/hr (₦${perDay.toLocaleString()}/day)\n`;
       text += `   • Internet: ${s.internetSpeedMbps} Mbps | Power: ${s.powerUptimeGuaranteePercent}% Uptime\n`;
       text += `   • Rating: ${s.rating} ★ (${s.reviewsCount} reviews)\n\n`;
     });

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Sliders, 
   Building2, 
-  DollarSign, 
+  Banknote, 
   Percent, 
   Calendar, 
   Tag, 
@@ -146,8 +146,16 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
                   type="number"
                   min="500"
                   step="500"
-                  value={hourlyRate}
-                  onChange={(e) => setHourlyRate(Number(e.target.value))}
+                  value={hourlyRate === 0 ? '' : hourlyRate}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setHourlyRate(val === '' ? 0 : Math.max(0, parseInt(val, 10) || 0));
+                  }}
+                  onBlur={() => {
+                    if (!hourlyRate || hourlyRate <= 0) {
+                      setHourlyRate(currentSpace?.pricePerHour || 3500);
+                    }
+                  }}
                   className="w-full pl-8 pr-4 py-2.5 rounded-2xl bg-[#18201B] border border-[#232D28] text-xs font-mono font-bold text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
                 />
               </div>
@@ -162,8 +170,16 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
                   type="number"
                   min="3000"
                   step="1000"
-                  value={dailyRate}
-                  onChange={(e) => setDailyRate(Number(e.target.value))}
+                  value={dailyRate === 0 ? '' : dailyRate}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDailyRate(val === '' ? 0 : Math.max(0, parseInt(val, 10) || 0));
+                  }}
+                  onBlur={() => {
+                    if (!dailyRate || dailyRate <= 0) {
+                      setDailyRate(currentSpace?.pricePerDay || 25000);
+                    }
+                  }}
                   className="w-full pl-8 pr-4 py-2.5 rounded-2xl bg-[#18201B] border border-[#232D28] text-xs font-mono font-bold text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
                 />
               </div>
@@ -264,22 +280,22 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
             <div className="space-y-2.5 text-xs">
               <div className="flex justify-between items-center">
                 <span className="text-[#718079]">Weekday Hourly:</span>
-                <span className="font-mono font-bold text-[#F2F2F2]">₦{hourlyRate.toLocaleString()}/hr</span>
+                <span className="font-mono font-bold text-[#F2F2F2]">₦{(hourlyRate || 0).toLocaleString()}/hr</span>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="text-[#718079]">Weekend Hourly ({weekendMultiplier}x):</span>
-                <span className="font-mono font-bold text-[#00C878]">₦{weekendHourly.toLocaleString()}/hr</span>
+                <span className="font-mono font-bold text-[#00C878]">₦{(weekendHourly || 0).toLocaleString()}/hr</span>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="text-[#718079]">Holiday Surge ({holidayMultiplier}x):</span>
-                <span className="font-mono font-bold text-[#E0A82E]">₦{holidayHourly.toLocaleString()}/hr</span>
+                <span className="font-mono font-bold text-[#E0A82E]">₦{(holidayHourly || 0).toLocaleString()}/hr</span>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="text-[#718079]">With Promo ({promoDiscountPercent}% off):</span>
-                <span className="font-mono font-bold text-[#00C878]">₦{promoHourly.toLocaleString()}/hr</span>
+                <span className="font-mono font-bold text-[#00C878]">₦{(promoHourly || 0).toLocaleString()}/hr</span>
               </div>
             </div>
 
@@ -290,15 +306,15 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
               </div>
               <div className="flex justify-between text-[#9EABA3]">
                 <span>Gross Guest Total:</span>
-                <span>₦{simGross.toLocaleString()}</span>
+                <span>₦{(simGross || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-[#718079]">
                 <span>OFIS Escrow (8%):</span>
-                <span>-₦{simPlatformFee.toLocaleString()}</span>
+                <span>-₦{(simPlatformFee || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-xs font-bold text-[#00C878] pt-1 border-t border-[#1E2522]">
                 <span>Your Net Payout:</span>
-                <span>₦{simNetHostPayout.toLocaleString()}</span>
+                <span>₦{(simNetHostPayout || 0).toLocaleString()}</span>
               </div>
             </div>
 

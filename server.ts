@@ -61,6 +61,69 @@ async function startServer() {
     });
   });
 
+  // Client IP & Geolocation Detection Endpoint
+  app.get('/api/ip-info', async (req, res) => {
+    try {
+      const forwarded = req.headers['x-forwarded-for'];
+      const rawIp = typeof forwarded === 'string'
+        ? forwarded.split(',')[0].trim()
+        : req.socket.remoteAddress || '';
+      
+      const cleanIp = rawIp.replace(/^::ffff:/, '');
+
+      // Check header country code if present from edge proxy
+      const headerCountry = (
+        (req.headers['cf-ipcountry'] as string) ||
+        (req.headers['x-appengine-country'] as string) ||
+        (req.headers['x-country-code'] as string) ||
+        ''
+      ).toUpperCase().trim();
+
+      if (headerCountry && headerCountry !== 'XX' && headerCountry !== 'T1') {
+        return res.json({
+          success: true,
+          detectedCountryCode: headerCountry,
+          ipAddress: cleanIp || 'Edge Client IP',
+        });
+      }
+
+      // If valid public IP, query lightweight geo provider with quick timeout
+      if (cleanIp && cleanIp !== '127.0.0.1' && cleanIp !== '::1' && !cleanIp.startsWith('192.168.') && !cleanIp.startsWith('10.') && !cleanIp.startsWith('172.')) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 1200);
+          const geoRes = await fetch(`https://ipwho.is/${cleanIp}`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (geoRes.ok) {
+            const geoData = await geoRes.json();
+            if (geoData && geoData.success !== false && geoData.country_code) {
+              return res.json({
+                success: true,
+                detectedCountryCode: geoData.country_code,
+                detectedCountry: geoData.country,
+                ipAddress: cleanIp,
+              });
+            }
+          }
+        } catch {
+          // Timeout or lookup failure, proceed to fallback
+        }
+      }
+
+      return res.json({
+        success: true,
+        detectedCountryCode: 'US',
+        ipAddress: cleanIp || 'Client IP',
+      });
+    } catch (err: any) {
+      return res.json({
+        success: false,
+        detectedCountryCode: 'US',
+        error: err.message,
+      });
+    }
+  });
+
   // Supabase Comprehensive Diagnostics Endpoint
   app.get('/api/supabase/diagnostics', async (req, res) => {
     const startTime = Date.now();
@@ -156,6 +219,11 @@ async function startServer() {
       }
 
       if (!supabaseAdmin) {
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({
+            error: 'Database service is not configured (SUPABASE_SERVICE_ROLE_KEY is missing). Cannot process payment in production.',
+          });
+        }
         // Fallback reference for local / sandbox environments when server secrets are unconfigured
         const fallbackRef = `pstk_test_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
         return res.json({
@@ -241,6 +309,12 @@ async function startServer() {
         });
       }
 
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(503).json({
+          error: 'Payment provider is not configured (PAYSTACK_SECRET_KEY is missing). Cannot process payment in production.',
+        });
+      }
+
       // Sandbox reference fallback when Paystack secret key is unconfigured
       const reference = `pstk_test_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
       return res.json({
@@ -267,6 +341,12 @@ async function startServer() {
       }
 
       if (!supabaseAdmin) {
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({
+            success: false,
+            error: 'Database service is not configured (SUPABASE_SERVICE_ROLE_KEY is missing). Cannot verify payment in production.',
+          });
+        }
         return res.json({
           success: true,
           booking: {
@@ -364,6 +444,11 @@ async function startServer() {
             error: 'Payment transaction reference does not match this booking record',
           });
         }
+      } else if (process.env.NODE_ENV === 'production') {
+        return res.status(503).json({
+          success: false,
+          error: 'Payment provider service is not configured (PAYSTACK_SECRET_KEY is missing). Cannot verify payment in production.',
+        });
       }
 
       // Invoke the hardened confirm_booking_payment RPC using service_role authority

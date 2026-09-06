@@ -22,11 +22,11 @@ export const RelatedSpacesSection: React.FC<RelatedSpacesSectionProps> = ({
       let score = 0;
 
       // 1. Same neighborhood (+40 points)
-      if (s.neighborhood?.toLowerCase() === currentSpace.neighborhood?.toLowerCase()) {
+      if (s.neighborhood && currentSpace.neighborhood && s.neighborhood.toLowerCase() === currentSpace.neighborhood.toLowerCase()) {
         score += 40;
       }
       // 2. Same city (+20 points)
-      if (s.city?.toLowerCase() === currentSpace.city?.toLowerCase()) {
+      if (s.city && currentSpace.city && s.city.toLowerCase() === currentSpace.city.toLowerCase()) {
         score += 20;
       }
       // 3. Same category (+30 points)

@@ -57,11 +57,11 @@ export const RecommendedSection: React.FC = () => {
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-1.5">
         <div>
-          <div className="flex items-center space-x-2 text-[#00C878] font-mono text-[11px] font-bold tracking-wider uppercase">
-            <Sparkles className="w-3.5 h-3.5 text-[#00C878]" />
+          <div className="flex items-center space-x-2 text-[#16A34A] font-mono text-[11px] font-bold tracking-wider uppercase">
+            <Sparkles className="w-3.5 h-3.5 text-[#16A34A]" />
             <span>Recommended for You</span>
           </div>
-          <p className="text-xs text-[#9EABA3] mt-0.5 max-w-xl">
+          <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5 max-w-xl">
             {rationale}
           </p>
         </div>

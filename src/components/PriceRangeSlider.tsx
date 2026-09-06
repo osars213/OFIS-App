@@ -39,10 +39,10 @@ export const PriceRangeSlider: React.FC<PriceRangeSliderProps> = ({
       />
 
       <div className="flex items-center justify-between text-[10px] text-[#718079] font-mono">
-        <span>₦{(min ?? 2000).toLocaleString()}</span>
-        <span>₦50,000</span>
-        <span>₦100,000</span>
-        <span>₦{(max ?? 150000).toLocaleString()}+</span>
+        <span>{formatPrice(min ?? 2000)}</span>
+        <span>{formatPrice(50000)}</span>
+        <span>{formatPrice(100000)}</span>
+        <span>{formatPrice(max ?? 150000)}+</span>
       </div>
     </div>
   );

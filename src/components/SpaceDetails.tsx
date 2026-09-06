@@ -19,13 +19,16 @@ import {
   Sparkles,
   Calendar as CalendarIcon,
   MessageSquare,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Bell
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { FloorPlan } from './FloorPlan';
 import { reviewsService } from '../services/reviewsService';
 import { FloorPlanSeat } from '../types';
 import { getSpaceAvailability } from '../utils/availability';
+import { getSpacePricing, formatSpaceRate } from '../utils/pricing';
+import { formatLocationFull } from '../utils/location';
 
 // Workspace Premium Sub-components
 import { HeroGallery } from './workspace/HeroGallery';
@@ -60,6 +63,7 @@ export const SpaceDetails: React.FC = () => {
     comparedSpaceIds,
     toggleSpaceCompare,
     setIsCompareModalOpen,
+    openAvailabilityAlertModal,
   } = useApp();
 
   const [selectedSeat, setSelectedSeat] = useState<FloorPlanSeat | undefined>(undefined);
@@ -71,13 +75,13 @@ export const SpaceDetails: React.FC = () => {
 
   if (!selectedSpace) {
     return (
-      <div className="min-h-screen bg-[#0D0D0D] flex items-center justify-center p-6 text-center">
+      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0D0D0D] flex items-center justify-center p-6 text-center">
         <div className="space-y-4">
-          <p className="text-[#9EABA3]">No space selected</p>
+          <p className="text-[#6B7280] dark:text-[#9EABA3]">No space selected</p>
           <button
             type="button"
             onClick={() => setCurrentView('explore')}
-            className="px-4 py-2 rounded-xl bg-[#00C878] text-[#0D0D0D] font-bold text-xs cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs cursor-pointer"
           >
             Back to Explore
           </button>
@@ -143,15 +147,15 @@ export const SpaceDetails: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] pb-36">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0D0D0D] pb-36">
       
       {/* Sticky Top Navigation Bar */}
-      <div className="sticky top-16 z-30 bg-[#0D0D0D]/90 backdrop-blur-md border-b border-[#1E2522] py-3 px-4 sm:px-6 lg:px-8">
+      <div className="sticky top-16 z-30 bg-white/90 dark:bg-[#0D0D0D]/90 backdrop-blur-md border-b border-[#E5E7EB] dark:border-[#1E2522] py-3 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <button
             type="button"
             onClick={() => setCurrentView('explore')}
-            className="flex items-center space-x-2 text-xs font-semibold text-[#9EABA3] hover:text-[#00C878] transition-colors cursor-pointer"
+            className="flex items-center space-x-2 text-xs font-semibold text-[#6B7280] dark:text-[#9EABA3] hover:text-[#16A34A] transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Workspaces</span>
@@ -164,8 +168,8 @@ export const SpaceDetails: React.FC = () => {
               onClick={() => toggleSpaceCompare(selectedSpace.id)}
               className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center space-x-1.5 transition-all cursor-pointer ${
                 comparedSpaceIds.includes(selectedSpace.id)
-                  ? 'bg-[#00C878] text-[#0D0D0D] border-[#00C878] font-bold shadow-md'
-                  : 'bg-[#141816] hover:bg-[#18201B] border-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2]'
+                  ? 'bg-[#16A34A] text-white border-[#16A34A] font-bold shadow-xs'
+                  : 'bg-white dark:bg-[#141816] hover:bg-[#F1F5F9] dark:hover:bg-[#18201B] border-[#E5E7EB] dark:border-[#232D28] text-[#6B7280] dark:text-[#9EABA3] hover:text-[#111827] dark:hover:text-[#F2F2F2]'
               }`}
               title={comparedSpaceIds.includes(selectedSpace.id) ? 'Remove from compare list' : 'Add to compare list'}
             >
@@ -176,15 +180,15 @@ export const SpaceDetails: React.FC = () => {
             <button
               type="button"
               onClick={() => toggleSaveSpace(selectedSpace.id)}
-              className="p-2 rounded-xl bg-[#141816] hover:bg-[#18201B] border border-[#232D28] text-[#F2F2F2] hover:text-[#00C878] transition-all cursor-pointer"
+              className="p-2 rounded-xl bg-white dark:bg-[#141816] hover:bg-[#F1F5F9] dark:hover:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] text-[#111827] dark:text-[#F2F2F2] hover:text-[#16A34A] transition-all cursor-pointer shadow-2xs"
               aria-label="Save to favorites"
             >
-              <Heart className={`w-4 h-4 ${isSaved ? 'fill-[#00C878] text-[#00C878]' : ''}`} />
+              <Heart className={`w-4 h-4 ${isSaved ? 'fill-[#16A34A] text-[#16A34A]' : ''}`} />
             </button>
             <button
               type="button"
               onClick={handleShare}
-              className="p-2 rounded-xl bg-[#141816] hover:bg-[#18201B] border border-[#232D28] text-[#F2F2F2] hover:text-[#00C878] transition-all cursor-pointer"
+              className="p-2 rounded-xl bg-white dark:bg-[#141816] hover:bg-[#F1F5F9] dark:hover:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] text-[#111827] dark:text-[#F2F2F2] hover:text-[#16A34A] transition-all cursor-pointer shadow-2xs"
               aria-label="Share workspace"
             >
               <Share2 className="w-4 h-4" />
@@ -202,30 +206,30 @@ export const SpaceDetails: React.FC = () => {
             <div 
               className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold tracking-wide border ${
                 availability.status === 'available_now'
-                  ? 'bg-[#00C878]/20 text-[#00C878] border-[#00C878]/40'
+                  ? 'bg-[#DCFCE7] dark:bg-[#16A34A]/20 text-[#16A34A] border-[#16A34A]/40'
                   : availability.status === 'available_today'
-                  ? 'bg-[#00C878]/15 text-[#00C878] border-[#00C878]/25'
-                  : 'bg-[#18201B] text-[#9EABA3] border-[#2E3B34]'
+                  ? 'bg-[#DCFCE7] dark:bg-[#16A34A]/15 text-[#16A34A] border-[#16A34A]/25'
+                  : 'bg-[#F1F5F9] dark:bg-[#18201B] text-[#6B7280] dark:text-[#9EABA3] border-[#E5E7EB] dark:border-[#2E3B34]'
               }`}
             >
               {availability.status === 'available_now' && (
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00C878] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00C878]" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#16A34A]" />
                 </span>
               )}
               {availability.status === 'available_today' && (
-                <span className="inline-flex rounded-full h-1.5 w-1.5 bg-[#00C878]" />
+                <span className="inline-flex rounded-full h-1.5 w-1.5 bg-[#16A34A]" />
               )}
               <span>{availability.statusLabel}</span>
             </div>
 
-            <span className="px-2.5 py-1 rounded-lg bg-[#00C878]/15 border border-[#00C878]/30 text-[#00C878] text-xs font-mono font-bold uppercase">
-              {selectedSpace.category.replace('_', ' ')}
+            <span className="px-2.5 py-1 rounded-lg bg-[#DCFCE7] dark:bg-[#16A34A]/15 border border-[#16A34A]/30 text-[#16A34A] text-xs font-mono font-bold uppercase">
+              {String(selectedSpace.category || '').replace(/_/g, ' ')}
             </span>
             
             {selectedSpace.isSuperhost && (
-              <span className="px-2.5 py-1 rounded-lg bg-[#00C878] text-[#0D0D0D] text-xs font-mono font-bold uppercase">
+              <span className="px-2.5 py-1 rounded-lg bg-[#16A34A] text-white text-xs font-mono font-bold uppercase shadow-2xs">
                 Superhost Verified
               </span>
             )}
@@ -233,22 +237,22 @@ export const SpaceDetails: React.FC = () => {
             <button
               type="button"
               onClick={scrollToReviews}
-              className="flex items-center space-x-1 text-xs text-[#F2F2F2] hover:text-[#00C878] transition-colors cursor-pointer"
+              className="flex items-center space-x-1 text-xs text-[#111827] dark:text-[#F2F2F2] hover:text-[#16A34A] transition-colors cursor-pointer"
             >
-              <Star className="w-3.5 h-3.5 fill-[#00C878] text-[#00C878]" />
+              <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
               <span className="font-bold">{selectedSpace.rating}</span>
-              <span className="text-[#718079]">({selectedSpace.reviewsCount} reviews)</span>
+              <span className="text-[#6B7280] dark:text-[#718079]">({selectedSpace.reviewsCount} reviews)</span>
             </button>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-[#F2F2F2] tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-[#111827] dark:text-[#F2F2F2] tracking-tight">
             {selectedSpace.title}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-[#9EABA3]">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-[#6B7280] dark:text-[#9EABA3]">
             <div className="flex items-center space-x-1.5">
-              <MapPin className="w-4 h-4 text-[#00C878]" />
-              <span>{selectedSpace.address || `${selectedSpace.neighborhood}, ${selectedSpace.city}`}</span>
+              <MapPin className="w-4 h-4 text-[#16A34A]" />
+              <span>{formatLocationFull(selectedSpace)}</span>
             </div>
             <button
               type="button"
@@ -256,7 +260,7 @@ export const SpaceDetails: React.FC = () => {
                 setDirectionsSpace(selectedSpace);
                 setIsDirectionsOpen(true);
               }}
-              className="text-[#00C878] hover:underline font-semibold flex items-center space-x-1 cursor-pointer"
+              className="text-[#16A34A] hover:underline font-semibold flex items-center space-x-1 cursor-pointer"
             >
               <Navigation className="w-3.5 h-3.5" />
               <span>Get Directions</span>
@@ -287,39 +291,39 @@ export const SpaceDetails: React.FC = () => {
           <div className="lg:col-span-2 space-y-8">
             
             {/* Space Power & Connectivity High-Performance Metrics Banner */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-5 rounded-3xl bg-[#141816] border border-[#1E2522]">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-5 rounded-3xl bg-white dark:bg-[#141816] border border-[#E5E7EB] dark:border-[#1E2522] shadow-xs">
               <div className="space-y-1">
-                <div className="flex items-center space-x-1.5 text-xs text-[#718079]">
-                  <Zap className="w-4 h-4 text-[#00C878]" />
+                <div className="flex items-center space-x-1.5 text-xs text-[#6B7280] dark:text-[#718079]">
+                  <Zap className="w-4 h-4 text-[#16A34A]" />
                   <span>Power Backup</span>
                 </div>
-                <div className="text-sm font-bold text-[#F2F2F2]">{selectedSpace.powerType}</div>
-                <p className="text-[10px] text-[#00C878] font-mono">{selectedSpace.powerUptimeGuaranteePercent}% Uptime Guarantee</p>
+                <div className="text-sm font-bold text-[#111827] dark:text-[#F2F2F2]">{selectedSpace.powerType}</div>
+                <p className="text-[10px] text-[#16A34A] font-mono">{selectedSpace.powerUptimeGuaranteePercent}% Uptime Guarantee</p>
               </div>
 
               <div className="space-y-1">
-                <div className="flex items-center space-x-1.5 text-xs text-[#718079]">
-                  <Wifi className="w-4 h-4 text-[#00C878]" />
+                <div className="flex items-center space-x-1.5 text-xs text-[#6B7280] dark:text-[#718079]">
+                  <Wifi className="w-4 h-4 text-[#16A34A]" />
                   <span>Internet Speed</span>
                 </div>
-                <div className="text-sm font-bold text-[#F2F2F2]">{selectedSpace.internetSpeedMbps} Mbps</div>
-                <p className="text-[10px] text-[#718079] font-mono">{selectedSpace.internetIsp || 'Dedicated Fiber'}</p>
+                <div className="text-sm font-bold text-[#111827] dark:text-[#F2F2F2]">{selectedSpace.internetSpeedMbps} Mbps</div>
+                <p className="text-[10px] text-[#6B7280] dark:text-[#718079] font-mono">{selectedSpace.internetIsp || 'Dedicated Fiber'}</p>
               </div>
 
               <div className="space-y-1 col-span-2 sm:col-span-1">
-                <div className="flex items-center space-x-1.5 text-xs text-[#718079]">
-                  <Users className="w-4 h-4 text-[#00C878]" />
+                <div className="flex items-center space-x-1.5 text-xs text-[#6B7280] dark:text-[#718079]">
+                  <Users className="w-4 h-4 text-[#16A34A]" />
                   <span>Capacity & Noise</span>
                 </div>
-                <div className="text-sm font-bold text-[#F2F2F2]">{selectedSpace.capacity} Guests</div>
-                <p className="text-[10px] text-[#718079] font-mono">{selectedSpace.noiseLevel}</p>
+                <div className="text-sm font-bold text-[#111827] dark:text-[#F2F2F2]">{selectedSpace.capacity} Guests</div>
+                <p className="text-[10px] text-[#6B7280] dark:text-[#718079] font-mono">{selectedSpace.noiseLevel}</p>
               </div>
             </div>
 
             {/* About this Workspace */}
             <div className="space-y-3">
-              <h3 className="text-lg font-bold text-[#F2F2F2]">About this Workspace</h3>
-              <p className="text-sm text-[#9EABA3] leading-relaxed whitespace-pre-line">
+              <h3 className="text-lg font-bold text-[#111827] dark:text-[#F2F2F2]">About this Workspace</h3>
+              <p className="text-sm text-[#4B5563] dark:text-[#9EABA3] leading-relaxed whitespace-pre-line">
                 {selectedSpace.description}
               </p>
             </div>
@@ -400,77 +404,97 @@ export const SpaceDetails: React.FC = () => {
 
           {/* Booking Summary Sidebar (1 Col Sticky Card) */}
           <div className="space-y-6">
-            <div className="sticky top-32 p-6 rounded-3xl bg-[#141816] border border-[#232D28] shadow-2xl space-y-6">
+            <div className="sticky top-32 p-6 rounded-3xl bg-white dark:bg-[#141816] border border-[#E5E7EB] dark:border-[#232D28] shadow-sm dark:shadow-2xl space-y-6">
               
-              <div className="flex items-baseline justify-between border-b border-[#1E2522] pb-4">
-                <div>
-                  <span className="text-2xl font-extrabold text-[#00C878] font-mono">
-                    {formatPrice(selectedSpace.pricePerHour)}
-                  </span>
-                  <span className="text-xs text-[#718079]"> / hour</span>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-mono font-bold text-[#F2F2F2]">
-                    {formatPrice(selectedSpace.pricePerDay || (selectedSpace.pricePerHour * 8))}
+              {(() => {
+                const pricing = getSpacePricing(selectedSpace);
+                return (
+                  <div className="flex items-baseline justify-between border-b border-[#E5E7EB] dark:border-[#1E2522] pb-4">
+                    <div>
+                      <div className="text-[10px] font-mono text-[#6B7280] dark:text-[#718079] uppercase tracking-wider font-semibold">
+                        {pricing.basis === 'person' ? 'Per Person' : 'Entire Space'}
+                      </div>
+                      <div className="flex items-baseline space-x-1">
+                        <span className="text-2xl font-extrabold text-[#16A34A] font-mono">
+                          {formatPrice(pricing.rate)}
+                        </span>
+                        <span className="text-xs text-[#6B7280] dark:text-[#718079]"> / {pricing.period}</span>
+                      </div>
+                    </div>
+                    {selectedSpace.pricePerDay && pricing.period === 'hour' && (
+                      <div className="text-right">
+                        <div className="text-xs font-mono font-bold text-[#111827] dark:text-[#F2F2F2]">
+                          {formatPrice(selectedSpace.pricePerDay)}
+                        </div>
+                        <div className="text-[10px] text-[#6B7280] dark:text-[#718079]">Full Day Pass</div>
+                      </div>
+                    )}
+                    {pricing.sessionDurationHours && (
+                      <div className="text-right">
+                        <div className="text-xs font-mono font-bold text-[#16A34A]">
+                          {pricing.sessionDurationHours}h Block
+                        </div>
+                        <div className="text-[10px] text-[#6B7280] dark:text-[#718079]">Per Session</div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-[10px] text-[#718079]">Full Day Pass</div>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Selected Slot or Live Status Banner */}
               {selectedSlot ? (
-                <div className="p-3 rounded-2xl bg-[#18201B] border border-[#00C878]/30 space-y-1">
-                  <div className="flex items-center space-x-1.5 text-xs text-[#00C878]">
+                <div className="p-3 rounded-2xl bg-[#DCFCE7] dark:bg-[#18201B] border border-[#16A34A]/30 space-y-1">
+                  <div className="flex items-center space-x-1.5 text-xs text-[#16A34A]">
                     <Clock className="w-3.5 h-3.5" />
                     <span>Selected Date & Slot</span>
                   </div>
-                  <div className="text-sm font-mono font-bold text-[#F2F2F2]">
+                  <div className="text-sm font-mono font-bold text-[#111827] dark:text-[#F2F2F2]">
                     {selectedSlot.date} @ {formatTime(selectedSlot.startTime)} ({selectedSlot.durationHours} hrs)
                   </div>
                 </div>
               ) : availability.status !== 'available_now' && availability.nextSlot ? (
-                <div className="p-3 rounded-2xl bg-[#18201B] border border-[#232D28] space-y-1">
-                  <div className="flex items-center space-x-1.5 text-xs text-[#9EABA3]">
-                    <Clock className="w-3.5 h-3.5 text-[#00C878]" />
+                <div className="p-3 rounded-2xl bg-[#F8FAFC] dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] space-y-1">
+                  <div className="flex items-center space-x-1.5 text-xs text-[#6B7280] dark:text-[#9EABA3]">
+                    <Clock className="w-3.5 h-3.5 text-[#16A34A]" />
                     <span>Next Available Reservation</span>
                   </div>
-                  <div className="text-sm font-mono font-bold text-[#F2F2F2]">
+                  <div className="text-sm font-mono font-bold text-[#111827] dark:text-[#F2F2F2]">
                     {availability.nextSlot.label}
                   </div>
                 </div>
               ) : (
-                <div className="p-3 rounded-2xl bg-[#18201B] border border-[#00C878]/20 flex items-center space-x-2">
+                <div className="p-3 rounded-2xl bg-[#DCFCE7] dark:bg-[#18201B] border border-[#16A34A]/20 flex items-center space-x-2">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00C878] opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00C878]" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#16A34A]" />
                   </span>
-                  <span className="text-xs text-[#00C878] font-bold">Instant Pass Active Now</span>
+                  <span className="text-xs text-[#16A34A] font-bold">Instant Pass Active Now</span>
                 </div>
               )}
 
               {/* Instant Booking Reassurance Details */}
-              <div className="space-y-3 text-xs text-[#9EABA3]">
+              <div className="space-y-3 text-xs text-[#6B7280] dark:text-[#9EABA3]">
                 {availability.occupancyLabel && (
                   <div className="flex items-center justify-between">
                     <span>Live Demand</span>
-                    <span className="font-semibold text-[#00C878]">
+                    <span className="font-semibold text-[#16A34A]">
                       {availability.occupancyLabel}
                     </span>
                   </div>
                 )}
                 <div className="flex items-center justify-between">
                   <span>Operating Hours</span>
-                  <span className="font-semibold text-[#F2F2F2]">
+                  <span className="font-semibold text-[#111827] dark:text-[#F2F2F2]">
                     {formatTime(selectedSpace.operatingHours.open)} - {formatTime(selectedSpace.operatingHours.close)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Digital Pass</span>
-                  <span className="text-[#00C878] font-semibold">Instant Mobile QR Gate</span>
+                  <span className="text-[#16A34A] font-semibold">Instant Mobile QR Gate</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Cancellation</span>
-                  <span className="text-[#F2F2F2]">Free up to 1hr prior</span>
+                  <span className="text-[#111827] dark:text-[#F2F2F2]">Free up to 1hr prior</span>
                 </div>
               </div>
 
@@ -479,7 +503,7 @@ export const SpaceDetails: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleBookNow}
-                  className="w-full py-3.5 rounded-2xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-extrabold text-sm shadow-lg transition-all active:scale-95 flex items-center justify-center space-x-2 cursor-pointer"
+                  className="w-full py-3.5 rounded-2xl bg-[#16A34A] hover:bg-[#15803D] text-white font-extrabold text-sm shadow-md transition-all active:scale-95 flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   <span>
                     {selectedSlot 
@@ -491,27 +515,40 @@ export const SpaceDetails: React.FC = () => {
                   <ChevronRight className="w-4 h-4 stroke-[3]" />
                 </button>
 
-                <button
-                  type="button"
-                  onClick={scrollToCalendar}
-                  className="w-full py-2.5 rounded-2xl bg-[#18201B] hover:bg-[#232D28] border border-[#232D28] text-xs font-semibold text-[#9EABA3] hover:text-[#F2F2F2] flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
-                >
-                  <CalendarIcon className="w-3.5 h-3.5 text-[#00C878]" />
-                  <span>Choose Another Date</span>
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={scrollToCalendar}
+                    className="w-full py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#18201B] hover:bg-[#F1F5F9] dark:hover:bg-[#232D28] border border-[#E5E7EB] dark:border-[#232D28] text-xs font-semibold text-[#6B7280] dark:text-[#9EABA3] hover:text-[#111827] dark:hover:text-[#F2F2F2] flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shadow-2xs"
+                  >
+                    <CalendarIcon className="w-3.5 h-3.5 text-[#16A34A]" />
+                    <span>Choose Dates</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    id="space-details-availability-alert-btn"
+                    onClick={() => openAvailabilityAlertModal(selectedSpace, selectedSlot ? { startDate: selectedSlot.date } : undefined)}
+                    className="w-full py-2.5 rounded-2xl bg-[#DCFCE7] dark:bg-[#16A34A]/10 hover:bg-[#bbf7d0] dark:hover:bg-[#16A34A]/20 border border-[#16A34A]/30 text-xs font-semibold text-[#16A34A] flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
+                    title="Get SMS/Email alert when this space is free"
+                  >
+                    <Bell className="w-3.5 h-3.5 text-[#16A34A]" />
+                    <span>Alert When Free</span>
+                  </button>
+                </div>
               </div>
 
               {/* Host Contact Quick Link */}
-              <div className="pt-4 border-t border-[#1E2522] flex items-center justify-between text-xs">
+              <div className="pt-4 border-t border-[#E5E7EB] dark:border-[#1E2522] flex items-center justify-between text-xs">
                 <div className="flex items-center space-x-2.5">
                   <img 
                     src={selectedSpace.host.avatar} 
                     alt={selectedSpace.host.name} 
-                    className="w-9 h-9 rounded-xl object-cover border border-[#00C878]/50" 
+                    className="w-9 h-9 rounded-xl object-cover border border-[#16A34A]/50" 
                   />
                   <div>
-                    <div className="font-bold text-[#F2F2F2]">{selectedSpace.host.name}</div>
-                    <div className="text-[10px] text-[#718079]">{selectedSpace.host.companyName}</div>
+                    <div className="font-bold text-[#111827] dark:text-[#F2F2F2]">{selectedSpace.host.name}</div>
+                    <div className="text-[10px] text-[#6B7280] dark:text-[#718079]">{selectedSpace.host.companyName}</div>
                   </div>
                 </div>
 
@@ -521,7 +558,7 @@ export const SpaceDetails: React.FC = () => {
                     setContactSpace(selectedSpace);
                     setIsContactOpen(true);
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-[#18201B] hover:bg-[#232D28] text-xs font-semibold text-[#00C878] border border-[#232D28] cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#18201B] hover:bg-[#F1F5F9] dark:hover:bg-[#232D28] text-xs font-semibold text-[#16A34A] border border-[#E5E7EB] dark:border-[#232D28] cursor-pointer shadow-2xs"
                 >
                   Contact
                 </button>

@@ -142,7 +142,7 @@ export const HostProfileModal: React.FC<HostProfileModalProps> = ({
 
                 <div className="text-right">
                   <div className="text-xs font-mono font-bold text-[#00C878]">
-                    ₦{s.pricePerHour.toLocaleString()} / hr
+                    ₦{(s.pricePerHour || 0).toLocaleString()} / hr
                   </div>
                   <div className="text-[10px] text-[#718079]">{s.rating} ★</div>
                 </div>

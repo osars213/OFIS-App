@@ -12,7 +12,7 @@ import {
   Clock, 
   Camera, 
   Image as ImageIcon,
-  DollarSign,
+  Banknote,
   Maximize2,
   X
 } from 'lucide-react';
@@ -124,7 +124,7 @@ export const EnhancedReviewsSection: React.FC<EnhancedReviewsSectionProps> = ({
 
         <div className="p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] col-span-2 sm:col-span-1">
           <div className="flex items-center space-x-1 text-[11px] text-[#718079] mb-1">
-            <DollarSign className="w-3.5 h-3.5 text-[#00C878]" />
+            <Banknote className="w-3.5 h-3.5 text-[#00C878]" />
             <span>Value</span>
           </div>
           <div className="text-sm font-bold text-[#F2F2F2] font-mono">4.90 / 5.0</div>

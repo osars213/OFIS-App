@@ -10,6 +10,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Space } from '../../types';
+import { calculateBookingPrice } from '../../utils/pricing';
 
 interface WorkspaceAvailabilityCalendarProps {
   space: Space;
@@ -115,7 +116,8 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
     setCurrentMonthDate(new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() + 1, 1));
   };
 
-  const monthName = currentMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const safeMonthDate = currentMonthDate instanceof Date && !isNaN(currentMonthDate.getTime()) ? currentMonthDate : new Date();
+  const monthName = safeMonthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
   // Calculate pricing
   const isWeekend = useMemo(() => {
@@ -124,11 +126,17 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
     return day === 0 || day === 6;
   }, [selectedDateStr]);
 
-  const multiplier = isWeekend && space.pricingRules?.weekendMultiplier ? space.pricingRules.weekendMultiplier : 1;
-  const hourlyRate = space.pricePerHour * multiplier;
-  const estimatedCost = durationHours === 8 
-    ? (space.pricePerDay || hourlyRate * 8) 
-    : hourlyRate * durationHours;
+  const bookingPricing = useMemo(() => {
+    return calculateBookingPrice(space, {
+      durationHours: durationHours,
+      quantity: durationHours,
+      guests: 1,
+      isWeekend: isWeekend,
+      selectedPeriod: durationHours === 8 && space.pricePerDay ? 'day' : undefined,
+    });
+  }, [space, durationHours, isWeekend]);
+
+  const estimatedCost = bookingPricing.totalAmount;
 
   const handleConfirm = () => {
     onSelectSlot({

@@ -10,11 +10,13 @@ const rawSupabaseUrl = (
 
 let cleanedSupabaseUrl = rawSupabaseUrl;
 try {
-  if (rawSupabaseUrl.startsWith('http')) {
+  if (rawSupabaseUrl && rawSupabaseUrl.startsWith('http')) {
     cleanedSupabaseUrl = new URL(rawSupabaseUrl).origin;
+  } else if (rawSupabaseUrl) {
+    cleanedSupabaseUrl = String(rawSupabaseUrl).replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
   }
 } catch {
-  cleanedSupabaseUrl = rawSupabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+  cleanedSupabaseUrl = String(rawSupabaseUrl || '').replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
 }
 
 const supabaseAnonKey = (
@@ -119,10 +121,13 @@ export function mapDbSpaceToSpace(row: any): Space {
     state: row.state || 'Lagos State',
     neighborhood: row.neighborhood || '',
     address: row.address || '',
-    latitude: Number(row.latitude) || 6.4281,
-    longitude: Number(row.longitude) || 3.4219,
+    latitude: typeof row.latitude === 'number' ? row.latitude : (row.latitude ? Number(row.latitude) : undefined),
+    longitude: typeof row.longitude === 'number' ? row.longitude : (row.longitude ? Number(row.longitude) : undefined),
     pricePerHour: Number(row.price_per_hour || row.pricePerHour || 3500),
-    pricePerDay: Number(row.price_per_day || row.pricePerDay || 20000),
+    pricePerDay: row.price_per_day ? Number(row.price_per_day) : (row.pricePerDay ? Number(row.pricePerDay) : undefined),
+    pricePerMonth: row.price_per_month ? Number(row.price_per_month) : (row.pricePerMonth ? Number(row.pricePerMonth) : undefined),
+    pricePerSession: row.price_per_session ? Number(row.price_per_session) : (row.pricePerSession ? Number(row.pricePerSession) : undefined),
+    pricingModel: row.pricing_model || row.pricingModel || undefined,
     capacity: Number(row.capacity) || 1,
     hasBackupPower: row.has_backup_power ?? row.hasBackupPower ?? true,
     powerType: row.power_type || row.powerType || 'Solar + Inverter',
@@ -349,6 +354,8 @@ export function mapDbProfileToUser(row: any): UserProfile {
     phone: row.phone || '+234 800 000 0000',
     avatar: row.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
     role: row.role || 'user',
+    isEmailVerified: row.is_email_verified ?? (row.email_confirmed_at ? true : false),
+    emailVerifiedAt: row.email_verified_at || row.email_confirmed_at,
     company: row.company || 'Independent Professional',
     bio: row.bio || '',
     walletBalanceNgn: Number(row.wallet_balance_ngn ?? 25000),

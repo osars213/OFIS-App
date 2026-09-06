@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Sparkles, Send, Bot, User, ArrowRight, Zap, Check } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GoogleGenAIService } from '../services/geminiService';
+import { formatSpaceRate } from '../utils/pricing';
 
 export const AiAssistantModal: React.FC = () => {
   const {
@@ -106,7 +107,7 @@ export const AiAssistantModal: React.FC = () => {
                     <img src={matchedSpace.featuredImage} alt={matchedSpace.title} className="w-12 h-12 rounded-xl object-cover" />
                     <div className="flex-1 min-w-0">
                       <h5 className="text-xs font-bold text-[#F2F2F2] truncate">{matchedSpace.title}</h5>
-                      <p className="text-[10px] text-[#00C878] font-mono">{formatPrice(matchedSpace.pricePerHour)}/hr</p>
+                      <p className="text-[10px] text-[#00C878] font-mono">{formatSpaceRate(matchedSpace)}</p>
                     </div>
                     <button
                       type="button"

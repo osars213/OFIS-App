@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import { Space, UserProfile, SearchFilters, Booking, SpaceCategory, AppNotification, HostPayout, DiagnosticItem, PricingRules, HostMessage, SavedComparison } from '../types';
+import { Space, UserProfile, SearchFilters, Booking, SpaceCategory, AppNotification, HostPayout, DiagnosticItem, PricingRules, HostMessage, SavedComparison, AppTheme } from '../types';
 import { spacesService } from '../services/spacesService';
 import { authService } from '../services/authService';
 import { bookingsService } from '../services/bookingsService';
@@ -10,6 +10,8 @@ import { reviewsService } from '../services/reviewsService';
 import { compareService } from '../services/compareService';
 import { storage } from '../services/storageService';
 import { formatTimeDisplay } from '../utils/timeFormat';
+import { currencyService, SupportedCurrency, IpDetectionResult, CURRENCY_RATES } from '../services/currencyService';
+import { availabilityAlertsService, AvailabilityAlert } from '../services/availabilityAlertsService';
 import { getSupabaseClient, checkSupabaseConnection, isSupabaseConfigured, mapDbBookingToBooking, mapDbSpaceToSpace } from '../services/supabaseClient';
 
 export type AppView = 'explore' | 'map' | 'details' | 'bookings' | 'host_dashboard' | 'saved';
@@ -66,7 +68,7 @@ interface AppContextType {
   cancelBookingWithReason: (id: string, reason: string) => { success: boolean; message: string; booking?: Booking };
   checkInGuest: (bookingIdOrCode: string) => { success: boolean; message: string; booking?: Booking };
   requestEarlyAccess: (bookingId: string) => { success: boolean; message: string; booking?: Booking };
-  extendBooking: (bookingId: string, additionalHours: number, paymentMethod?: 'paystack' | 'flutterwave' | 'wallet' | 'card') => { success: boolean; message: string; booking?: Booking };
+  extendBooking: (bookingId: string, options: { additionalHours?: number; additionalDays?: number } | number, paymentMethod?: 'paystack' | 'flutterwave' | 'wallet' | 'card') => { success: boolean; message: string; booking?: Booking };
   checkOutBooking: (bookingId: string) => { success: boolean; message: string; booking?: Booking };
   submitPostVisitReview: (bookingId: string, data: { rating: number; hostRating?: number; powerRating: number; internetRating: number; noiseRating: number; comment: string; verifiedAmenities?: string[]; photos?: string[] }) => void;
   toggleBookingReminder: (bookingId: string) => boolean;
@@ -94,15 +96,34 @@ interface AppContextType {
   trendingSearches: string[];
   executeSearchQuery: (query: string, category?: SpaceCategory | 'all') => void;
 
+  // Notifications
   notifications: AppNotification[];
   unreadNotificationsCount: number;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: () => void;
+  deleteNotification: (id: string) => void;
+  clearAllNotifications: () => void;
   addNotification: (notif: Omit<AppNotification, 'id' | 'timestamp' | 'read'> & { timestamp?: string; read?: boolean }) => void;
 
-  currency: 'NGN';
-  setCurrency: (c: 'NGN') => void;
-  formatPrice: (amountNgn?: number | null, options?: { perHour?: boolean; perDay?: boolean }) => string;
+  // Currency & Internationalization
+  currency: SupportedCurrency;
+  currencyMode: 'auto_ip' | 'manual';
+  detectedIpInfo: IpDetectionResult;
+  setCurrency: (c: SupportedCurrency) => void;
+  setCurrencyMode: (mode: 'auto_ip' | 'manual') => void;
+  resetCurrencyToAutoIp: () => void;
+  formatPrice: (amountNgn?: number | null, options?: { perHour?: boolean; perDay?: boolean; forceCurrency?: SupportedCurrency }) => string;
+
+  // Space Availability Alerts
+  availabilityAlerts: AvailabilityAlert[];
+  createAvailabilityAlert: (alert: Omit<AvailabilityAlert, 'id' | 'createdAt' | 'status'>) => AvailabilityAlert;
+  cancelAvailabilityAlert: (alertId: string) => boolean;
+  triggerAvailabilityAlertSim: (alertId: string) => { success: boolean; notification?: AppNotification; smsMessage?: string; emailSubject?: string };
+  isAvailabilityModalOpen: boolean;
+  setIsAvailabilityModalOpen: (open: boolean) => void;
+  availabilityModalSpace: Space | null;
+  setAvailabilityModalSpace: (space: Space | null) => void;
+  openAvailabilityAlertModal: (space: Space, prefillDates?: { startDate?: string; endDate?: string }) => void;
 
   timeFormat: '12h' | '24h';
   setTimeFormat: (format: '12h' | '24h') => void;
@@ -126,6 +147,28 @@ interface AppContextType {
 
   isDiagnosticsModalOpen: boolean;
   setIsDiagnosticsModalOpen: (open: boolean) => void;
+
+  isAdminReviewModalOpen: boolean;
+  setIsAdminReviewModalOpen: (open: boolean) => void;
+  adminReviewSpace: Space | null;
+  setAdminReviewSpace: (space: Space | null) => void;
+  verifySpaceByAdmin: (spaceId: string, approve: boolean, notes?: string) => Promise<void>;
+  pendingSpacesCount: number;
+
+  isEmailVerificationModalOpen: boolean;
+  setIsEmailVerificationModalOpen: (open: boolean) => void;
+  emailVerificationReason: 'listing' | 'payment' | 'general' | null;
+  setEmailVerificationReason: (reason: 'listing' | 'payment' | 'general' | null) => void;
+  openEmailVerificationModal: (reason?: 'listing' | 'payment' | 'general') => void;
+  verifyUserEmail: (code?: string) => Promise<{ success: boolean; message: string }>;
+  sendVerificationEmail: (email?: string) => Promise<{ success: boolean; code: string; message: string }>;
+  toggleUserEmailVerification: (isVerified?: boolean) => void;
+
+  isInfoModalOpen: boolean;
+  setIsInfoModalOpen: (open: boolean) => void;
+  infoModalTab: 'about' | 'faq' | 'help' | 'support' | 'report' | 'privacy' | 'terms' | 'partner' | 'rate' | 'share';
+  setInfoModalTab: (tab: 'about' | 'faq' | 'help' | 'support' | 'report' | 'privacy' | 'terms' | 'partner' | 'rate' | 'share') => void;
+  openInfoModal: (tab?: 'about' | 'faq' | 'help' | 'support' | 'report' | 'privacy' | 'terms' | 'partner' | 'rate' | 'share') => void;
 
   isAiModalOpen: boolean;
   setIsAiModalOpen: (open: boolean) => void;
@@ -188,7 +231,24 @@ interface AppContextType {
   supabaseStatus: 'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error';
   supabaseMessage: string;
   checkSupabaseHealth: () => Promise<void>;
+
+  // Theme & Appearance
+  theme: AppTheme;
+  setTheme: (t: AppTheme) => void;
+  resolvedTheme: 'light' | 'dark';
+  toggleTheme: () => void;
+
+  // Logo Concept Selection
+  selectedLogoConceptId: number;
+  setSelectedLogoConceptId: (id: number) => void;
+  isLogoGalleryOpen: boolean;
+  setIsLogoGalleryOpen: (open: boolean) => void;
+
+  // Global Action State for Logo Breathing
+  isAppPerformingAction: boolean;
+  triggerAppAction: (durationMs?: number) => void;
 }
+
 
 const DEFAULT_FILTERS: SearchFilters = {
   searchQuery: '',
@@ -226,15 +286,173 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [savedSpaceIds, setSavedSpaceIds] = useState<string[]>(favoritesService.getSavedIds());
   const [bookings, setBookings] = useState<Booking[]>(bookingsService.getBookings());
   const [notifications, setNotifications] = useState<AppNotification[]>(notificationsService.getNotifications());
-  const [currency, setCurrency] = useState<'NGN'>('NGN');
+  
+  // Currency & Internationalization (IP-Dependent by default)
+  const [detectedIpInfo, setDetectedIpInfo] = useState<IpDetectionResult>(() => currencyService.detectCurrencyFromIp());
+  const [currency, setCurrencyState] = useState<SupportedCurrency>(() => currencyService.getInitialCurrency());
+  const [currencyMode, setCurrencyModeState] = useState<'auto_ip' | 'manual'>(() =>
+    currencyService.hasManualOverride() ? 'manual' : 'auto_ip'
+  );
+
+  // Authoritative asynchronous IP detection on startup (auto-adapts by default)
+  useEffect(() => {
+    let isMounted = true;
+    currencyService.detectCurrencyAsync().then((result) => {
+      if (!isMounted) return;
+      setDetectedIpInfo(result);
+      // If user hasn't manually overridden currency, automatically sync to detected IP currency
+      if (!currencyService.hasManualOverride()) {
+        setCurrencyState(result.detectedCurrency);
+        setCurrencyModeState('auto_ip');
+      }
+    }).catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const setCurrency = (c: SupportedCurrency) => {
+    setCurrencyState(c);
+    currencyService.setManualOverride(true);
+    currencyService.setSavedCurrency(c);
+    setCurrencyModeState('manual');
+  };
+
+  const setCurrencyMode = (mode: 'auto_ip' | 'manual') => {
+    setCurrencyModeState(mode);
+    if (mode === 'auto_ip') {
+      currencyService.setManualOverride(false);
+      const autoDetected = detectedIpInfo.detectedCurrency;
+      setCurrencyState(autoDetected);
+      currencyService.resetToAutoDetectedCurrency();
+    } else {
+      currencyService.setManualOverride(true);
+    }
+  };
+
+  const resetCurrencyToAutoIp = () => {
+    currencyService.setManualOverride(false);
+    setCurrencyModeState('auto_ip');
+    setCurrencyState(detectedIpInfo.detectedCurrency);
+    currencyService.resetToAutoDetectedCurrency();
+  };
+
+  // Availability Alerts State
+  const [availabilityAlerts, setAvailabilityAlerts] = useState<AvailabilityAlert[]>(() => availabilityAlertsService.getAllAlerts());
+  const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
+  const [availabilityModalSpace, setAvailabilityModalSpace] = useState<Space | null>(null);
+
+  const openAvailabilityAlertModal = (space: Space, prefillDates?: { startDate?: string; endDate?: string }) => {
+    setAvailabilityModalSpace(space);
+    setIsAvailabilityModalOpen(true);
+  };
+
+  const createAvailabilityAlert = (alertData: Omit<AvailabilityAlert, 'id' | 'createdAt' | 'status'>): AvailabilityAlert => {
+    const created = availabilityAlertsService.createAlert(alertData);
+    setAvailabilityAlerts(availabilityAlertsService.getAllAlerts());
+    setNotifications(notificationsService.getNotifications());
+    return created;
+  };
+
+  const cancelAvailabilityAlert = (alertId: string): boolean => {
+    const success = availabilityAlertsService.cancelAlert(alertId);
+    if (success) {
+      setAvailabilityAlerts(availabilityAlertsService.getAllAlerts());
+    }
+    return success;
+  };
+
+  const triggerAvailabilityAlertSim = (alertId: string) => {
+    const res = availabilityAlertsService.triggerAlert(alertId);
+    setAvailabilityAlerts(availabilityAlertsService.getAllAlerts());
+    setNotifications(notificationsService.getNotifications());
+    return res;
+  };
+
+  const deleteNotification = (id: string) => {
+    const updated = notificationsService.removeNotification(id);
+    setNotifications(updated);
+  };
+
+  const clearAllNotifications = () => {
+    const updated = notificationsService.clearAll();
+    setNotifications(updated);
+  };
+
   const [timeFormat, setTimeFormatState] = useState<'12h' | '24h'>(() => storage.get<'12h' | '24h'>('time_format_pref', '12h'));
   
+  // Theme & Appearance
+  const [theme, setThemeState] = useState<AppTheme>(() => storage.get<AppTheme>('theme_pref', 'dark'));
+  const [selectedLogoConceptId, setSelectedLogoConceptIdState] = useState<number>(() => storage.get<number>('ofis_selected_logo_concept', 1));
+  const [isLogoGalleryOpen, setIsLogoGalleryOpen] = useState<boolean>(false);
+
+  const setSelectedLogoConceptId = (id: number) => {
+    setSelectedLogoConceptIdState(id);
+    storage.set('ofis_selected_logo_concept', id);
+  };
+  const [systemIsDark, setSystemIsDark] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setSystemIsDark(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  const resolvedTheme: 'light' | 'dark' = useMemo(() => {
+    if (theme === 'system') {
+      return systemIsDark ? 'dark' : 'light';
+    }
+    return theme;
+  }, [theme, systemIsDark]);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      if (resolvedTheme === 'dark') {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    }
+  }, [resolvedTheme]);
+
+  const setTheme = (t: AppTheme) => {
+    setThemeState(t);
+    storage.set('theme_pref', t);
+  };
+
+  const toggleTheme = () => {
+    const nextTheme: AppTheme = resolvedTheme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+  };
+
   // Async Loading & Error States
+  const [isManualAppAction, setIsManualAppAction] = useState(false);
   const [isLoadingSpaces, setIsLoadingSpaces] = useState(false);
   const [spacesError, setSpacesError] = useState<string | null>(null);
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
   const [bookingsError, setBookingsError] = useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+
+  // Logo Breathing state is active during space loading, booking actions, auth loading, or manual triggered actions
+  const isAppPerformingAction = useMemo(() => {
+    return isLoadingSpaces || isLoadingBookings || isAuthLoading || isManualAppAction;
+  }, [isLoadingSpaces, isLoadingBookings, isAuthLoading, isManualAppAction]);
+
+  const triggerAppAction = (durationMs = 2400) => {
+    setIsManualAppAction(true);
+    setTimeout(() => {
+      setIsManualAppAction(false);
+    }, durationMs);
+  };
   const [supabaseStatus, setSupabaseStatus] = useState<'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error'>('unconfigured');
   const [supabaseMessage, setSupabaseMessage] = useState('Initializing Supabase connection...');
 
@@ -286,8 +504,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const executeSearchQuery = (query: string, category?: SpaceCategory | 'all') => {
-    const cleanQuery = query.trim();
+  const executeSearchQuery = (query?: string, category?: SpaceCategory | 'all') => {
+    const cleanQuery = (query || '').trim();
     if (cleanQuery) {
       addRecentSearch(cleanQuery);
     }
@@ -348,6 +566,71 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [editingSpace, setEditingSpace] = useState<Space | null>(null);
   const [isHostPayoutModalOpen, setIsHostPayoutModalOpen] = useState(false);
   const [isDiagnosticsModalOpen, setIsDiagnosticsModalOpen] = useState(false);
+  const [isAdminReviewModalOpen, setIsAdminReviewModalOpen] = useState(false);
+  const [adminReviewSpace, setAdminReviewSpace] = useState<Space | null>(null);
+
+  // Email Verification Gating State
+  const [isEmailVerificationModalOpen, setIsEmailVerificationModalOpen] = useState(false);
+  const [emailVerificationReason, setEmailVerificationReason] = useState<'listing' | 'payment' | 'general' | null>(null);
+
+  // Info Modal State
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+  const [infoModalTab, setInfoModalTab] = useState<'about' | 'faq' | 'help' | 'support' | 'report' | 'privacy' | 'terms' | 'partner' | 'rate' | 'share'>('about');
+
+  const openInfoModal = (tab: 'about' | 'faq' | 'help' | 'support' | 'report' | 'privacy' | 'terms' | 'partner' | 'rate' | 'share' = 'about') => {
+    setInfoModalTab(tab);
+    setIsInfoModalOpen(true);
+  };
+
+  const openEmailVerificationModal = (reason: 'listing' | 'payment' | 'general' = 'general') => {
+    setEmailVerificationReason(reason);
+    setIsEmailVerificationModalOpen(true);
+  };
+
+  const verifyUserEmail = async (code?: string): Promise<{ success: boolean; message: string }> => {
+    const updated = authService.verifyEmail(currentUser.id);
+    setCurrentUser(updated);
+    addNotification({
+      title: 'Email Address Verified! 🎉',
+      message: `Your email (${updated.email}) is now verified. You can now list workspaces and pay for passes without restriction.`,
+      type: 'system',
+      read: false,
+    });
+    return {
+      success: true,
+      message: `Your email (${updated.email}) has been verified successfully.`,
+    };
+  };
+
+  const sendVerificationEmail = async (email?: string): Promise<{ success: boolean; code: string; message: string }> => {
+    const targetEmail = email || currentUser.email;
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    addNotification({
+      title: 'Verification Code Dispatched',
+      message: `Security OTP ${generatedOtp} sent to ${targetEmail}.`,
+      type: 'system',
+      read: false,
+    });
+    return {
+      success: true,
+      code: generatedOtp,
+      message: `Verification code sent to ${targetEmail}`,
+    };
+  };
+
+  const toggleUserEmailVerification = (isVerified?: boolean) => {
+    const targetState = isVerified !== undefined ? isVerified : !currentUser.isEmailVerified;
+    const updated = authService.setEmailVerifiedStatus(currentUser.id, targetState);
+    setCurrentUser(updated);
+    addNotification({
+      title: targetState ? 'Email Verified' : 'Email Verification Cleared',
+      message: targetState 
+        ? `Your email (${updated.email}) is verified.`
+        : `Email verification reset. Verification is required before listing or paying.`,
+      type: 'system',
+      read: false,
+    });
+  };
 
   const openAuthModal = (tab: 'signup' | 'login' | 'profile' = 'signup') => {
     setAuthModalTab(tab);
@@ -614,17 +897,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       state: spaceData.city === 'Abuja' ? 'FCT' : `${spaceData.city} State`,
       rules: ['No loud calls in quiet focus zones', 'Keep desks neat and sanitized'],
       tags: ['Verified Power', 'High Speed', spaceData.city],
-      isActive: true,
+      isActive: false,
+      isVerified: false,
+      verificationStatus: 'pending',
+      submittedAt: new Date().toISOString(),
       ...spaceData,
     };
     await spacesService.addSpace(newSpace);
     await refreshSpaces();
     addNotification({
-      title: 'New Hub Published',
-      message: `"${newSpace.title}" has been successfully published to OFIS 2.0 network.`,
+      title: 'Space Submitted for Admin Verification',
+      message: `"${newSpace.title}" has been submitted for review. The OFIS Admin Agent will audit photos and power specs before public activation.`,
       type: 'system',
       read: false,
     });
+  };
+
+  const verifySpaceByAdmin = async (spaceId: string, approve: boolean, notes?: string) => {
+    const status = approve ? 'verified' : 'rejected';
+    const updated = await spacesService.verifySpace(spaceId, status, notes);
+    await refreshSpaces();
+    if (updated) {
+      if (approve) {
+        addNotification({
+          title: 'Workspace Verified & Live 🎉',
+          message: `"${updated.title}" has passed Admin Agent verification and is now active for bookings!`,
+          type: 'system',
+          read: false,
+        });
+      } else {
+        addNotification({
+          title: 'Workspace Verification Notice ⚠️',
+          message: `Admin review for "${updated.title}": ${notes || 'Please update pictures or power specs before activation.'}`,
+          type: 'system',
+          read: false,
+        });
+      }
+    }
   };
 
   const updateSpace = async (updatedSpace: Space) => {
@@ -707,26 +1016,39 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const extendBooking = (
     bookingId: string,
-    additionalHours: number,
+    options: { additionalHours?: number; additionalDays?: number } | number,
     paymentMethod: 'paystack' | 'flutterwave' | 'wallet' | 'card' = 'wallet'
   ): { success: boolean; message: string; booking?: Booking } => {
     const target = bookings.find(b => b.id === bookingId);
     const space = allSpaces.find(s => s.id === target?.spaceId);
-    const hourlyRate = space?.pricePerHour || (target ? Math.round(target.totalAmount / target.durationHours) : 3500);
+    
+    let unitRate = 3500;
+    const isDayExtension = typeof options === 'object' && Boolean(options.additionalDays && options.additionalDays > 0);
+    
+    if (isDayExtension) {
+      unitRate = space?.pricePerDay || (space?.pricePerHour ? space.pricePerHour * 8 : 25000);
+    } else {
+      unitRate = space?.pricePerHour || (target ? Math.round(target.totalAmount / target.durationHours) : 3500);
+    }
 
-    const res = bookingsService.extendBooking(bookingId, additionalHours, hourlyRate, paymentMethod);
+    const res = bookingsService.extendBooking(bookingId, options, unitRate, paymentMethod);
     if (res.success && res.booking) {
       setBookings(bookingsService.getBookings());
+      
+      const label = typeof options === 'number' 
+        ? `+${options}h` 
+        : options.additionalDays ? `+${options.additionalDays} day(s)` : `+${options.additionalHours || 1}h`;
+
       addNotification({
-        title: 'Booking Extended (+ ' + additionalHours + 'h)',
-        message: `Your session at ${res.booking.spaceTitle} has been extended to ${res.booking.endTime}.`,
+        title: `Booking Extended (${label})`,
+        message: `Your pass at ${res.booking.spaceTitle} is updated: ${res.message}.`,
         type: 'booking',
         read: false,
         bookingId: res.booking.id,
       });
       addNotification({
         title: 'Host Alert: Session Extended',
-        message: `${res.booking.userName} extended their stay at ${res.booking.spaceTitle} by +${additionalHours} hour(s). Total: ₦${res.booking.totalAmount.toLocaleString()}.`,
+        message: `${res.booking.userName} extended stay at ${res.booking.spaceTitle} (${label}). Total: ₦${(res.booking.totalAmount || 0).toLocaleString()}.`,
         type: 'system',
         read: false,
         bookingId: res.booking.id,
@@ -838,7 +1160,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     addNotification({
       title: 'Payout Request Dispatched',
-      message: `₦${data.amountNgn.toLocaleString()} transfer initiated to ${data.bankName} (${data.accountNumber.slice(-4)}). Reference: ${newPayout.reference}.`,
+      message: `₦${(data.amountNgn || 0).toLocaleString()} transfer initiated to ${data.bankName} (${data.accountNumber.slice(-4)}). Reference: ${newPayout.reference}.`,
       type: 'payment',
       read: false,
     });
@@ -1125,13 +1447,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return allSpaces.find(s => s.id === selectedSpaceId);
   }, [selectedSpaceId, allSpaces]);
 
-  const formatPrice = (amountNgn?: number | null, options?: { perHour?: boolean; perDay?: boolean }): string => {
-    const validAmount = typeof amountNgn === 'number' && !isNaN(amountNgn) ? amountNgn : 0;
-    let formatted = `₦${validAmount.toLocaleString('en-NG')}`;
-
-    if (options?.perHour) formatted += '/hr';
-    if (options?.perDay) formatted += '/day';
-    return formatted;
+  const formatPrice = (
+    amountNgn?: number | null,
+    options?: { perHour?: boolean; perDay?: boolean; forceCurrency?: SupportedCurrency }
+  ): string => {
+    const activeCurr = options?.forceCurrency || currency;
+    return currencyService.format(amountNgn, activeCurr, {
+      perHour: options?.perHour,
+      perDay: options?.perDay,
+    });
   };
 
   return (
@@ -1203,10 +1527,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         unreadNotificationsCount,
         markNotificationRead,
         markAllNotificationsRead,
+        deleteNotification,
+        clearAllNotifications,
         addNotification,
         currency,
+        currencyMode,
+        detectedIpInfo,
         setCurrency,
+        setCurrencyMode,
+        resetCurrencyToAutoIp,
         formatPrice,
+        availabilityAlerts,
+        createAvailabilityAlert,
+        cancelAvailabilityAlert,
+        triggerAvailabilityAlertSim,
+        isAvailabilityModalOpen,
+        setIsAvailabilityModalOpen,
+        availabilityModalSpace,
+        setAvailabilityModalSpace,
+        openAvailabilityAlertModal,
         timeFormat,
         setTimeFormat,
         toggleTimeFormat,
@@ -1226,6 +1565,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setIsHostPayoutModalOpen,
         isDiagnosticsModalOpen,
         setIsDiagnosticsModalOpen,
+        isAdminReviewModalOpen,
+        setIsAdminReviewModalOpen,
+        adminReviewSpace,
+        setAdminReviewSpace,
+        verifySpaceByAdmin,
+        pendingSpacesCount: allSpaces.filter(s => s.verificationStatus === 'pending' || (s.isVerified === false && s.verificationStatus !== 'rejected')).length,
+        isEmailVerificationModalOpen,
+        setIsEmailVerificationModalOpen,
+        emailVerificationReason,
+        setEmailVerificationReason,
+        openEmailVerificationModal,
+        verifyUserEmail,
+        sendVerificationEmail,
+        toggleUserEmailVerification,
+        isInfoModalOpen,
+        setIsInfoModalOpen,
+        infoModalTab,
+        setInfoModalTab,
+        openInfoModal,
         isAiModalOpen,
         setIsAiModalOpen,
         isSettingsOpen,
@@ -1275,6 +1633,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         supabaseStatus,
         supabaseMessage,
         checkSupabaseHealth,
+        theme,
+        setTheme,
+        resolvedTheme,
+        toggleTheme,
+        selectedLogoConceptId,
+        setSelectedLogoConceptId,
+        isLogoGalleryOpen,
+        setIsLogoGalleryOpen,
+        isAppPerformingAction,
+        triggerAppAction,
       }}
     >
       {children}

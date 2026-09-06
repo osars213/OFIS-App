@@ -76,6 +76,8 @@ export const authService = {
       if (data.bio !== undefined) dbPayload.bio = data.bio;
       if (data.walletBalanceNgn !== undefined) dbPayload.wallet_balance_ngn = data.walletBalanceNgn;
       if (data.savedSpaceIds !== undefined) dbPayload.saved_space_ids = data.savedSpaceIds;
+      if (data.isEmailVerified !== undefined) dbPayload.is_email_verified = data.isEmailVerified;
+      if (data.emailVerifiedAt !== undefined) dbPayload.email_verified_at = data.emailVerifiedAt;
 
       await client.from('profiles').update(dbPayload).eq('id', userId);
     } catch (err) {
@@ -125,6 +127,8 @@ export const authService = {
             phone: cleanPhone || '+234 800 000 0000',
             avatar: payload.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
             role: payload.role,
+            isEmailVerified: authData.user.email_confirmed_at ? true : false,
+            emailVerifiedAt: authData.user.email_confirmed_at,
             company: cleanCompany || (payload.role === 'host' ? 'OFIS Workspace Host' : 'Independent Professional'),
             bio: payload.role === 'host' ? 'Verified Workspace Host on OFIS network.' : 'OFIS verified remote professional.',
             walletBalanceNgn: payload.role === 'user' ? 25000 : 150000,
@@ -145,6 +149,7 @@ export const authService = {
               bio: userProfile.bio,
               wallet_balance_ngn: userProfile.walletBalanceNgn,
               saved_space_ids: userProfile.savedSpaceIds,
+              is_email_verified: userProfile.isEmailVerified,
             });
           } catch (profileErr) {
             console.warn('[authService] Note on upserting profile table:', profileErr);
@@ -154,7 +159,7 @@ export const authService = {
           return {
             success: true,
             user: userProfile,
-            message: `Account created successfully with Supabase Auth! Welcome to OFIS, ${userProfile.name}.`,
+            message: `Account created successfully with Supabase Auth! Please verify your email ${userProfile.email} to list workspaces or pay.`,
           };
         } else if (authError && authError.message.toLowerCase().includes('already registered')) {
           // If already registered in Supabase, attempt sign in with provided password
@@ -168,7 +173,7 @@ export const authService = {
 
     // 2. Local fallback storage
     const users = authService.getAllUsers();
-    const existing = users.find(u => u.email.toLowerCase() === cleanEmail);
+    const existing = users.find(u => (u.email || '').toLowerCase() === cleanEmail);
     if (existing) {
       const updatedUser: UserProfile = {
         id: existing.id,
@@ -177,6 +182,8 @@ export const authService = {
         phone: existing.phone || cleanPhone,
         avatar: existing.avatar || payload.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
         role: existing.role || payload.role,
+        isEmailVerified: existing.isEmailVerified ?? false,
+        emailVerifiedAt: existing.emailVerifiedAt,
         company: existing.company || cleanCompany,
         bio: existing.bio || (payload.role === 'host' ? 'Verified Workspace Host on OFIS network.' : 'OFIS verified remote professional.'),
         walletBalanceNgn: existing.walletBalanceNgn ?? (payload.role === 'user' ? 25000 : 150000),
@@ -206,6 +213,7 @@ export const authService = {
       phone: cleanPhone || '+234 800 000 0000',
       avatar: payload.avatar || defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)],
       role: payload.role,
+      isEmailVerified: false, // Must be verified before listing or paying
       company: cleanCompany || (payload.role === 'host' ? 'OFIS Workspace Host' : 'Independent Professional'),
       bio: payload.role === 'host' ? 'Verified Workspace Host on OFIS network.' : 'OFIS verified remote professional.',
       walletBalanceNgn: payload.role === 'user' ? 25000 : 150000,
@@ -223,7 +231,7 @@ export const authService = {
     return {
       success: true,
       user: userProfile,
-      message: `Account created successfully! Welcome to OFIS, ${newUser.name}. ₦${newUser.walletBalanceNgn.toLocaleString()} welcome credit added.`,
+      message: `Account created successfully! Welcome to OFIS, ${newUser.name}. Please verify your email (${userProfile.email}) to list workspaces and authorize payments.`,
     };
   },
 
@@ -346,5 +354,54 @@ export const authService = {
     const user = role === 'host' ? INITIAL_HOST : INITIAL_USER;
     storage.set(USER_KEY, user);
     return user;
-  }
+  },
+
+  verifyEmail: (userId?: string): UserProfile => {
+    const current = authService.getCurrentUser();
+    const updated: UserProfile = {
+      ...current,
+      isEmailVerified: true,
+      emailVerifiedAt: new Date().toISOString(),
+    };
+    storage.set(USER_KEY, updated);
+
+    // Update in local users store if present
+    const users = authService.getAllUsers();
+    const updatedUsers = users.map(u => {
+      if (u.id === (userId || current.id) || (u.email && u.email.toLowerCase() === current.email.toLowerCase())) {
+        return { ...u, isEmailVerified: true, emailVerifiedAt: new Date().toISOString() };
+      }
+      return u;
+    });
+    storage.set(USERS_DB_KEY, updatedUsers);
+
+    authService.updateProfileAsync(updated.id, { isEmailVerified: true, emailVerifiedAt: updated.emailVerifiedAt });
+    return updated;
+  },
+
+  setEmailVerifiedStatus: (userId: string, isVerified: boolean): UserProfile => {
+    const current = authService.getCurrentUser();
+    const isCurrent = current.id === userId;
+    const updated: UserProfile = isCurrent ? {
+      ...current,
+      isEmailVerified: isVerified,
+      emailVerifiedAt: isVerified ? new Date().toISOString() : undefined,
+    } : current;
+
+    if (isCurrent) {
+      storage.set(USER_KEY, updated);
+    }
+
+    const users = authService.getAllUsers();
+    const updatedUsers = users.map(u => {
+      if (u.id === userId) {
+        return { ...u, isEmailVerified: isVerified, emailVerifiedAt: isVerified ? new Date().toISOString() : undefined };
+      }
+      return u;
+    });
+    storage.set(USERS_DB_KEY, updatedUsers);
+
+    authService.updateProfileAsync(userId, { isEmailVerified: isVerified, emailVerifiedAt: isVerified ? new Date().toISOString() : undefined });
+    return updated;
+  },
 };

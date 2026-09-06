@@ -199,7 +199,7 @@ export const HeroGallery: React.FC<HeroGalleryProps> = ({
           {/* Category & Verified Tag */}
           <div className="flex items-center space-x-2">
             <span className="px-3 py-1 rounded-xl bg-[#00C878]/20 border border-[#00C878]/40 text-[#00C878] text-xs font-mono font-bold uppercase tracking-wider backdrop-blur-md">
-              {space.category.replace('_', ' ')}
+              {String(space.category || '').replace(/_/g, ' ')}
             </span>
             {space.isSuperhost && (
               <span className="px-2.5 py-1 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-mono font-black uppercase tracking-wider shadow-md">

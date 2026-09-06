@@ -63,7 +63,7 @@ export const HostPayoutsTab: React.FC = () => {
             <Wallet className="w-4 h-4 text-[#00C878]" />
           </div>
           <div className="text-2xl font-mono font-extrabold text-[#00C878]">
-            ₦{availableBalance.toLocaleString()}
+            ₦{(availableBalance || 0).toLocaleString()}
           </div>
           <p className="text-[10px] text-[#9EABA3]">Cleared & ready for instant bank transfer</p>
         </div>
@@ -87,7 +87,7 @@ export const HostPayoutsTab: React.FC = () => {
             <ShieldCheck className="w-4 h-4 text-[#00C878]" />
           </div>
           <div className="text-2xl font-mono font-extrabold text-[#F2F2F2]">
-            ₦{lifetimeCompleted.toLocaleString()}
+            ₦{(lifetimeCompleted || 0).toLocaleString()}
           </div>
           <p className="text-[10px] text-[#00C878] font-semibold">100% On-time NIP clearance</p>
         </div>
@@ -123,7 +123,7 @@ export const HostPayoutsTab: React.FC = () => {
                   <div>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm font-mono font-bold text-[#F2F2F2]">
-                        ₦{payout.amountNgn.toLocaleString()}
+                        ₦{(payout.amountNgn || 0).toLocaleString()}
                       </span>
                       <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
                         payout.status === 'completed'

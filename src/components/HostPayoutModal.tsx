@@ -45,7 +45,7 @@ export const HostPayoutModal: React.FC = () => {
       return;
     }
     if (amount > availableBalance) {
-      setError(`Amount exceeds your available wallet balance (₦${availableBalance.toLocaleString()}).`);
+      setError(`Amount exceeds your available wallet balance (₦${(availableBalance || 0).toLocaleString()}).`);
       return;
     }
     if (accountNumber.trim().length !== 10) {
@@ -102,7 +102,7 @@ export const HostPayoutModal: React.FC = () => {
             <div className="space-y-1">
               <h4 className="text-lg font-bold text-[#F2F2F2]">Payout Request Dispatched!</h4>
               <p className="text-xs text-[#9EABA3]">
-                ₦{amount.toLocaleString()} is being settled to {bankName} ({accountNumber}).
+                ₦{(amount || 0).toLocaleString()} is being settled to {bankName} ({accountNumber}).
               </p>
             </div>
 
@@ -128,7 +128,7 @@ export const HostPayoutModal: React.FC = () => {
               <div>
                 <span className="text-[11px] text-[#718079]">Available Host Balance</span>
                 <div className="text-2xl font-extrabold text-[#00C878] font-mono">
-                  ₦{availableBalance.toLocaleString()}
+                  ₦{(availableBalance || 0).toLocaleString()}
                 </div>
               </div>
               <div className="text-right">
@@ -223,7 +223,7 @@ export const HostPayoutModal: React.FC = () => {
                 className="px-6 py-2.5 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs flex items-center space-x-2 shadow-lg cursor-pointer"
               >
                 <Wallet className="w-4 h-4" />
-                <span>Confirm Payout of ₦{amount.toLocaleString()}</span>
+                <span>Confirm Payout of ₦{(amount || 0).toLocaleString()}</span>
               </button>
             </div>
           </form>

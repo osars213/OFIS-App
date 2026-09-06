@@ -1,5 +1,12 @@
 export type SpaceCategory = 
   | 'coworking'
+  | 'meeting-room'
+  | 'private-office'
+  | 'training-room'
+  | 'event-space'
+  | 'studio'
+  | 'other'
+  // Backward compatibility aliases
   | 'private_office'
   | 'meeting'
   | 'podcast'
@@ -9,6 +16,34 @@ export type SpaceCategory =
 export type CityLocation = 'Lagos' | 'Abuja' | 'Port Harcourt' | 'Ibadan' | 'All Cities';
 
 export type PricingTier = 'hourly' | 'daily' | 'monthly';
+
+export type PricingBasis = 'person' | 'space' | 'session';
+export type PricingPeriod = 'hour' | 'day' | 'month' | 'session';
+
+export interface PricingModel {
+  basis: PricingBasis;
+  period: PricingPeriod;
+  rate: number;
+  currency?: 'NGN';
+  minimumQuantity?: number;
+  sessionDurationHours?: number;
+  description?: string;
+}
+
+export interface BookingPriceBreakdown {
+  baseRate: number;
+  basis: PricingBasis;
+  period: PricingPeriod;
+  quantity: number;
+  guests: number;
+  guestMultiplierApplied: boolean;
+  subtotal: number;
+  discountAmount: number;
+  discount?: number;
+  totalAmount: number;
+  rateDescription: string;
+  summaryLabel: string;
+}
 
 export interface Amenity {
   id: string;
@@ -112,6 +147,20 @@ export interface HostMessage {
   isRead?: boolean;
 }
 
+export type SpaceVerificationStatus = 'pending' | 'verified' | 'rejected';
+
+export interface SpaceVerificationAudit {
+  photosChecked: boolean;
+  powerChecked: boolean;
+  internetChecked: boolean;
+  locationChecked: boolean;
+  pricingChecked: boolean;
+  notes?: string;
+  reviewedBy?: string;
+  auditScore?: number;
+  verifiedAt?: string;
+}
+
 export interface Space {
   id: string;
   title: string;
@@ -126,6 +175,11 @@ export interface Space {
   longitude: number;
   pricePerHour: number;
   pricePerDay: number;
+  pricePerMonth?: number;
+  pricePerSession?: number;
+  pricingBasis?: PricingBasis;
+  pricingPeriod?: PricingPeriod;
+  pricingModel?: PricingModel;
   capacity: number;
   hasBackupPower: boolean;
   powerType: 'Solar + Inverter' | 'Heavy Duty Gen + Solar Hybrid' | 'Dual Diesel Generators' | 'Grid + Inverter Auto-Switch';
@@ -148,6 +202,11 @@ export interface Space {
   tags: string[];
   instantBooking?: boolean;
   isVerified?: boolean;
+  verificationStatus?: SpaceVerificationStatus;
+  verificationAudit?: SpaceVerificationAudit;
+  submittedAt?: string;
+  reviewedAt?: string;
+  adminReviewNotes?: string;
   isSuperhost?: boolean;
   isActive?: boolean;
   floorPlanSeats?: FloorPlanSeat[];
@@ -174,6 +233,7 @@ export type BookingLifecycleStatus =
 export interface BookingExtensionRecord {
   id: string;
   durationHours: number;
+  extendedDays?: number;
   costNgn: number;
   timestamp: string;
   paymentMethod: string;
@@ -191,6 +251,9 @@ export interface Booking {
   userEmail: string;
   userPhone: string;
   date: string;
+  endDate?: string;
+  isMultiDayPass?: boolean;
+  extendedDaysCount?: number;
   startTime: string;
   endTime?: string;
   durationHours: number;
@@ -198,8 +261,14 @@ export interface Booking {
   selectedSeatLabel?: string;
   guestCount: number;
   totalAmount: number;
-  currency: 'NGN';
+  currency: 'NGN' | 'USD' | string;
   status: BookingLifecycleStatus;
+  pricingModel?: PricingModel | any;
+  pricingBasis?: PricingBasis;
+  pricingPeriod?: PricingPeriod;
+  priceBreakdown?: BookingPriceBreakdown;
+  bookedQuantity?: number;
+  unitRate?: number;
   checkedIn?: boolean;
   checkedInAt?: string;
   checkedOut?: boolean;
@@ -207,6 +276,7 @@ export interface Booking {
   earlyAccessRequested?: boolean;
   earlyAccessGranted?: boolean;
   extendedHours?: number;
+  extendedDays?: number;
   extensionHistory?: BookingExtensionRecord[];
   isReviewed?: boolean;
   qrCodeValue: string;
@@ -247,6 +317,13 @@ export interface DiagnosticItem {
   latencyMs?: number;
 }
 
+export interface UserNotificationPreferences {
+  smsAlerts: boolean;
+  emailAlerts: boolean;
+  availabilityAlerts: boolean;
+  bookingReminders: boolean;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -254,10 +331,14 @@ export interface UserProfile {
   phone: string;
   avatar: string;
   role: 'user' | 'host' | 'admin';
+  isEmailVerified?: boolean;
+  emailVerifiedAt?: string;
   company?: string;
   bio?: string;
   walletBalanceNgn: number;
   savedSpaceIds: string[];
+  notificationPreferences?: UserNotificationPreferences;
+  preferredCurrency?: string;
   createdAt: string;
 }
 
@@ -272,27 +353,36 @@ export interface SearchFilters {
   date: string;
   timeSlot: string;
   startHour: string; // 'any', '08:00', '09:00', '10:00', '14:00', etc.
-  duration: number; // hours (1..12)
+  duration: number; // hours (1..12) or days/months depending on mode
   guests: number;
+  pricingPeriod?: PricingPeriod | 'all';
+  pricingBasis?: PricingBasis | 'all';
   needsBackupPower: boolean;
   needsHighSpeedInternet: boolean;
   needsFixedInternet: boolean;
   needsWiredInternet: boolean;
   needsSoundproofing: boolean;
+  needsWhiteboard?: boolean;
+  needsProjector?: boolean;
+  needsCameraEquipment?: boolean;
   amenities: string[];
+  categoryAmenities?: string[];
   instantBookingOnly: boolean;
   availableNowOnly?: boolean;
-  sortBy: 'recommended' | 'price_asc' | 'price_desc' | 'rating' | 'popular';
+  sortBy: 'recommended' | 'price_asc' | 'price_desc' | 'rating' | 'popular' | 'distance';
 }
 
 export interface AppNotification {
   id: string;
   title: string;
   message: string;
-  type: 'booking' | 'system' | 'reminder' | 'payment';
+  type: 'booking' | 'system' | 'reminder' | 'payment' | 'availability';
   timestamp: string;
   read: boolean;
   bookingId?: string;
+  spaceId?: string;
+  preferredDates?: string;
+  channelsSent?: ('sms' | 'email' | 'in_app')[];
 }
 
 export interface SavedComparison {
@@ -311,3 +401,6 @@ export interface WorkspaceComparisonDifference {
   highlightText: string;
   isAdvantage: boolean;
 }
+
+export type AppTheme = 'light' | 'dark' | 'system';
+

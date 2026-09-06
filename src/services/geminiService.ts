@@ -26,14 +26,20 @@ export class GoogleGenAIService {
       const officeSpace = availableSpaces.find(s => s.category === 'private_office');
       if (officeSpace) matchedSpace = officeSpace;
     } else if (promptLower.includes('lekki')) {
-      const lekkiSpace = availableSpaces.find(s => s.neighborhood.toLowerCase().includes('lekki'));
+      const lekkiSpace = availableSpaces.find(s => (s.neighborhood || '').toLowerCase().includes('lekki'));
       if (lekkiSpace) matchedSpace = lekkiSpace;
     } else if (promptLower.includes('abuja') || promptLower.includes('maitama')) {
-      const abujaSpace = availableSpaces.find(s => s.city.toLowerCase().includes('abuja') || s.neighborhood.toLowerCase().includes('maitama'));
+      const abujaSpace = availableSpaces.find(s => (s.city || '').toLowerCase().includes('abuja') || (s.neighborhood || '').toLowerCase().includes('maitama'));
       if (abujaSpace) matchedSpace = abujaSpace;
     } else if (promptLower.includes('ikeja')) {
-      const ikejaSpace = availableSpaces.find(s => s.neighborhood.toLowerCase().includes('ikeja'));
+      const ikejaSpace = availableSpaces.find(s => (s.neighborhood || '').toLowerCase().includes('ikeja'));
       if (ikejaSpace) matchedSpace = ikejaSpace;
+    }
+
+    if (!matchedSpace) {
+      return {
+        recommendationText: 'We found spaces available in Lagos and Abuja. Explore our directory to choose your preferred workspace.',
+      };
     }
 
     return {

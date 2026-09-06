@@ -10,14 +10,16 @@ import {
   Check, 
   LogOut, 
   LogIn, 
-  UserPlus,
-  Sparkles,
-  Briefcase,
-  Eye,
-  EyeOff,
-  CheckCircle2,
-  Wallet,
-  ArrowRight
+  UserPlus, 
+  Sparkles, 
+  Briefcase, 
+  Eye, 
+  EyeOff, 
+  CheckCircle2, 
+  Wallet, 
+  ArrowRight,
+  AlertCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { authService } from '../services/authService';
@@ -28,15 +30,18 @@ export const OfisAuthModal: React.FC = () => {
   const { 
     isAuthModalOpen, 
     setIsAuthModalOpen, 
-    authModalTab,
-    setAuthModalTab,
+    authModalTab, 
+    setAuthModalTab, 
     currentUser, 
     updateCurrentUser, 
-    registerUser,
-    loginUser,
-    switchUserRole,
-    signOut,
+    registerUser, 
+    loginUser, 
+    switchUserRole, 
+    signOut, 
     isGuest,
+    openEmailVerificationModal,
+    verifyUserEmail,
+    toggleUserEmailVerification,
   } = useApp();
 
   const [authMode, setAuthMode] = useState<'signup' | 'login' | 'profile'>('signup');
@@ -615,7 +620,20 @@ export const OfisAuthModal: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Email Address</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-[#F2F2F2]">Email Address</label>
+                {currentUser?.isEmailVerified ? (
+                  <span className="text-[10px] text-[#00C878] font-bold flex items-center space-x-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Verified (List & Pay Active)</span>
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-[#FFB800] font-bold flex items-center space-x-1">
+                    <AlertCircle className="w-3 h-3" />
+                    <span>Unverified (Gated)</span>
+                  </span>
+                )}
+              </div>
               <input
                 id="profile-email-input"
                 type="email"
@@ -624,6 +642,60 @@ export const OfisAuthModal: React.FC = () => {
                 required
                 className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
               />
+            </div>
+
+            {/* Email Verification Status Card */}
+            <div className={`p-3 rounded-2xl border text-xs space-y-2 ${
+              currentUser?.isEmailVerified 
+                ? 'bg-[#00C878]/10 border-[#00C878]/30 text-[#F2F2F2]' 
+                : 'bg-[#FFB800]/10 border-[#FFB800]/30 text-[#F2F2F2]'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  {currentUser?.isEmailVerified ? (
+                    <ShieldCheck className="w-4 h-4 text-[#00C878]" />
+                  ) : (
+                    <AlertTriangle className="w-4 h-4 text-[#FFB800]" />
+                  )}
+                  <span className="font-bold text-xs">
+                    {currentUser?.isEmailVerified ? 'Email Verified' : 'Email Unverified'}
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-1.5">
+                  {!currentUser?.isEmailVerified ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAuthModalOpen(false);
+                        openEmailVerificationModal('general');
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-[#FFB800] hover:bg-[#FFC72C] text-[#0D0D0D] font-extrabold text-[10px] cursor-pointer"
+                    >
+                      Verify Now
+                    </button>
+                  ) : (
+                    <span className="text-[10px] text-[#00C878] font-mono">
+                      {currentUser?.emailVerifiedAt ? `Verified ${new Date(currentUser.emailVerifiedAt).toLocaleDateString()}` : 'Active'}
+                    </span>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => toggleUserEmailVerification()}
+                    className="px-2 py-1 rounded-lg bg-[#18201B] hover:bg-[#232D28] border border-[#232D28] text-[10px] text-[#9EABA3] hover:text-[#F2F2F2] font-mono cursor-pointer"
+                    title="Toggle verification state for testing"
+                  >
+                    Toggle
+                  </button>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-[#9EABA3]">
+                {currentUser?.isEmailVerified 
+                  ? 'Your email is verified. You have full access to list workspaces and pay for turnstile passes.'
+                  : 'Policy: Users cannot list new spaces or make pass payments until email is verified.'}
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

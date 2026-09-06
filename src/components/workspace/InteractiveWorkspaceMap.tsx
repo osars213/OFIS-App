@@ -15,6 +15,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Space } from '../../types';
+import { formatLocationFull, extractStructuredLocation } from '../../utils/location';
 
 interface InteractiveWorkspaceMapProps {
   space: Space;
@@ -61,13 +62,16 @@ export const InteractiveWorkspaceMap: React.FC<InteractiveWorkspaceMapProps> = (
     }
   }, [space.neighborhood]);
 
-  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    `${space.title} ${space.address || space.neighborhood} ${space.city}`
-  )}`;
+  const structuredLoc = extractStructuredLocation(space);
+  const locationLabel = formatLocationFull(space);
 
-  const appleMapsUrl = `https://maps.apple.com/?q=${encodeURIComponent(
-    `${space.title} ${space.address || space.neighborhood} ${space.city}`
-  )}&ll=${space.latitude},${space.longitude}`;
+  const googleMapsUrl = structuredLoc.hasCoordinates
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(space.title)}&query_place_id=&ll=${structuredLoc.latitude},${structuredLoc.longitude}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${space.title} ${locationLabel}`)}`;
+
+  const appleMapsUrl = structuredLoc.hasCoordinates
+    ? `https://maps.apple.com/?q=${encodeURIComponent(space.title)}&ll=${structuredLoc.latitude},${structuredLoc.longitude}`
+    : `https://maps.apple.com/?q=${encodeURIComponent(`${space.title} ${locationLabel}`)}`;
 
   return (
     <div className="space-y-4">
@@ -75,7 +79,7 @@ export const InteractiveWorkspaceMap: React.FC<InteractiveWorkspaceMapProps> = (
         <div>
           <h3 className="text-lg font-bold text-[#F2F2F2]">Location & Surroundings</h3>
           <p className="text-xs text-[#9EABA3]">
-            {space.address || `${space.neighborhood}, ${space.city}`}
+            {locationLabel}
           </p>
         </div>
 

@@ -41,7 +41,14 @@ export const notificationsService = {
     return updated;
   },
 
-  removeNotificationByBookingIdAndType: (bookingId: string, type: 'reminder' | 'booking' | 'system' | 'payment'): AppNotification[] => {
+  removeNotification: (id: string): AppNotification[] => {
+    const list = notificationsService.getNotifications();
+    const updated = list.filter(n => n.id !== id);
+    storage.set(NOTIFICATIONS_KEY, updated);
+    return updated;
+  },
+
+  removeNotificationByBookingIdAndType: (bookingId: string, type: 'reminder' | 'booking' | 'system' | 'payment' | 'availability'): AppNotification[] => {
     const list = notificationsService.getNotifications();
     const updated = list.filter(n => !(n.bookingId === bookingId && n.type === type));
     storage.set(NOTIFICATIONS_KEY, updated);
@@ -60,5 +67,10 @@ export const notificationsService = {
     const list = notificationsService.getNotifications().map(n => ({ ...n, read: true }));
     storage.set(NOTIFICATIONS_KEY, list);
     return list;
+  },
+
+  clearAll: (): AppNotification[] => {
+    storage.set(NOTIFICATIONS_KEY, []);
+    return [];
   }
 };

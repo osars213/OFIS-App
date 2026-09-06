@@ -31,7 +31,7 @@ export const recommendationsService = {
     if (!query || !query.trim()) return recommendationsService.getRecentSearches();
     const clean = query.trim();
     const existing = recommendationsService.getRecentSearches();
-    const filtered = existing.filter(q => q.toLowerCase() !== clean.toLowerCase());
+    const filtered = (existing || []).filter(q => q && q.toLowerCase() !== clean.toLowerCase());
     const updated = [clean, ...filtered].slice(0, 5); // Keep up to 5
     storage.set(RECENT_SEARCHES_KEY, updated);
     return updated;

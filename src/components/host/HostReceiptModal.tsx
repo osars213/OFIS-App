@@ -24,9 +24,9 @@ export const HostReceiptModal: React.FC<HostReceiptModalProps> = ({
   const handleDownload = () => {
     // Generate text/csv receipt for immediate offline access
     const receiptData = payout 
-      ? `OFIS 2.0 OFFICIAL PAYOUT RECEIPT\nReference: ${payout.reference}\nAmount: NGN ${payout.amountNgn.toLocaleString()}\nBank: ${payout.bankName}\nAccount: ${payout.accountNumber}\nStatus: ${payout.status.toUpperCase()}\nDate: ${payout.createdAt}\nOFIS Technologies Ltd - 100% Verified NIP Settlement`
+      ? `OFIS 2.0 OFFICIAL PAYOUT RECEIPT\nReference: ${payout.reference}\nAmount: NGN ${(payout.amountNgn || 0).toLocaleString()}\nBank: ${payout.bankName}\nAccount: ${payout.accountNumber}\nStatus: ${(payout.status || '').toUpperCase()}\nDate: ${payout.createdAt}\nOFIS Technologies Ltd - 100% Verified NIP Settlement`
       : booking 
-      ? `OFIS 2.0 BOOKING INVOICE & RECEIPT\nBooking ID: ${booking.id}\nSpace: ${booking.spaceTitle}\nGuest: ${booking.userName} (${booking.userEmail})\nDate: ${booking.date} (${booking.startTime})\nTotal: NGN ${booking.totalAmount.toLocaleString()}\nPayment: ${booking.paymentMethod.toUpperCase()} (${booking.paymentReference})\nStatus: ${booking.status.toUpperCase()}\nPass Code: ${booking.digitalPassCode}`
+      ? `OFIS 2.0 BOOKING INVOICE & RECEIPT\nBooking ID: ${booking.id}\nSpace: ${booking.spaceTitle}\nGuest: ${booking.userName} (${booking.userEmail})\nDate: ${booking.date} (${booking.startTime})\nTotal: NGN ${(booking.totalAmount || 0).toLocaleString()}\nPayment: ${(booking.paymentMethod || '').toUpperCase()} (${booking.paymentReference})\nStatus: ${(booking.status || '').toUpperCase()}\nPass Code: ${booking.digitalPassCode}`
       : '';
 
     const blob = new Blob([receiptData], { type: 'text/plain;charset=utf-8' });
@@ -88,7 +88,7 @@ export const HostReceiptModal: React.FC<HostReceiptModalProps> = ({
             <div className="space-y-3 pt-1">
               <div className="flex justify-between items-center py-1 border-b border-[#1E2522]">
                 <span className="text-[#718079]">Settlement Amount:</span>
-                <span className="text-base font-bold text-[#00C878]">₦{payout.amountNgn.toLocaleString()}</span>
+                <span className="text-base font-bold text-[#00C878]">₦{(payout.amountNgn || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-[#1E2522]">
                 <span className="text-[#718079]">Recipient Bank:</span>
@@ -131,7 +131,7 @@ export const HostReceiptModal: React.FC<HostReceiptModalProps> = ({
               </div>
               <div className="flex justify-between items-center py-1 border-b border-[#1E2522]">
                 <span className="text-[#718079]">Gross Paid:</span>
-                <span className="text-base font-bold text-[#00C878]">₦{booking.totalAmount.toLocaleString()}</span>
+                <span className="text-base font-bold text-[#00C878]">₦{(booking.totalAmount || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-[#1E2522]">
                 <span className="text-[#718079]">Payment Method:</span>

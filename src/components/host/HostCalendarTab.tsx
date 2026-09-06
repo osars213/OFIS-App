@@ -163,7 +163,7 @@ export const HostCalendarTab: React.FC<HostCalendarTabProps> = ({
             
             // Check bookings for this day
             const dayBookings = spaceBookings.filter(b => {
-              if (isToday && (b.date.toLowerCase() === 'today' || b.date === '2025-03-01')) return true;
+              if (isToday && ((b.date || '').toLowerCase() === 'today' || b.date === '2025-03-01')) return true;
               return b.date === dateStr;
             });
 

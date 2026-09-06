@@ -62,7 +62,8 @@ export const CategorizedAmenities: React.FC<CategorizedAmenitiesProps> = ({ spac
     const securityItems: string[] = [];
 
     // Parse each raw amenity string into the most relevant category
-    rawAmenities.forEach((item) => {
+    (rawAmenities || []).forEach((item) => {
+      if (!item) return;
       const lower = item.toLowerCase();
 
       if (
