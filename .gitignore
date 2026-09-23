@@ -25,3 +25,9 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Root temporary artifacts
+/file_*.png
+/178805*.png
+bun.lock
+bun.lockb

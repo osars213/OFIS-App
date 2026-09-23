@@ -54,7 +54,6 @@ export const OfisAuthModal: React.FC = () => {
   const [signupCompany, setSignupCompany] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [showSignupPassword, setShowSignupPassword] = useState(false);
-  const [signupAvatar, setSignupAvatar] = useState('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80');
 
   // Login state
   const [loginEmailOrPhone, setLoginEmailOrPhone] = useState('');
@@ -90,13 +89,6 @@ export const OfisAuthModal: React.FC = () => {
 
   if (!isAuthModalOpen) return null;
 
-  const AVATAR_OPTIONS = [
-    { url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80', label: 'Tech Lead' },
-    { url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80', label: 'Engineer' },
-    { url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80', label: 'Operator' },
-    { url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80', label: 'Creative' },
-  ];
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatusMessage(null);
@@ -125,7 +117,7 @@ export const OfisAuthModal: React.FC = () => {
         role: signupRole,
         company: signupCompany.trim(),
         password: signupPassword.trim(),
-        avatar: signupAvatar,
+        avatar: '',
       });
 
       setIsSubmitting(false);
@@ -211,46 +203,46 @@ export const OfisAuthModal: React.FC = () => {
   return (
     <div 
       id="ofis-auth-modal-backdrop"
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-4"
     >
       <div 
         id="ofis-auth-modal-dialog"
-        className="relative w-full max-w-lg bg-[#141816] rounded-3xl border border-[#232D28] shadow-2xl p-6 sm:p-7 space-y-5"
+        className="relative w-full max-w-lg bg-white dark:bg-[#07383D] rounded-3xl border border-[#E2ECEB] dark:border-[#166D74] shadow-2xl p-6 sm:p-7 space-y-5"
       >
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-[#1E2522] pb-4">
+        <div className="flex items-center justify-between border-b border-[#E2ECEB] dark:border-[#166D74] pb-4">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-[#00C878]/15 text-[#00C878] flex items-center justify-center font-bold">
-              <ShieldCheck className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-2xl bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB] flex items-center justify-center font-bold">
+              <ShieldCheck className="w-5 h-5 text-[#14BEB8]" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-[#F2F2F2]">
+              <h3 className="text-base sm:text-lg font-bold text-[#12383B] dark:text-white">
                 {authMode === 'signup' ? 'Create OFIS Account' : authMode === 'login' ? 'Sign In to OFIS' : 'Account & Pass Credentials'}
               </h3>
-              <p className="text-xs text-[#718079]">Vetted workspaces, instant digital passes & host operations</p>
+              <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">Vetted workspaces, instant digital passes & host operations</p>
             </div>
           </div>
           <button
             id="auth-modal-close-btn"
             type="button"
             onClick={() => setIsAuthModalOpen(false)}
-            className="p-2 rounded-xl text-[#718079] hover:text-[#F2F2F2] hover:bg-[#18201B] cursor-pointer transition-colors"
+            className="p-2 rounded-xl text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#0B4A50] cursor-pointer transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Switcher */}
-        <div className="grid grid-cols-3 p-1 rounded-2xl bg-[#18201B] border border-[#232D28] text-xs font-semibold">
+        <div className="grid grid-cols-3 p-1 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs font-semibold">
           <button
             id="auth-tab-signup-btn"
             type="button"
             onClick={() => switchTab('signup')}
             className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
               authMode === 'signup' 
-                ? 'bg-[#00C878] text-[#0D0D0D] font-bold shadow-md' 
-                : 'text-[#718079] hover:text-[#F2F2F2]'
+                ? 'bg-[#14BEB8] text-white font-bold shadow-xs' 
+                : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
             }`}
           >
             <UserPlus className="w-3.5 h-3.5" />
@@ -263,8 +255,8 @@ export const OfisAuthModal: React.FC = () => {
             onClick={() => switchTab('login')}
             className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
               authMode === 'login' 
-                ? 'bg-[#00C878] text-[#0D0D0D] font-bold shadow-md' 
-                : 'text-[#718079] hover:text-[#F2F2F2]'
+                ? 'bg-[#14BEB8] text-white font-bold shadow-xs' 
+                : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
             }`}
           >
             <LogIn className="w-3.5 h-3.5" />
@@ -277,8 +269,8 @@ export const OfisAuthModal: React.FC = () => {
             onClick={() => switchTab('profile')}
             className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
               authMode === 'profile' 
-                ? 'bg-[#00C878] text-[#0D0D0D] font-bold shadow-md' 
-                : 'text-[#718079] hover:text-[#F2F2F2]'
+                ? 'bg-[#14BEB8] text-white font-bold shadow-xs' 
+                : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
             }`}
           >
             <User className="w-3.5 h-3.5" />
@@ -292,11 +284,11 @@ export const OfisAuthModal: React.FC = () => {
             id="auth-status-alert"
             className={`p-3 rounded-2xl text-xs flex items-center space-x-2 border transition-all ${
               statusMessage.type === 'success' 
-                ? 'bg-[#00C878]/15 border-[#00C878]/30 text-[#00C878]' 
-                : 'bg-[#FF5C5C]/15 border-[#FF5C5C]/30 text-[#FF8585]'
+                ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border-[#14BEB8]/40 text-[#006B70] dark:text-[#28D2CB]' 
+                : 'bg-red-50 dark:bg-red-950/30 border-red-500/30 text-red-600 dark:text-red-400'
             }`}
           >
-            {statusMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <X className="w-4 h-4 shrink-0" />}
+            {statusMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0 text-[#14BEB8]" /> : <X className="w-4 h-4 shrink-0" />}
             <span className="font-medium">{statusMessage.text}</span>
           </div>
         )}
@@ -309,7 +301,7 @@ export const OfisAuthModal: React.FC = () => {
             
             {/* Role Selection */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Account Type & Purpose</label>
+              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Account Type & Purpose</label>
               <div className="grid grid-cols-2 gap-2.5">
                 <button
                   id="signup-role-member-btn"
@@ -317,15 +309,15 @@ export const OfisAuthModal: React.FC = () => {
                   onClick={() => setSignupRole('user')}
                   className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                     signupRole === 'user'
-                      ? 'bg-[#00C878]/10 border-[#00C878] text-[#F2F2F2]'
-                      : 'bg-[#18201B] border-[#232D28] text-[#718079] hover:border-[#35433C]'
+                      ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border-[#14BEB8] text-[#12383B] dark:text-white'
+                      : 'bg-white dark:bg-[#0B4A50] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:border-[#14BEB8]/40'
                   }`}
                 >
                   <div className="flex items-center space-x-2">
-                    <Briefcase className={`w-4 h-4 ${signupRole === 'user' ? 'text-[#00C878]' : 'text-[#718079]'}`} />
+                    <Briefcase className={`w-4 h-4 ${signupRole === 'user' ? 'text-[#14BEB8]' : 'text-[#5D7A7D] dark:text-[#B8D1D0]'}`} />
                     <span className="text-xs font-bold">Workspace Member</span>
                   </div>
-                  <p className="text-[10px] text-[#718079] mt-1">Book desks, meeting rooms & receive ₦25,000 credit</p>
+                  <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] mt-1">Book desks, meeting rooms & receive ₦25,000 credit</p>
                 </button>
 
                 <button
@@ -334,24 +326,24 @@ export const OfisAuthModal: React.FC = () => {
                   onClick={() => setSignupRole('host')}
                   className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                     signupRole === 'host'
-                      ? 'bg-[#00C878]/10 border-[#00C878] text-[#F2F2F2]'
-                      : 'bg-[#18201B] border-[#232D28] text-[#718079] hover:border-[#35433C]'
+                      ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border-[#14BEB8] text-[#12383B] dark:text-white'
+                      : 'bg-white dark:bg-[#0B4A50] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:border-[#14BEB8]/40'
                   }`}
                 >
                   <div className="flex items-center space-x-2">
-                    <Building2 className={`w-4 h-4 ${signupRole === 'host' ? 'text-[#00C878]' : 'text-[#718079]'}`} />
+                    <Building2 className={`w-4 h-4 ${signupRole === 'host' ? 'text-[#14BEB8]' : 'text-[#5D7A7D] dark:text-[#B8D1D0]'}`} />
                     <span className="text-xs font-bold">Hub Operator / Host</span>
                   </div>
-                  <p className="text-[10px] text-[#718079] mt-1">List spaces, check in guests & receive Naira payouts</p>
+                  <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] mt-1">List spaces, check in guests & receive Naira payouts</p>
                 </button>
               </div>
             </div>
 
             {/* Full Name */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Full Name *</label>
+              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Full Name *</label>
               <div className="relative">
-                <User className="absolute left-3 top-3 w-4 h-4 text-[#718079]" />
+                <User className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
                 <input
                   id="signup-name-input"
                   type="text"
@@ -359,16 +351,16 @@ export const OfisAuthModal: React.FC = () => {
                   value={signupName}
                   onChange={(e) => setSignupName(e.target.value)}
                   required
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
                 />
               </div>
             </div>
 
             {/* Email Address */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Email Address *</label>
+              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Email Address *</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 w-4 h-4 text-[#718079]" />
+                <Mail className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
                 <input
                   id="signup-email-input"
                   type="email"
@@ -376,7 +368,7 @@ export const OfisAuthModal: React.FC = () => {
                   value={signupEmail}
                   onChange={(e) => setSignupEmail(e.target.value)}
                   required
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
                 />
               </div>
             </div>
@@ -384,72 +376,53 @@ export const OfisAuthModal: React.FC = () => {
             {/* Phone & Company */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#F2F2F2]">Phone Number</label>
+                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Phone Number</label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-3 w-4 h-4 text-[#718079]" />
+                  <Phone className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
                   <input
                     id="signup-phone-input"
                     type="tel"
                     placeholder="+234 802 000 0000"
                     value={signupPhone}
                     onChange={(e) => setSignupPhone(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#F2F2F2]">Company / Organization</label>
+                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Company / Organization</label>
                 <div className="relative">
-                  <Building2 className="absolute left-3 top-3 w-4 h-4 text-[#718079]" />
+                  <Building2 className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
                   <input
                     id="signup-company-input"
                     type="text"
                     placeholder="e.g. Paystack, Remote, Studio"
                     value={signupCompany}
                     onChange={(e) => setSignupCompany(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Avatar Selection */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Choose Profile Avatar</label>
-              <div className="flex items-center space-x-3">
-                {AVATAR_OPTIONS.map((av) => (
-                  <button
-                    key={av.url}
-                    type="button"
-                    onClick={() => setSignupAvatar(av.url)}
-                    className={`relative rounded-full transition-all cursor-pointer ${
-                      signupAvatar === av.url ? 'ring-2 ring-[#00C878] scale-105' : 'opacity-60 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={av.url} alt={av.label} className="w-10 h-10 rounded-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Password */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Password</label>
+              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 w-4 h-4 text-[#718079]" />
+                <Lock className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
                 <input
                   id="signup-password-input"
                   type={showSignupPassword ? 'text' : 'password'}
                   placeholder="At least 6 characters"
                   value={signupPassword}
                   onChange={(e) => setSignupPassword(e.target.value)}
-                  className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
                 />
                 <button
                   type="button"
                   onClick={() => setShowSignupPassword(!showSignupPassword)}
-                  className="absolute right-3 top-2.5 text-[#718079] hover:text-[#F2F2F2] cursor-pointer"
+                  className="absolute right-3 top-2.5 text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white cursor-pointer"
                 >
                   {showSignupPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -460,9 +433,9 @@ export const OfisAuthModal: React.FC = () => {
               id="signup-submit-btn"
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 rounded-2xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-extrabold text-xs shadow-lg transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer disabled:opacity-50 mt-2"
+              className="w-full py-3 rounded-2xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer disabled:opacity-50 mt-2"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4 text-[#FFA987]" />
               <span>
                 {isSubmitting 
                   ? 'Registering Account...' 
@@ -480,9 +453,9 @@ export const OfisAuthModal: React.FC = () => {
         {authMode === 'login' && (
           <form id="login-form" onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Email Address or Phone Number</label>
+              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Email Address or Phone Number</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 w-4 h-4 text-[#718079]" />
+                <Mail className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
                 <input
                   id="login-email-input"
                   type="text"
@@ -490,27 +463,27 @@ export const OfisAuthModal: React.FC = () => {
                   value={loginEmailOrPhone}
                   onChange={(e) => setLoginEmailOrPhone(e.target.value)}
                   required
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Password</label>
+              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 w-4 h-4 text-[#718079]" />
+                <Lock className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
                 <input
                   id="login-password-input"
                   type={showLoginPassword ? 'text' : 'password'}
                   placeholder="••••••••••••"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
                 />
                 <button
                   type="button"
                   onClick={() => setShowLoginPassword(!showLoginPassword)}
-                  className="absolute right-3 top-2.5 text-[#718079] hover:text-[#F2F2F2] cursor-pointer"
+                  className="absolute right-3 top-2.5 text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white cursor-pointer"
                 >
                   {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -521,15 +494,15 @@ export const OfisAuthModal: React.FC = () => {
               id="login-submit-btn"
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 rounded-2xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-extrabold text-xs shadow-lg transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer disabled:opacity-50"
+              className="w-full py-3 rounded-2xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer disabled:opacity-50"
             >
               <LogIn className="w-4 h-4" />
               <span>{isSubmitting ? 'Authenticating...' : 'Sign In to OFIS'}</span>
             </button>
 
             {/* Fast Demo Switches */}
-            <div className="pt-3 border-t border-[#1E2522] space-y-2">
-              <div className="text-[11px] text-[#718079] font-medium">Quick 1-Tap Demo Logins:</div>
+            <div className="pt-3 border-t border-[#E2ECEB] dark:border-[#166D74] space-y-2">
+              <div className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-medium">Quick 1-Tap Demo Logins:</div>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   id="quick-demo-user-btn"
@@ -539,10 +512,10 @@ export const OfisAuthModal: React.FC = () => {
                     setStatusMessage({ text: 'Logged in as Babatunde Adeyemi (User)', type: 'success' });
                     setTimeout(() => setIsAuthModalOpen(false), 800);
                   }}
-                  className="p-2.5 rounded-xl bg-[#18201B] hover:bg-[#232D28] border border-[#232D28] text-left transition-all cursor-pointer"
+                  className="p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/50 text-left transition-all cursor-pointer"
                 >
-                  <div className="text-xs font-bold text-[#F2F2F2]">Babatunde (User)</div>
-                  <div className="text-[10px] text-[#00C878]">Paystack Engineer • ₦45,000</div>
+                  <div className="text-xs font-bold text-[#12383B] dark:text-white">Babatunde (User)</div>
+                  <div className="text-[10px] text-[#006B70] dark:text-[#28D2CB]">Paystack Engineer • ₦45,000</div>
                 </button>
 
                 <button
@@ -553,10 +526,10 @@ export const OfisAuthModal: React.FC = () => {
                     setStatusMessage({ text: 'Logged in as Funke Akindele-Cole (Host)', type: 'success' });
                     setTimeout(() => setIsAuthModalOpen(false), 800);
                   }}
-                  className="p-2.5 rounded-xl bg-[#18201B] hover:bg-[#232D28] border border-[#232D28] text-left transition-all cursor-pointer"
+                  className="p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/50 text-left transition-all cursor-pointer"
                 >
-                  <div className="text-xs font-bold text-[#F2F2F2]">Funke (Host)</div>
-                  <div className="text-[10px] text-[#00C878]">VI Hub Operator • ₦380,000</div>
+                  <div className="text-xs font-bold text-[#12383B] dark:text-white">Funke (Host)</div>
+                  <div className="text-[10px] text-[#006B70] dark:text-[#28D2CB]">VI Hub Operator • ₦380,000</div>
                 </button>
               </div>
             </div>
@@ -568,12 +541,14 @@ export const OfisAuthModal: React.FC = () => {
         {/* ========================================================================= */}
         {authMode === 'profile' && (
           <form id="profile-form" onSubmit={handleProfileSave} className="space-y-4">
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#18201B] border border-[#232D28]">
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74]">
               <div className="flex items-center space-x-3">
-                <img src={currentUser.avatar} alt="Avatar" className="w-12 h-12 rounded-full object-cover ring-2 ring-[#00C878]" />
+                <div className="w-11 h-11 rounded-2xl bg-[#14BEB8]/15 border border-[#14BEB8]/40 text-[#006B70] dark:text-[#28D2CB] flex items-center justify-center">
+                  <User className="w-5 h-5 text-[#14BEB8]" />
+                </div>
                 <div>
-                  <div className="text-xs font-bold text-[#F2F2F2]">{currentUser.name}</div>
-                  <div className="text-[10px] text-[#00C878] font-mono uppercase font-bold flex items-center space-x-1">
+                  <div className="text-xs font-bold text-[#12383B] dark:text-white">{currentUser.name}</div>
+                  <div className="text-[10px] text-[#006B70] dark:text-[#28D2CB] font-mono uppercase font-bold flex items-center space-x-1">
                     <span>{currentUser.role} Account</span>
                     <span>•</span>
                     <span>₦{(currentUser.walletBalanceNgn || 0).toLocaleString()} Balance</span>
@@ -590,16 +565,16 @@ export const OfisAuthModal: React.FC = () => {
                     setAuthMode('login');
                     setStatusMessage({ text: 'Signed out of OFIS session.', type: 'success' });
                   }}
-                  className="px-3 py-1.5 rounded-xl bg-[#2D1616] hover:bg-[#3D1A1A] border border-[#FF5C5C]/30 text-xs font-bold text-[#FF8585] flex items-center space-x-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/40 border border-red-500/30 text-xs font-bold text-red-600 dark:text-red-400 flex items-center space-x-1.5 transition-colors cursor-pointer"
                 >
-                  <LogOut className="w-3.5 h-3.5 text-[#FF5C5C]" />
+                  <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => switchTab('signup')}
-                  className="px-3 py-1.5 rounded-xl bg-[#00C878]/15 border border-[#00C878]/30 text-xs font-bold text-[#00C878] flex items-center space-x-1.5 cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-[#14BEB8]/15 border border-[#14BEB8]/40 text-xs font-bold text-[#006B70] dark:text-[#28D2CB] flex items-center space-x-1.5 cursor-pointer"
                 >
                   <UserPlus className="w-3.5 h-3.5" />
                   <span>Create Account</span>
@@ -608,27 +583,27 @@ export const OfisAuthModal: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Full Name</label>
+              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Full Name</label>
               <input
                 id="profile-name-input"
                 type="text"
                 value={profileName}
                 onChange={(e) => setProfileName(e.target.value)}
                 required
-                className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8]"
               />
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-[#F2F2F2]">Email Address</label>
+                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Email Address</label>
                 {currentUser?.isEmailVerified ? (
-                  <span className="text-[10px] text-[#00C878] font-bold flex items-center space-x-1">
-                    <CheckCircle2 className="w-3 h-3" />
+                  <span className="text-[10px] text-[#006B70] dark:text-[#28D2CB] font-bold flex items-center space-x-1">
+                    <CheckCircle2 className="w-3 h-3 text-[#14BEB8]" />
                     <span>Verified (List & Pay Active)</span>
                   </span>
                 ) : (
-                  <span className="text-[10px] text-[#FFB800] font-bold flex items-center space-x-1">
+                  <span className="text-[10px] text-[#C05621] dark:text-[#FFA987] font-bold flex items-center space-x-1">
                     <AlertCircle className="w-3 h-3" />
                     <span>Unverified (Gated)</span>
                   </span>
@@ -640,22 +615,22 @@ export const OfisAuthModal: React.FC = () => {
                 value={profileEmail}
                 onChange={(e) => setProfileEmail(e.target.value)}
                 required
-                className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8]"
               />
             </div>
 
             {/* Email Verification Status Card */}
             <div className={`p-3 rounded-2xl border text-xs space-y-2 ${
               currentUser?.isEmailVerified 
-                ? 'bg-[#00C878]/10 border-[#00C878]/30 text-[#F2F2F2]' 
-                : 'bg-[#FFB800]/10 border-[#FFB800]/30 text-[#F2F2F2]'
+                ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/15 border-[#14BEB8]/40 text-[#12383B] dark:text-white' 
+                : 'bg-[#FFA987]/15 dark:bg-[#FFA987]/10 border-[#FFA987]/30 text-[#12383B] dark:text-white'
             }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   {currentUser?.isEmailVerified ? (
-                    <ShieldCheck className="w-4 h-4 text-[#00C878]" />
+                    <ShieldCheck className="w-4 h-4 text-[#14BEB8]" />
                   ) : (
-                    <AlertTriangle className="w-4 h-4 text-[#FFB800]" />
+                    <AlertTriangle className="w-4 h-4 text-[#FFA987]" />
                   )}
                   <span className="font-bold text-xs">
                     {currentUser?.isEmailVerified ? 'Email Verified' : 'Email Unverified'}
@@ -670,12 +645,12 @@ export const OfisAuthModal: React.FC = () => {
                         setIsAuthModalOpen(false);
                         openEmailVerificationModal('general');
                       }}
-                      className="px-2.5 py-1 rounded-lg bg-[#FFB800] hover:bg-[#FFC72C] text-[#0D0D0D] font-extrabold text-[10px] cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg bg-[#FFA987] hover:bg-[#ff966f] text-[#006B70] font-extrabold text-[10px] cursor-pointer"
                     >
                       Verify Now
                     </button>
                   ) : (
-                    <span className="text-[10px] text-[#00C878] font-mono">
+                    <span className="text-[10px] text-[#006B70] dark:text-[#28D2CB] font-mono">
                       {currentUser?.emailVerifiedAt ? `Verified ${new Date(currentUser.emailVerifiedAt).toLocaleDateString()}` : 'Active'}
                     </span>
                   )}
@@ -683,7 +658,7 @@ export const OfisAuthModal: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => toggleUserEmailVerification()}
-                    className="px-2 py-1 rounded-lg bg-[#18201B] hover:bg-[#232D28] border border-[#232D28] text-[10px] text-[#9EABA3] hover:text-[#F2F2F2] font-mono cursor-pointer"
+                    className="px-2 py-1 rounded-lg bg-white dark:bg-[#07383D] hover:bg-[#F3F6F5] border border-[#E2ECEB] dark:border-[#166D74] text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white font-mono cursor-pointer"
                     title="Toggle verification state for testing"
                   >
                     Toggle
@@ -691,7 +666,7 @@ export const OfisAuthModal: React.FC = () => {
                 </div>
               </div>
 
-              <p className="text-[11px] text-[#9EABA3]">
+              <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">
                 {currentUser?.isEmailVerified 
                   ? 'Your email is verified. You have full access to list workspaces and pay for turnstile passes.'
                   : 'Policy: Users cannot list new spaces or make pass payments until email is verified.'}
@@ -700,30 +675,30 @@ export const OfisAuthModal: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#F2F2F2]">Phone Number</label>
+                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Phone Number</label>
                 <input
                   id="profile-phone-input"
                   type="tel"
                   value={profilePhone}
                   onChange={(e) => setProfilePhone(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#F2F2F2]">Company</label>
+                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Company</label>
                 <input
                   id="profile-company-input"
                   type="text"
                   value={profileCompany}
                   onChange={(e) => setProfileCompany(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8]"
                 />
               </div>
             </div>
 
             {/* Saved Comparisons Section */}
-            <div className="pt-3 border-t border-[#1E2522]">
+            <div className="pt-3 border-t border-[#E2ECEB] dark:border-[#166D74]">
               <SavedComparisonsSection
                 compact
                 onSelectComparison={() => {
@@ -732,12 +707,12 @@ export const OfisAuthModal: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-[#1E2522]">
+            <div className="flex items-center justify-between pt-3 border-t border-[#E2ECEB] dark:border-[#166D74]">
               <button
                 id="profile-toggle-role-btn"
                 type="button"
                 onClick={() => switchUserRole(currentUser.role === 'host' ? 'user' : 'host')}
-                className="text-xs font-semibold text-[#00C878] hover:underline cursor-pointer"
+                className="text-xs font-semibold text-[#006B70] dark:text-[#28D2CB] hover:underline cursor-pointer"
               >
                 Switch to {currentUser.role === 'host' ? 'Member Mode' : 'Host Mode'}
               </button>
@@ -745,7 +720,7 @@ export const OfisAuthModal: React.FC = () => {
               <button
                 id="profile-save-btn"
                 type="submit"
-                className="px-5 py-2.5 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs shadow-md cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white font-bold text-xs shadow-md cursor-pointer"
               >
                 Save Changes
               </button>

@@ -281,7 +281,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [allSpaces, setAllSpaces] = useState<Space[]>(spacesService.getSpaces());
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS);
   const [activeCategory, setActiveCategoryState] = useState<SpaceCategory | 'all'>('all');
-  const [currentView, setCurrentView] = useState<AppView>('explore');
+  const [currentView, setCurrentViewState] = useState<AppView>(() => {
+    const saved = storage.get<string>('ofis_current_view', 'explore');
+    if (saved === 'launch' || !['explore', 'map', 'details', 'bookings', 'host_dashboard', 'saved'].includes(saved)) {
+      return 'explore';
+    }
+    return saved as AppView;
+  });
+  const setCurrentView = (view: AppView) => {
+    setCurrentViewState(view);
+    storage.set('ofis_current_view', view);
+  };
   const [selectedSpaceId, setSelectedSpaceIdState] = useState<string | null>(null);
   const [savedSpaceIds, setSavedSpaceIds] = useState<string[]>(favoritesService.getSavedIds());
   const [bookings, setBookings] = useState<Booking[]>(bookingsService.getBookings());
@@ -382,8 +392,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [timeFormat, setTimeFormatState] = useState<'12h' | '24h'>(() => storage.get<'12h' | '24h'>('time_format_pref', '12h'));
   
-  // Theme & Appearance
-  const [theme, setThemeState] = useState<AppTheme>(() => storage.get<AppTheme>('theme_pref', 'dark'));
+  // Theme & Appearance (Light mode as primary brand experience)
+  const [theme, setThemeState] = useState<AppTheme>(() => storage.get<AppTheme>('theme_pref', 'light'));
   const [selectedLogoConceptId, setSelectedLogoConceptIdState] = useState<number>(() => storage.get<number>('ofis_selected_logo_concept', 1));
   const [isLogoGalleryOpen, setIsLogoGalleryOpen] = useState<boolean>(false);
 
@@ -395,7 +405,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches;
     }
-    return true;
+    return false;
   });
 
   useEffect(() => {

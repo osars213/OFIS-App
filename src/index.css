@@ -2,38 +2,116 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-ofis-teal: #14BEB8;
+  --color-ofis-teal-hover: #0EA8A2;
+  --color-ofis-teal-deep: #006B70;
+  --color-ofis-teal-bright: #28D2CB;
+  --color-ofis-peach: #FFA987;
+  --color-ofis-peach-soft: #FFD0BD;
+  --color-ofis-cream: #FFF9F4;
+  --color-ofis-soft-grey: #F3F6F5;
+  --color-ofis-text-dark: #12383B;
+  --color-ofis-navy: #07383D;
+
+  --color-ofis-bg-light: #FFF9F4;
+  --color-ofis-surface-light: #FFFFFF;
+  --color-ofis-muted: #5D7A7D;
+  --color-ofis-border: #E2ECEB;
+  --color-ofis-error: #EF4444;
+
+  --color-ofis-bg-dark: #07383D;
+  --color-ofis-surface-dark: #0B4A50;
+  --color-ofis-elevated-dark: #105A60;
+  --color-ofis-input-dark: #0B4A50;
+  --color-ofis-border-dark: #166D74;
+  --color-ofis-text-dark: #FFFFFF;
+  --color-ofis-text-sec-dark: #B8D1D0;
+  --color-ofis-muted-dark: #8BA8A7;
+  --color-ofis-error-dark: #F87171;
+}
+
 @layer base {
   :root {
-    --color-bg-light: #F8FAFC;
+    --ofis-navy: #07383D;
+    --ofis-charcoal: #12383B;
+    --ofis-teal: #14BEB8;
+    --ofis-teal-deep: #006B70;
+    --ofis-teal-hover: #0EA8A2;
+    --ofis-teal-bright: #28D2CB;
+    --ofis-peach: #FFA987;
+    --ofis-peach-soft: #FFD0BD;
+    --ofis-background: #FFF9F4;
+    --ofis-surface: #FFFFFF;
+    --ofis-surface-elevated: #FFFFFF;
+    --ofis-text: #12383B;
+    --ofis-text-secondary: #406366;
+    --ofis-muted: #5D7A7D;
+    --ofis-border: #E2ECEB;
+    --ofis-input: #FFFFFF;
+    --ofis-error: #EF4444;
+
+    /* Compatibility mappings mapped directly to OFIS tokens */
+    --color-bg-light: #FFF9F4;
     --color-surface-light: #FFFFFF;
-    --color-surface-secondary-light: #F1F5F9;
-    --color-border-light: #E5E7EB;
-    --color-text-main-light: #111827;
-    --color-text-muted-light: #6B7280;
+    --color-surface-secondary-light: #F7FAF9;
+    --color-border-light: #E2ECEB;
+    --color-text-main-light: #12383B;
+    --color-text-muted-light: #5D7A7D;
 
-    --color-bg-dark: #0B1220;
-    --color-surface-dark: #172033;
-    --color-surface-secondary-dark: #101827;
-    --color-border-dark: #1E293B;
-    --color-text-main-dark: #F8FAFC;
-    --color-text-muted-dark: #94A3B8;
+    --color-primary-green: #14BEB8;
+    --color-primary-green-hover: #0EA8A2;
+    --color-primary-green-light: #E6F8F7;
+  }
 
-    --color-primary-green: #10B981;
-    --color-primary-green-hover: #059669;
-    --color-primary-green-light: #D1FAE5;
+  html.dark {
+    --ofis-background: #07383D;
+    --ofis-surface: #0B4A50;
+    --ofis-surface-elevated: #105A60;
+    --ofis-text: #FFFFFF;
+    --ofis-text-secondary: #B8D1D0;
+    --ofis-muted: #8BA8A7;
+    --ofis-border: #166D74;
+    --ofis-input: #0B4A50;
+    --ofis-error: #F87171;
+
+    --color-bg-dark: #07383D;
+    --color-surface-dark: #0B4A50;
+    --color-surface-secondary-dark: #105A60;
+    --color-border-dark: #166D74;
+    --color-text-main-dark: #FFFFFF;
+    --color-text-muted-dark: #B8D1D0;
+    --color-primary-green: #28D2CB;
+    --color-primary-green-hover: #14BEB8;
+    --color-primary-green-light: rgba(40, 210, 203, 0.18);
   }
 
   body {
-    background-color: #F8FAFC;
-    color: #111827;
+    background-color: #FFF9F4;
+    color: #12383B;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     transition: background-color 0.15s ease, color 0.15s ease;
   }
 
   html.dark body {
-    background-color: #0B1220;
-    color: #F8FAFC;
+    background-color: #07383D;
+    color: #FFFFFF;
   }
+}
+
+/* Subtle Architectural Grid & Glow Utilities */
+.ofis-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(20, 190, 184, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 190, 184, 0.05) 1px, transparent 1px);
+}
+
+.dark .ofis-grid-pattern {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(40, 210, 203, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(40, 210, 203, 0.06) 1px, transparent 1px);
 }
 
 /* Revolving Arc Architectural Metaphor Background Animations */
@@ -61,8 +139,8 @@
   left: 50%;
   border-radius: 9999px;
   border: 1.5px solid transparent;
-  border-top-color: rgba(16, 185, 129, 0.25);
-  border-right-color: rgba(16, 185, 129, 0.1);
+  border-top-color: rgba(20, 190, 184, 0.35);
+  border-right-color: rgba(255, 169, 135, 0.25);
   animation: ofis-spin-slow 32s linear infinite;
 }
 
@@ -71,17 +149,8 @@
   top: 50%;
   left: 50%;
   border-radius: 9999px;
-  border: 1px dashed rgba(16, 185, 129, 0.18);
+  border: 1px dashed rgba(255, 169, 135, 0.4);
   animation: ofis-spin-reverse 45s linear infinite;
-}
-
-.ofis-hero-arc-conic {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  border-radius: 9999px;
-  background: conic-gradient(from 180deg at 50% 50%, rgba(16, 185, 129, 0) 0deg, rgba(16, 185, 129, 0.08) 180deg, rgba(16, 185, 129, 0) 360deg);
-  animation: ofis-spin-slow 40s linear infinite;
 }
 
 /* Custom scrollbars */
@@ -90,37 +159,56 @@
   height: 6px;
 }
 
-/* OFIS Brand Logo Breathing & Subtle Glow Keyframes (Refined 35% reduction) */
+::-webkit-scrollbar-track {
+  background: #FFF9F4;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #07383D;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C8DDD9;
+  border-radius: 3px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #105A60;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #14BEB8;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #28D2CB;
+}
+
+/* OFIS Brand Logo Breathing & Subtle Glow Keyframes (Teal + Peach Accents) */
 @keyframes ofis-breathe {
   0%, 100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 3px rgba(16, 185, 129, 0.15)) brightness(1);
   }
   50% {
-    transform: scale(1.03);
-    filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.35)) brightness(1.06);
+    transform: scale(1.025);
   }
 }
 
 @keyframes ofis-breathe-slow {
   0%, 100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.1)) brightness(1);
   }
   50% {
-    transform: scale(1.02);
-    filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.28)) brightness(1.04);
+    transform: scale(1.018);
   }
 }
 
 @keyframes ofis-breathe-fast {
   0%, 100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.2)) brightness(1);
   }
   50% {
-    transform: scale(1.04);
-    filter: drop-shadow(0 0 10px rgba(74, 222, 128, 0.45)) brightness(1.08);
+    transform: scale(1.035);
   }
 }
 
@@ -129,31 +217,23 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
   }
 }
 
 .animate-bounce-subtle {
-  animation: bounce-subtle 2.5s ease-in-out infinite;
+  animation: bounce-subtle 3s ease-in-out infinite;
 }
 
-::-webkit-scrollbar-track {
-  background: #F1F5F9;
+/* Specular Reflective Finish for OFIS Teal Price Elements */
+.reflective-price {
+  background: linear-gradient(135deg, #006B70 0%, #14BEB8 60%, #0EA8A2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-html.dark ::-webkit-scrollbar-track {
-  background: #111827;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 3px;
-}
-
-html.dark ::-webkit-scrollbar-thumb {
-  background: #374151;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #16A34A;
+.dark .reflective-price {
+  background: linear-gradient(135deg, #28D2CB 0%, #14BEB8 50%, #FFA987 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

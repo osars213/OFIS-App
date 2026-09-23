@@ -33,8 +33,8 @@ export const HostNotificationsTab: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[#F2F2F2]">Host Activity Notifications & Alerts</h2>
-          <p className="text-xs text-[#718079]">
+          <h2 className="text-xl font-bold text-[#111827] dark:text-[#F9FAFB]">Host Activity Notifications &amp; Alerts</h2>
+          <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
             Stay updated on new guest bookings, check-in scans, reviews, and payout disbursements
           </p>
         </div>
@@ -43,7 +43,7 @@ export const HostNotificationsTab: React.FC = () => {
           <button
             type="button"
             onClick={markAllNotificationsRead}
-            className="px-4 py-2 rounded-2xl bg-[#18201B] hover:bg-[#232D28] text-xs font-bold text-[#00C878] border border-[#232D28] flex items-center space-x-1.5 cursor-pointer transition-colors"
+            className="px-4 py-2 rounded-2xl bg-white dark:bg-[#1F2937] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] text-xs font-bold text-[#0F766E] dark:text-[#14B8A6] border border-[#E5E7EB] dark:border-[#374151] flex items-center space-x-1.5 cursor-pointer transition-colors shadow-xs"
           >
             <CheckCheck className="w-4 h-4" />
             <span>Mark All as Read</span>
@@ -65,8 +65,8 @@ export const HostNotificationsTab: React.FC = () => {
             onClick={() => setActiveFilter(f.id as any)}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
               activeFilter === f.id
-                ? 'bg-[#00C878] text-[#0D0D0D]'
-                : 'bg-[#141816] text-[#718079] hover:text-[#F2F2F2] border border-[#1E2522]'
+                ? 'bg-[#0F766E] text-white shadow-xs'
+                : 'bg-white dark:bg-[#1F2937] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] border border-[#E5E7EB] dark:border-[#374151]'
             }`}
           >
             {f.label}
@@ -76,10 +76,10 @@ export const HostNotificationsTab: React.FC = () => {
 
       {/* Notifications List */}
       {filtered.length === 0 ? (
-        <div className="p-12 text-center rounded-3xl bg-[#141816] border border-[#1E2522] space-y-3">
-          <Bell className="w-10 h-10 text-[#232D28] mx-auto" />
-          <h3 className="text-base font-bold text-[#F2F2F2]">No Notifications</h3>
-          <p className="text-xs text-[#718079]">
+        <div className="p-12 text-center rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] space-y-3 shadow-xs">
+          <Bell className="w-10 h-10 text-[#9CA3AF] dark:text-[#4B5563] mx-auto" />
+          <h3 className="text-base font-bold text-[#111827] dark:text-[#F9FAFB]">No Notifications</h3>
+          <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
             You're all caught up! New alerts and guest requests will appear here in real-time.
           </p>
         </div>
@@ -92,16 +92,16 @@ export const HostNotificationsTab: React.FC = () => {
                 onClick={() => markNotificationRead(item.id)}
                 className={`p-4 rounded-2xl border transition-all flex items-start space-x-3.5 cursor-pointer ${
                   item.read
-                    ? 'bg-[#141816] border-[#1E2522] text-[#718079]'
-                    : 'bg-[#18201B] border-[#00C878]/30 text-[#F2F2F2] shadow-sm'
+                    ? 'bg-[#F9FAFB] dark:bg-[#1F2937]/50 border-[#E5E7EB] dark:border-[#374151] text-[#6B7280] dark:text-[#9CA3AF]'
+                    : 'bg-white dark:bg-[#1F2937] border-[#0F766E]/40 text-[#111827] dark:text-[#F9FAFB] shadow-xs'
                 }`}
               >
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                   item.type === 'booking'
-                    ? 'bg-[#00C878]/15 text-[#00C878]'
+                    ? 'bg-[#0F766E]/10 text-[#0F766E] dark:text-[#14B8A6]'
                     : item.type === 'payment'
-                    ? 'bg-[#E0A82E]/15 text-[#E0A82E]'
-                    : 'bg-[#1E2522] text-[#9EABA3]'
+                    ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                    : 'bg-[#F1F5F9] dark:bg-[#374151] text-[#6B7280] dark:text-[#9CA3AF]'
                 }`}>
                   {item.type === 'booking' ? (
                     <CalendarCheck className="w-4 h-4" />
@@ -114,16 +114,16 @@ export const HostNotificationsTab: React.FC = () => {
 
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-[#F2F2F2]">{item.title}</h4>
-                    <span className="text-[10px] text-[#718079]">
+                    <h4 className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB]">{item.title}</h4>
+                    <span className="text-[10px] text-[#9CA3AF] dark:text-[#6B7280]">
                       {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-                  <p className="text-xs text-[#9EABA3] leading-relaxed">{item.message}</p>
+                  <p className="text-xs text-[#4B5563] dark:text-[#D1D5DB] leading-relaxed">{item.message}</p>
                 </div>
 
                 {!item.read && (
-                  <div className="w-2 h-2 rounded-full bg-[#00C878] shrink-0 mt-1.5" />
+                  <div className="w-2 h-2 rounded-full bg-[#0F766E] shrink-0 mt-1.5" />
                 )}
               </div>
             );

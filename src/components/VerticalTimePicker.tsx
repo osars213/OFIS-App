@@ -82,7 +82,7 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB] dark:border-[#374151] bg-[#F8FAFC] dark:bg-[#111827]">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] dark:bg-[#16A34A]/20 border border-[#16A34A]/30 flex items-center justify-center text-[#16A34A]">
+              <div className="w-8 h-8 rounded-xl bg-[#E6F4F2] dark:bg-[#0F766E]/20 border border-[#0F766E]/30 flex items-center justify-center text-[#0F766E]">
                 <Clock className="w-4 h-4" />
               </div>
               <div>
@@ -100,7 +100,7 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
                   onClick={() => setTimeFormat('12h')}
                   className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
                     timeFormat === '12h'
-                      ? 'bg-[#16A34A] text-white shadow-2xs'
+                      ? 'bg-[#0F766E] text-white shadow-2xs'
                       : 'text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB]'
                   }`}
                 >
@@ -112,7 +112,7 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
                   onClick={() => setTimeFormat('24h')}
                   className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
                     timeFormat === '24h'
-                      ? 'bg-[#16A34A] text-white shadow-2xs'
+                      ? 'bg-[#0F766E] text-white shadow-2xs'
                       : 'text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB]'
                   }`}
                 >
@@ -134,7 +134,7 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
           {/* Current Selection Badge Banner */}
           <div className="px-5 py-2.5 bg-[#F8FAFC] dark:bg-[#111827] border-b border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between">
             <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF] font-medium">Currently Selected:</span>
-            <span className="text-xs font-mono font-bold text-[#16A34A] bg-[#DCFCE7] dark:bg-[#16A34A]/20 px-2.5 py-0.5 rounded-lg border border-[#16A34A]/30">
+            <span className="text-xs font-mono font-bold text-[#0F766E] bg-[#E6F4F2] dark:bg-[#0F766E]/20 px-2.5 py-0.5 rounded-lg border border-[#0F766E]/30">
               {formatTime(selectedTime)}
             </span>
           </div>
@@ -160,7 +160,7 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
                   }}
                   className={`w-full snap-center flex items-center justify-between px-4 py-3 rounded-2xl text-left transition-all duration-150 cursor-pointer ${
                     isSelected
-                      ? 'bg-[#16A34A] text-white font-bold shadow-md scale-[1.01]'
+                      ? 'bg-[#0F766E] text-white font-bold shadow-md scale-[1.01]'
                       : 'bg-white dark:bg-[#111827] hover:bg-[#F8FAFC] dark:hover:bg-[#374151] text-[#111827] dark:text-[#F9FAFB] border border-[#E5E7EB] dark:border-[#374151]'
                   }`}
                 >
@@ -177,7 +177,7 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
 
                   <div className="flex items-center space-x-1.5">
                     {isSelected ? (
-                      <span className="w-6 h-6 rounded-full bg-white text-[#16A34A] flex items-center justify-center">
+                      <span className="w-6 h-6 rounded-full bg-white text-[#0F766E] flex items-center justify-center">
                         <Check className="w-3.5 h-3.5 stroke-[3]" />
                       </span>
                     ) : (
@@ -205,7 +205,7 @@ export const VerticalTimePicker: React.FC<VerticalTimePickerProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center space-x-1.5 cursor-pointer"
+              className="px-5 py-2 rounded-xl bg-[#0F766E] hover:bg-[#0D625C] text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center space-x-1.5 cursor-pointer"
             >
               <span>Done</span>
             </button>

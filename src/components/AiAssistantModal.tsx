@@ -63,23 +63,23 @@ export const AiAssistantModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="relative w-full max-w-xl bg-[#141816] rounded-3xl border border-[#232D28] shadow-2xl flex flex-col h-[580px] overflow-hidden">
+      <div className="relative w-full max-w-xl bg-[#111827] rounded-3xl border border-[#374151] shadow-2xl flex flex-col h-[580px] overflow-hidden">
         
         {/* Header */}
-        <div className="p-4 border-b border-[#1E2522] flex items-center justify-between bg-[#121614]">
+        <div className="p-4 border-b border-[#374151] flex items-center justify-between bg-[#0F172A]">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-[#00C878]/15 text-[#00C878] border border-[#00C878]/30">
+            <div className="p-2 rounded-xl bg-[#0F766E]/15 text-[#14B8A6] border border-[#14B8A6]/30">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#F2F2F2]">Ofis Assistant</h3>
-              <p className="text-[10px] text-[#718079]">Intelligent workspace matching & telemetry auditing</p>
+              <h3 className="text-sm font-bold text-[#F9FAFB]">Ofis Assistant</h3>
+              <p className="text-[10px] text-[#94A3B8]">Intelligent workspace matching & telemetry auditing</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setIsAiModalOpen(false)}
-            className="p-1.5 rounded-xl text-[#718079] hover:text-[#F2F2F2] hover:bg-[#18201B]"
+            className="p-1.5 rounded-xl text-[#94A3B8] hover:text-[#F9FAFB] hover:bg-[#1F2937]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -95,19 +95,19 @@ export const AiAssistantModal: React.FC = () => {
                 <div
                   className={`p-3.5 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
                     m.sender === 'user'
-                      ? 'bg-[#00C878] text-[#0D0D0D] font-medium'
-                      : 'bg-[#18201B] border border-[#232D28] text-[#F2F2F2]'
+                      ? 'bg-[#0F766E] text-white font-medium'
+                      : 'bg-[#1F2937] border border-[#374151] text-[#F9FAFB]'
                   }`}
                 >
                   {m.text}
                 </div>
 
                 {matchedSpace && (
-                  <div className="p-3 rounded-2xl bg-[#18201B] border border-[#00C878]/40 max-w-sm flex items-center justify-between gap-3 shadow-lg">
+                  <div className="p-3 rounded-2xl bg-[#1F2937] border border-[#14B8A6]/40 max-w-sm flex items-center justify-between gap-3 shadow-lg">
                     <img src={matchedSpace.featuredImage} alt={matchedSpace.title} className="w-12 h-12 rounded-xl object-cover" />
                     <div className="flex-1 min-w-0">
-                      <h5 className="text-xs font-bold text-[#F2F2F2] truncate">{matchedSpace.title}</h5>
-                      <p className="text-[10px] text-[#00C878] font-mono">{formatSpaceRate(matchedSpace)}</p>
+                      <h5 className="text-xs font-bold text-[#F9FAFB] truncate">{matchedSpace.title}</h5>
+                      <p className="text-[10px] text-[#14B8A6] font-mono">{formatSpaceRate(matchedSpace)}</p>
                     </div>
                     <button
                       type="button"
@@ -116,7 +116,7 @@ export const AiAssistantModal: React.FC = () => {
                         setCurrentView('details');
                         setIsAiModalOpen(false);
                       }}
-                      className="px-3 py-1.5 rounded-lg bg-[#00C878] text-[#0D0D0D] text-xs font-bold shrink-0"
+                      className="px-3 py-1.5 rounded-lg bg-[#0F766E] text-white text-xs font-bold shrink-0"
                     >
                       View
                     </button>
@@ -127,40 +127,40 @@ export const AiAssistantModal: React.FC = () => {
           })}
 
           {loading && (
-            <div className="flex items-center space-x-2 text-xs text-[#00C878] font-mono">
-              <span className="w-2 h-2 rounded-full bg-[#00C878] animate-ping" />
+            <div className="flex items-center space-x-2 text-xs text-[#14B8A6] font-mono">
+              <span className="w-2 h-2 rounded-full bg-[#0F766E] animate-ping" />
               <span>Analyzing telemetry & workspace availability across Nigeria...</span>
             </div>
           )}
         </div>
 
         {/* Quick Suggestion Chips */}
-        <div className="px-4 py-2 bg-[#121614] border-t border-[#1E2522] flex items-center space-x-2 overflow-x-auto text-[11px]">
+        <div className="px-4 py-2 bg-[#0F172A] border-t border-[#374151] flex items-center space-x-2 overflow-x-auto text-[11px]">
           <button
             type="button"
             onClick={() => handleSend("Quiet podcast studio with 4K camera gear in Lekki")}
-            className="px-2.5 py-1 rounded-lg bg-[#18201B] border border-[#232D28] text-[#9EABA3] hover:text-[#00C878] shrink-0"
+            className="px-2.5 py-1 rounded-lg bg-[#1F2937] border border-[#374151] text-[#CBD5E1] hover:text-[#14B8A6] shrink-0"
           >
             🎙️ Podcast studio Lekki
           </button>
           <button
             type="button"
             onClick={() => handleSend("Boardroom for 10 people in Victoria Island with 85 inch display")}
-            className="px-2.5 py-1 rounded-lg bg-[#18201B] border border-[#232D28] text-[#9EABA3] hover:text-[#00C878] shrink-0"
+            className="px-2.5 py-1 rounded-lg bg-[#1F2937] border border-[#374151] text-[#CBD5E1] hover:text-[#14B8A6] shrink-0"
           >
             📊 Boardroom VI (10 pax)
           </button>
           <button
             type="button"
             onClick={() => handleSend("Cyclorama infinity photo studio in Ikeja")}
-            className="px-2.5 py-1 rounded-lg bg-[#18201B] border border-[#232D28] text-[#9EABA3] hover:text-[#00C878] shrink-0"
+            className="px-2.5 py-1 rounded-lg bg-[#1F2937] border border-[#374151] text-[#CBD5E1] hover:text-[#14B8A6] shrink-0"
           >
             📸 Photo studio Ikeja
           </button>
         </div>
 
         {/* Input Bar */}
-        <div className="p-3 bg-[#121614] border-t border-[#1E2522]">
+        <div className="p-3 bg-[#0F172A] border-t border-[#374151]">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -173,12 +173,12 @@ export const AiAssistantModal: React.FC = () => {
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="Ask anything about workspaces, power, fiber speeds..."
-              className="flex-1 p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] placeholder-[#718079] focus:outline-none focus:border-[#00C878]"
+              className="flex-1 p-2.5 rounded-xl bg-[#1F2937] border border-[#374151] text-xs text-[#F9FAFB] placeholder-[#94A3B8] focus:outline-none focus:border-[#0F766E]"
             />
             <button
               type="submit"
               disabled={loading || !prompt.trim()}
-              className="p-2.5 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] transition-all disabled:opacity-50"
+              className="p-2.5 rounded-xl bg-[#0F766E] hover:bg-[#14B8A6] text-white transition-all disabled:opacity-50"
             >
               <Send className="w-4 h-4" />
             </button>

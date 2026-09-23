@@ -37,8 +37,8 @@ export const HostPayoutsTab: React.FC = () => {
       {/* Top Header & Payout Trigger */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[#F2F2F2]">Host Earnings & Bank Settlements</h2>
-          <p className="text-xs text-[#718079]">
+          <h2 className="text-xl font-bold text-[#111827] dark:text-[#F9FAFB]">Host Earnings & Bank Settlements</h2>
+          <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
             Direct NIP bank transfers, real-time escrow settlements, and official payment receipts
           </p>
         </div>
@@ -46,7 +46,7 @@ export const HostPayoutsTab: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsHostPayoutModalOpen(true)}
-          className="px-5 py-2.5 rounded-2xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs flex items-center justify-center space-x-2 shadow-lg shadow-[#00C878]/15 cursor-pointer active:scale-95 transition-all"
+          className="px-5 py-2.5 rounded-2xl bg-[#0F766E] hover:bg-[#0D625C] text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-xs cursor-pointer active:scale-95 transition-all"
         >
           <ArrowUpRight className="w-4 h-4" />
           <span>Request Payout (₦)</span>
@@ -57,55 +57,55 @@ export const HostPayoutsTab: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         
         {/* Available for Withdrawal */}
-        <div className="p-5 rounded-3xl bg-[#141816] border border-[#00C878]/40 space-y-2 relative overflow-hidden">
-          <div className="flex items-center justify-between text-xs text-[#718079]">
+        <div className="p-5 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#0F766E]/40 space-y-2 relative overflow-hidden shadow-xs">
+          <div className="flex items-center justify-between text-xs text-[#6B7280] dark:text-[#9CA3AF]">
             <span>Available Balance</span>
-            <Wallet className="w-4 h-4 text-[#00C878]" />
+            <Wallet className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
           </div>
-          <div className="text-2xl font-mono font-extrabold text-[#00C878]">
+          <div className="text-2xl font-mono font-extrabold text-[#0F766E] dark:text-[#14B8A6]">
             ₦{(availableBalance || 0).toLocaleString()}
           </div>
-          <p className="text-[10px] text-[#9EABA3]">Cleared & ready for instant bank transfer</p>
+          <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Cleared & ready for instant bank transfer</p>
         </div>
 
         {/* Pending Settlement */}
-        <div className="p-5 rounded-3xl bg-[#141816] border border-[#1E2522] space-y-2">
-          <div className="flex items-center justify-between text-xs text-[#718079]">
+        <div className="p-5 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] space-y-2 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-[#6B7280] dark:text-[#9CA3AF]">
             <span>In Escrow (Active Bookings)</span>
-            <Clock className="w-4 h-4 text-[#E0A82E]" />
+            <Clock className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="text-2xl font-mono font-extrabold text-[#F2F2F2]">
+          <div className="text-2xl font-mono font-extrabold text-[#111827] dark:text-[#F9FAFB]">
             ₦140,000
           </div>
-          <p className="text-[10px] text-[#718079]">Releases immediately upon guest check-in</p>
+          <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Releases immediately upon guest check-in</p>
         </div>
 
         {/* Lifetime Earnings */}
-        <div className="p-5 rounded-3xl bg-[#141816] border border-[#1E2522] space-y-2">
-          <div className="flex items-center justify-between text-xs text-[#718079]">
+        <div className="p-5 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] space-y-2 shadow-xs">
+          <div className="flex items-center justify-between text-xs text-[#6B7280] dark:text-[#9CA3AF]">
             <span>Lifetime Payouts</span>
-            <ShieldCheck className="w-4 h-4 text-[#00C878]" />
+            <ShieldCheck className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
           </div>
-          <div className="text-2xl font-mono font-extrabold text-[#F2F2F2]">
+          <div className="text-2xl font-mono font-extrabold text-[#111827] dark:text-[#F9FAFB]">
             ₦{(lifetimeCompleted || 0).toLocaleString()}
           </div>
-          <p className="text-[10px] text-[#00C878] font-semibold">100% On-time NIP clearance</p>
+          <p className="text-[10px] text-[#0F766E] dark:text-[#14B8A6] font-semibold">100% On-time NIP clearance</p>
         </div>
 
       </div>
 
       {/* Payout Ledger & Invoices Table */}
-      <div className="p-6 rounded-3xl bg-[#141816] border border-[#1E2522] space-y-4">
-        <div className="flex items-center justify-between border-b border-[#1E2522] pb-3">
+      <div className="p-6 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] space-y-4 shadow-xs">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] dark:border-[#374151] pb-3">
           <div className="flex items-center space-x-2">
-            <History className="w-4 h-4 text-[#00C878]" />
-            <h3 className="text-sm font-bold text-[#F2F2F2]">Disbursement History & Receipts</h3>
+            <History className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+            <h3 className="text-sm font-bold text-[#111827] dark:text-[#F9FAFB]">Disbursement History & Receipts</h3>
           </div>
-          <span className="text-xs text-[#718079]">{hostPayouts.length} recorded settlements</span>
+          <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">{hostPayouts.length} recorded settlements</span>
         </div>
 
         {hostPayouts.length === 0 ? (
-          <div className="py-8 text-center text-xs text-[#718079]">
+          <div className="py-8 text-center text-xs text-[#6B7280] dark:text-[#9CA3AF]">
             No payout requests made yet. When you withdraw earnings, full transaction receipts will be logged here.
           </div>
         ) : (
@@ -113,31 +113,31 @@ export const HostPayoutsTab: React.FC = () => {
             {hostPayouts.map((payout) => (
               <div
                 key={payout.id}
-                className="p-4 rounded-2xl bg-[#18201B] border border-[#232D28] hover:border-[#2A3630] transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="p-4 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] hover:border-[#0F766E]/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div className="flex items-center space-x-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-[#00C878]/15 text-[#00C878] flex items-center justify-center font-mono font-bold shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#0F766E]/10 text-[#0F766E] dark:text-[#14B8A6] flex items-center justify-center font-mono font-bold shrink-0">
                     ₦
                   </div>
 
                   <div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm font-mono font-bold text-[#F2F2F2]">
+                      <span className="text-sm font-mono font-bold text-[#111827] dark:text-[#F9FAFB]">
                         ₦{(payout.amountNgn || 0).toLocaleString()}
                       </span>
                       <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
                         payout.status === 'completed'
-                          ? 'bg-[#00C878]/15 text-[#00C878] border border-[#00C878]/30'
-                          : 'bg-[#E0A82E]/15 text-[#E0A82E] border border-[#E0A82E]/30'
+                          ? 'bg-[#0F766E]/10 text-[#0F766E] dark:text-[#14B8A6] border border-[#0F766E]/20'
+                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
                       }`}>
                         {payout.status}
                       </span>
                     </div>
 
-                    <div className="text-xs text-[#718079] mt-0.5">
+                    <div className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
                       {payout.bankName} ••••• {payout.accountNumber.slice(-4)} ({payout.accountName})
                     </div>
-                    <div className="text-[10px] text-[#9EABA3] font-mono mt-0.5">
+                    <div className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] font-mono mt-0.5">
                       Ref: {payout.reference} • Date: {payout.createdAt}
                     </div>
                   </div>
@@ -147,7 +147,7 @@ export const HostPayoutsTab: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setSelectedReceiptPayout(payout)}
-                    className="px-3 py-1.5 rounded-xl bg-[#141816] hover:bg-[#232D28] text-xs font-semibold text-[#00C878] border border-[#232D28] flex items-center space-x-1.5 cursor-pointer transition-colors"
+                    className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#1F2937] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] text-xs font-semibold text-[#0F766E] dark:text-[#14B8A6] border border-[#E5E7EB] dark:border-[#374151] flex items-center space-x-1.5 cursor-pointer transition-colors"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>View Receipt</span>

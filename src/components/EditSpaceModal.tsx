@@ -135,18 +135,18 @@ export const EditSpaceModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="relative w-full max-w-2xl bg-[#141816] rounded-3xl border border-[#232D28] shadow-2xl p-6 sm:p-7 space-y-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-[#1F2937] rounded-3xl border border-[#E5E7EB] dark:border-[#374151] shadow-2xl p-6 sm:p-7 space-y-6 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1E2522] pb-4">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] dark:border-[#374151] pb-4">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-[#00C878]/15 text-[#00C878] flex items-center justify-center font-bold">
+            <div className="w-9 h-9 rounded-2xl bg-[#0F766E]/10 text-[#0F766E] dark:text-[#14B8A6] flex items-center justify-center font-bold">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[#F2F2F2]">Edit Workspace Listing</h3>
-              <p className="text-xs text-[#718079]">Update pricing, capacity, and location for {editingSpace.title}</p>
+              <h3 className="text-lg font-bold text-[#111827] dark:text-[#F9FAFB]">Edit Workspace Listing</h3>
+              <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">Update pricing, capacity, and location for {editingSpace.title}</p>
             </div>
           </div>
           <button
@@ -155,7 +155,7 @@ export const EditSpaceModal: React.FC = () => {
               setIsEditSpaceModalOpen(false);
               setEditingSpace(null);
             }}
-            className="p-2 rounded-xl text-[#718079] hover:text-[#F2F2F2] hover:bg-[#18201B] cursor-pointer"
+            className="p-2 rounded-xl text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] cursor-pointer transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -165,22 +165,22 @@ export const EditSpaceModal: React.FC = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Hub Title *</label>
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Hub Title *</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                className="w-full p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Category</label>
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Category</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as SpaceCategory)}
-                className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                className="w-full p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E] cursor-pointer"
               >
                 <option value="coworking">Coworking &amp; Hot Desks</option>
                 <option value="private_office">Private Dedicated Office</option>
@@ -194,17 +194,17 @@ export const EditSpaceModal: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-[#F2F2F2]">Tagline / Short Pitch</label>
+            <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Tagline / Short Pitch</label>
             <input
               type="text"
               value={tagline}
               onChange={(e) => setTagline(e.target.value)}
-              className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+              className="w-full p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
             />
           </div>
 
           {/* Photo Management Section */}
-          <div className="p-4 rounded-2xl bg-[#18201B] border border-[#232D28] space-y-3">
+          <div className="p-4 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] space-y-3">
             <PhotoUploadManager
               images={images}
               onChange={setImages}
@@ -226,24 +226,24 @@ export const EditSpaceModal: React.FC = () => {
           />
 
           {/* Flexible Pricing Model Configuration */}
-          <div className="p-4 rounded-2xl bg-[#18201B] border border-[#232D28] space-y-3">
+          <div className="p-4 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-bold text-[#00C878] uppercase flex items-center space-x-1.5">
+              <span className="text-xs font-mono font-bold text-[#0F766E] dark:text-[#14B8A6] uppercase flex items-center space-x-1.5">
                 <Banknote className="w-3.5 h-3.5" />
                 <span>Pricing Model &amp; Rates</span>
               </span>
-              <span className="text-[10px] text-[#718079]">
+              <span className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">
                 {pricingBasis === 'person' ? 'Scales per person' : 'Flat rate for space'}
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               <div className="space-y-1">
-                <label className="text-[11px] text-[#9EABA3]">Pricing Basis</label>
+                <label className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Pricing Basis</label>
                 <select
                   value={pricingBasis}
                   onChange={(e) => setPricingBasis(e.target.value as PricingBasis)}
-                  className="w-full p-2 rounded-xl bg-[#141816] border border-[#232D28] text-xs text-[#F2F2F2]"
+                  className="w-full p-2 rounded-xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] cursor-pointer"
                 >
                   <option value="person">Per Person (Seat)</option>
                   <option value="space">Per Space (Whole Area)</option>
@@ -251,7 +251,7 @@ export const EditSpaceModal: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] text-[#9EABA3]">Billing Period</label>
+                <label className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Billing Period</label>
                 <select
                   value={pricingPeriod}
                   onChange={(e) => {
@@ -259,7 +259,7 @@ export const EditSpaceModal: React.FC = () => {
                     setPricingPeriod(newP);
                     setRate(getDefaultRateForPeriod(newP, category));
                   }}
-                  className="w-full p-2 rounded-xl bg-[#141816] border border-[#232D28] text-xs text-[#F2F2F2]"
+                  className="w-full p-2 rounded-xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] cursor-pointer"
                 >
                   <option value="hour">Per Hour</option>
                   <option value="day">Per Day</option>
@@ -269,9 +269,9 @@ export const EditSpaceModal: React.FC = () => {
               </div>
 
               <div className="space-y-1 col-span-2 sm:col-span-1">
-                <label className="text-[11px] text-[#9EABA3]">Rate (₦ NGN)</label>
+                <label className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Rate (₦ NGN)</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2 text-[#00C878] font-bold text-xs">₦</span>
+                  <span className="absolute left-3 top-2 text-[#0F766E] dark:text-[#14B8A6] font-bold text-xs">₦</span>
                   <input
                     type="number"
                     min="500"
@@ -293,22 +293,22 @@ export const EditSpaceModal: React.FC = () => {
                     }}
                     placeholder={getDefaultRateForPeriod(pricingPeriod, category).toLocaleString()}
                     required
-                    className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#141816] border border-[#232D28] text-xs text-[#F2F2F2] font-mono focus:outline-none focus:border-[#00C878]"
+                    className="w-full pl-8 pr-3 py-2 rounded-xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] font-mono focus:outline-none focus:border-[#0F766E]"
                   />
                 </div>
               </div>
             </div>
 
             {pricingPeriod === 'session' && (
-              <div className="pt-2 border-t border-[#232D28] flex items-center justify-between">
-                <label className="text-xs text-[#9EABA3]">Session Duration (Hours)</label>
+              <div className="pt-2 border-t border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between">
+                <label className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">Session Duration (Hours)</label>
                 <input
                   type="number"
                   value={sessionDurationHours}
                   onChange={(e) => setSessionDurationHours(Number(e.target.value))}
                   min={1}
                   max={12}
-                  className="w-24 p-1.5 rounded-lg bg-[#141816] border border-[#232D28] text-xs text-[#F2F2F2] font-mono text-center"
+                  className="w-24 p-1.5 rounded-lg bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] font-mono text-center"
                 />
               </div>
             )}
@@ -316,28 +316,28 @@ export const EditSpaceModal: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Max Capacity</label>
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Max Capacity</label>
               <div className="relative">
-                <Users className="absolute left-3 top-2.5 w-3.5 h-3.5 text-[#718079]" />
+                <Users className="absolute left-3 top-2.5 w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF]" />
                 <input
                   type="number"
                   min="1"
                   value={capacity}
                   onChange={(e) => setCapacity(Number(e.target.value))}
                   required
-                  className="w-full pl-8 pr-3 py-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] font-mono focus:outline-none focus:border-[#00C878]"
+                  className="w-full pl-8 pr-3 py-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] font-mono focus:outline-none focus:border-[#0F766E]"
                 />
               </div>
             </div>
             
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2]">Neighborhood / Area</label>
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Neighborhood / Area</label>
               <input
                 type="text"
                 value={neighborhood}
                 onChange={(e) => setNeighborhood(e.target.value)}
                 placeholder="e.g. Victoria Island"
-                className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                className="w-full p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
               />
             </div>
           </div>
@@ -345,14 +345,14 @@ export const EditSpaceModal: React.FC = () => {
           {/* Power & Connectivity */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2] flex items-center space-x-1.5">
-                <Zap className="w-3.5 h-3.5 text-[#00C878]" />
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB] flex items-center space-x-1.5">
+                <Zap className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
                 <span>Power System Architecture</span>
               </label>
               <select
                 value={powerType}
                 onChange={(e) => setPowerType(e.target.value as Space['powerType'])}
-                className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                className="w-full p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E] cursor-pointer"
               >
                 <option value="Solar + Inverter">Solar + Inverter Hybrid</option>
                 <option value="Heavy Duty Gen + Solar Hybrid">Heavy Duty Gen + Solar Hybrid</option>
@@ -362,8 +362,8 @@ export const EditSpaceModal: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#F2F2F2] flex items-center space-x-1.5">
-                <Wifi className="w-3.5 h-3.5 text-[#00C878]" />
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB] flex items-center space-x-1.5">
+                <Wifi className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
                 <span>Internet ISP &amp; Speed (Mbps)</span>
               </label>
               <div className="flex space-x-2">
@@ -372,24 +372,24 @@ export const EditSpaceModal: React.FC = () => {
                   value={internetIsp}
                   onChange={(e) => setInternetIsp(e.target.value)}
                   placeholder="e.g. Starlink + MainOne"
-                  className="w-2/3 p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-2/3 p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
                 />
                 <input
                   type="number"
                   value={internetSpeed}
                   onChange={(e) => setInternetSpeed(Number(e.target.value))}
                   placeholder="Mbps"
-                  className="w-1/3 p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] font-mono focus:outline-none focus:border-[#00C878]"
+                  className="w-1/3 p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] font-mono focus:outline-none focus:border-[#0F766E]"
                 />
               </div>
             </div>
           </div>
 
           {/* Active Status */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#18201B] border border-[#232D28]">
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151]">
             <div>
-              <div className="text-xs font-bold text-[#F2F2F2]">Public Listing Status</div>
-              <div className="text-[11px] text-[#718079]">
+              <div className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB]">Public Listing Status</div>
+              <div className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
                 {isActive ? 'Workspace is public and accepting instant guest bookings' : 'Workspace is paused and hidden from guest discovery'}
               </div>
             </div>
@@ -397,7 +397,7 @@ export const EditSpaceModal: React.FC = () => {
               type="button"
               onClick={() => setIsActive(!isActive)}
               className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                isActive ? 'bg-[#00C878]/15 text-[#00C878] border border-[#00C878]/30' : 'bg-[#FF5C5C]/15 text-[#FF8585] border border-[#FF5C5C]/30'
+                isActive ? 'bg-[#0F766E]/15 text-[#0F766E] dark:text-[#14B8A6] border border-[#0F766E]/30' : 'bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30'
               }`}
             >
               {isActive ? 'Active / Open' : 'Paused / Hidden'}
@@ -405,21 +405,21 @@ export const EditSpaceModal: React.FC = () => {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[#1E2522]">
+          <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[#E5E7EB] dark:border-[#374151]">
             <button
               type="button"
               onClick={() => {
                 setIsEditSpaceModalOpen(false);
                 setEditingSpace(null);
               }}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-[#9EABA3] hover:text-[#F2F2F2] cursor-pointer"
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] cursor-pointer transition-colors"
             >
               Cancel
             </button>
 
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs flex items-center space-x-2 shadow-lg cursor-pointer"
+              className="px-6 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#0B625C] text-white font-bold text-xs flex items-center space-x-2 shadow-xs cursor-pointer transition-colors"
             >
               <Save className="w-4 h-4" />
               <span>Save &amp; Publish Changes</span>

@@ -160,40 +160,40 @@ export const DiagnosticsModal: React.FC = () => {
   const healthyCount = diagnosticsList.filter(d => d.status === 'healthy').length;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="relative w-full max-w-2xl bg-[#141816] rounded-3xl border border-[#232D28] shadow-2xl p-6 sm:p-7 space-y-6">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-[#1F2937] rounded-3xl border border-[#E5E7EB] dark:border-[#374151] shadow-2xl p-6 sm:p-7 space-y-6 animate-in fade-in zoom-in-95 duration-150">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#1E2522] pb-4">
+        <div className="flex items-center justify-between border-b border-[#E2ECEB] dark:border-[#166D74] pb-4">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#00C878]/15 border border-[#00C878]/30 flex items-center justify-center text-[#00C878]">
+            <div className="w-10 h-10 rounded-2xl bg-[#14BEB8]/15 border border-[#14BEB8]/30 flex items-center justify-center text-[#006B70] dark:text-[#28D2CB]">
               <Activity className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-[#F2F2F2]">OFIS 2.0 System Diagnostics</h2>
-              <p className="text-xs text-[#718079]">Live integrity audit: Supabase DB, Auth, Bookings, Pricing & Facilities</p>
+              <h2 className="text-lg font-bold text-[#12383B] dark:text-white">OFIS 2.0 System Diagnostics</h2>
+              <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">Live integrity audit: Supabase DB, Auth, Bookings, Pricing &amp; Facilities</p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => setIsDiagnosticsModalOpen(false)}
-            className="p-2 rounded-xl text-[#718079] hover:text-[#F2F2F2] hover:bg-[#1E2522] transition-colors"
+            className="p-2 rounded-xl text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#0B4A50] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Status Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#0D0D0D] border border-[#1E2522]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74]">
           <div className="flex items-center space-x-3">
-            <div className="w-3 h-3 rounded-full bg-[#00C878] animate-pulse" />
+            <div className="w-3 h-3 rounded-full bg-[#14BEB8] animate-pulse" />
             <div>
-              <span className="text-xs font-semibold text-[#F2F2F2]">
-                {healthyCount}/{diagnosticsList.length} Systems Healthy & Certified
+              <span className="text-xs font-semibold text-[#12383B] dark:text-white">
+                {healthyCount}/{diagnosticsList.length} Systems Healthy &amp; Certified
               </span>
               {lastRunTime && (
-                <p className="text-[10px] text-[#718079]">Last audit run at {lastRunTime}</p>
+                <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">Last audit run at {lastRunTime}</p>
               )}
             </div>
           </div>
@@ -202,7 +202,7 @@ export const DiagnosticsModal: React.FC = () => {
             type="button"
             onClick={runFullDiagnosis}
             disabled={isRunning}
-            className="px-4 py-2 rounded-xl bg-[#00C878] text-[#0D0D0D] text-xs font-bold hover:bg-[#00E58B] transition-all flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#14BEB8] text-white text-xs font-bold hover:bg-[#0EA8A2] transition-all flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer shadow-xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRunning ? 'animate-spin' : ''}`} />
             <span>{isRunning ? 'Auditing Subsystems...' : 'Re-run Diagnostics'}</span>
@@ -212,13 +212,13 @@ export const DiagnosticsModal: React.FC = () => {
         {/* Progress Bar (Visible while running) */}
         {isRunning && (
           <div className="space-y-1.5">
-            <div className="flex justify-between text-[11px] text-[#718079]">
-              <span>Testing endpoints & schemas...</span>
+            <div className="flex justify-between text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">
+              <span>Testing endpoints &amp; schemas...</span>
               <span>{progress}%</span>
             </div>
-            <div className="w-full h-1.5 bg-[#1E2522] rounded-full overflow-hidden">
+            <div className="w-full h-1.5 bg-[#E2ECEB] dark:bg-[#166D74] rounded-full overflow-hidden">
               <div 
-                className="h-full bg-[#00C878] transition-all duration-300 rounded-full"
+                className="h-full bg-[#14BEB8] transition-all duration-300 rounded-full"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -230,40 +230,40 @@ export const DiagnosticsModal: React.FC = () => {
           {diagnosticsList.map((item) => (
             <div
               key={item.id}
-              className="p-4 rounded-2xl bg-[#0D0D0D] border border-[#1E2522] space-y-2 hover:border-[#232D28] transition-all"
+              className="p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2 hover:border-[#14BEB8]/40 transition-all"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2.5">
                   {item.status === 'healthy' ? (
-                    <CheckCircle2 className="w-4 h-4 text-[#00C878] shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-[#14BEB8] shrink-0" />
                   ) : item.status === 'warning' ? (
-                    <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                   ) : (
-                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                    <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
                   )}
-                  <span className="text-xs font-bold text-[#F2F2F2]">{item.title}</span>
+                  <span className="text-xs font-bold text-[#12383B] dark:text-white">{item.title}</span>
                 </div>
                 {item.latencyMs !== undefined && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#141816] text-[#718079] border border-[#1E2522]">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white dark:bg-[#07383D] text-[#5D7A7D] dark:text-[#B8D1D0] border border-[#E2ECEB] dark:border-[#166D74]">
                     {item.latencyMs}ms
                   </span>
                 )}
               </div>
-              <p className="text-xs text-[#9EABA3] pl-6.5 leading-relaxed">{item.detail}</p>
+              <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0] pl-6.5 leading-relaxed">{item.detail}</p>
             </div>
           ))}
         </div>
 
         {/* Footer */}
-        <div className="pt-2 flex items-center justify-between border-t border-[#1E2522] text-xs text-[#718079]">
+        <div className="pt-2 flex items-center justify-between border-t border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
           <span className="flex items-center space-x-1.5">
-            <ShieldCheck className="w-4 h-4 text-[#00C878]" />
+            <ShieldCheck className="w-4 h-4 text-[#14BEB8]" />
             <span>OFIS 2.0 Production Ready Build</span>
           </span>
           <button
             type="button"
             onClick={() => setIsDiagnosticsModalOpen(false)}
-            className="px-4 py-2 rounded-xl bg-[#1E2522] hover:bg-[#232D28] text-xs font-semibold text-[#F2F2F2] transition-colors"
+            className="px-4 py-2 rounded-xl bg-white dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] text-xs font-semibold text-[#12383B] dark:text-white transition-colors cursor-pointer"
           >
             Close
           </button>

@@ -101,7 +101,7 @@ export const HostBookingsTab: React.FC<HostBookingsTabProps> = ({
             placeholder="Search guest, booking ID or pass..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-2xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] placeholder-[#6B7280] dark:placeholder-[#9CA3AF] focus:outline-none focus:border-[#16A34A] shadow-xs"
+            className="w-full pl-9 pr-4 py-2 rounded-2xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] placeholder-[#6B7280] dark:placeholder-[#9CA3AF] focus:outline-none focus:border-[#0F766E] shadow-xs"
           />
         </div>
       </div>
@@ -123,7 +123,7 @@ export const HostBookingsTab: React.FC<HostBookingsTabProps> = ({
               onClick={() => setActiveFilter(tab.id as any)}
               className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all flex items-center space-x-2 cursor-pointer shadow-xs ${
                 isActive
-                  ? 'bg-[#16A34A] text-white'
+                  ? 'bg-[#0F766E] text-white'
                   : 'bg-white dark:bg-[#1F2937] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] border border-[#E5E7EB] dark:border-[#374151]'
               }`}
             >
@@ -157,13 +157,13 @@ export const HostBookingsTab: React.FC<HostBookingsTabProps> = ({
             return (
               <div
                 key={booking.id}
-                className="p-5 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] hover:border-[#16A34A]/50 transition-all space-y-4 shadow-xs"
+                className="p-5 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] hover:border-[#0F766E]/50 transition-all space-y-4 shadow-xs"
               >
                 {/* Upper Info Row */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-start space-x-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-[#DCFCE7] dark:bg-[#16A34A]/20 border border-[#16A34A]/30 text-[#16A34A] flex items-center justify-center font-bold shrink-0">
-                      <User className="w-6 h-6 text-[#16A34A]" />
+                    <div className="w-12 h-12 rounded-2xl bg-[#E6F4F2] dark:bg-[#0F766E]/20 border border-[#0F766E]/30 text-[#0F766E] flex items-center justify-center font-bold shrink-0">
+                      <User className="w-6 h-6 text-[#0F766E]" />
                     </div>
 
                     <div>
@@ -176,7 +176,7 @@ export const HostBookingsTab: React.FC<HostBookingsTabProps> = ({
 
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
                           isCheckedIn
-                            ? 'bg-[#DCFCE7] dark:bg-[#16A34A]/20 text-[#16A34A] border border-[#16A34A]/30'
+                            ? 'bg-[#E6F4F2] dark:bg-[#0F766E]/20 text-[#0F766E] border border-[#0F766E]/30'
                             : isCancelled
                             ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30'
                             : isCompleted
@@ -194,7 +194,7 @@ export const HostBookingsTab: React.FC<HostBookingsTabProps> = ({
                         {booking.selectedSeatLabel && (
                           <>
                             <span>•</span>
-                            <span className="text-[#16A34A] font-medium">{booking.selectedSeatLabel}</span>
+                            <span className="text-[#0F766E] font-medium">{booking.selectedSeatLabel}</span>
                           </>
                         )}
                       </div>
@@ -219,7 +219,7 @@ export const HostBookingsTab: React.FC<HostBookingsTabProps> = ({
 
                   {/* Pricing & Digital Pass Code */}
                   <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-2 sm:pt-0 border-[#E5E7EB] dark:border-[#374151]">
-                    <div className="text-base font-mono font-extrabold text-[#16A34A]">
+                    <div className="text-base font-mono font-extrabold text-[#0F766E]">
                       ₦{(booking.totalAmount || 0).toLocaleString()}
                     </div>
                     <div className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] flex items-center space-x-1">
@@ -247,7 +247,7 @@ export const HostBookingsTab: React.FC<HostBookingsTabProps> = ({
                       onClick={() => setMessagingBooking(booking)}
                       className="px-3 py-1.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] border border-[#E5E7EB] dark:border-[#374151] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] flex items-center space-x-1.5 cursor-pointer transition-colors shadow-2xs"
                     >
-                      <MessageSquare className="w-3.5 h-3.5 text-[#16A34A]" />
+                      <MessageSquare className="w-3.5 h-3.5 text-[#0F766E]" />
                       <span>Message Guest</span>
                     </button>
 
@@ -268,7 +268,7 @@ export const HostBookingsTab: React.FC<HostBookingsTabProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenCheckInCode(booking.digitalPassCode)}
-                          className="px-3.5 py-1.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95 transition-all"
+                          className="px-3.5 py-1.5 rounded-xl bg-[#0F766E] hover:bg-[#0B625C] text-white font-bold text-xs flex items-center space-x-1.5 cursor-pointer shadow-xs active:scale-95 transition-all"
                         >
                           <QrCode className="w-3.5 h-3.5" />
                           <span>Turnstile Check In</span>
@@ -289,7 +289,7 @@ export const HostBookingsTab: React.FC<HostBookingsTabProps> = ({
                     )}
 
                     {isCheckedIn && (
-                      <span className="px-3 py-1.5 rounded-xl bg-[#DCFCE7] dark:bg-[#16A34A]/20 text-[#16A34A] text-xs font-bold border border-[#16A34A]/30 flex items-center space-x-1.5">
+                      <span className="px-3 py-1.5 rounded-xl bg-[#E6F4F2] dark:bg-[#0F766E]/20 text-[#0F766E] text-xs font-bold border border-[#0F766E]/30 flex items-center space-x-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Checked In • Active in Hub</span>
                       </span>

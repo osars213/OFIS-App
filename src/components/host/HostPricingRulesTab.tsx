@@ -98,19 +98,19 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
       {/* Header & Space Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[#F2F2F2]">Dynamic Pricing & Surge Multipliers</h2>
-          <p className="text-xs text-[#718079]">
+          <h2 className="text-xl font-bold text-[#111827] dark:text-[#F9FAFB]">Dynamic Pricing & Surge Multipliers</h2>
+          <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
             Configure base hourly/daily rates, weekend adjustments, holiday surges, and promotional discount codes
           </p>
         </div>
 
         {hostSpaces.length > 1 && (
           <div className="flex items-center space-x-2">
-            <Building2 className="w-4 h-4 text-[#00C878]" />
+            <Building2 className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
             <select
               value={activeSpaceId}
               onChange={(e) => setActiveSpaceId(e.target.value)}
-              className="px-3.5 py-2 rounded-2xl bg-[#141816] border border-[#1E2522] text-xs font-bold text-[#F2F2F2] focus:outline-none focus:border-[#00C878] cursor-pointer"
+              className="px-3.5 py-2 rounded-2xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs font-bold text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E] cursor-pointer"
             >
               {hostSpaces.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -126,11 +126,11 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Form Column (2/3) */}
-        <form onSubmit={handleSave} className="lg:col-span-2 p-6 rounded-3xl bg-[#141816] border border-[#1E2522] space-y-5">
+        <form onSubmit={handleSave} className="lg:col-span-2 p-6 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] space-y-5 shadow-xs">
           
-          <div className="flex items-center space-x-2 border-b border-[#1E2522] pb-3">
-            <Sliders className="w-4 h-4 text-[#00C878]" />
-            <h3 className="text-sm font-bold text-[#F2F2F2]">
+          <div className="flex items-center space-x-2 border-b border-[#E5E7EB] dark:border-[#374151] pb-3">
+            <Sliders className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+            <h3 className="text-sm font-bold text-[#111827] dark:text-[#F9FAFB]">
               Pricing Rules for "{currentSpace?.title}"
             </h3>
           </div>
@@ -139,9 +139,9 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
             
             {/* Base Hourly */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#9EABA3]">Base Rate per Hour (₦)</label>
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Base Rate per Hour (₦)</label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#00C878]">₦</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#0F766E] dark:text-[#14B8A6]">₦</span>
                 <input
                   type="number"
                   min="500"
@@ -156,16 +156,16 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
                       setHourlyRate(currentSpace?.pricePerHour || 3500);
                     }
                   }}
-                  className="w-full pl-8 pr-4 py-2.5 rounded-2xl bg-[#18201B] border border-[#232D28] text-xs font-mono font-bold text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full pl-8 pr-4 py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs font-mono font-bold text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
                 />
               </div>
             </div>
 
             {/* Base Daily */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#9EABA3]">Base Full-Day Pass (₦)</label>
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Base Full-Day Pass (₦)</label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#00C878]">₦</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#0F766E] dark:text-[#14B8A6]">₦</span>
                 <input
                   type="number"
                   min="3000"
@@ -180,18 +180,18 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
                       setDailyRate(currentSpace?.pricePerDay || 25000);
                     }
                   }}
-                  className="w-full pl-8 pr-4 py-2.5 rounded-2xl bg-[#18201B] border border-[#232D28] text-xs font-mono font-bold text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full pl-8 pr-4 py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs font-mono font-bold text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
                 />
               </div>
             </div>
 
             {/* Weekend Multiplier */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#9EABA3]">Weekend Rate Multiplier</label>
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Weekend Rate Multiplier</label>
               <select
                 value={weekendMultiplier}
                 onChange={(e) => setWeekendMultiplier(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-2xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878] cursor-pointer"
+                className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E] cursor-pointer"
               >
                 <option value={1.0}>Standard (1.0x - No Change)</option>
                 <option value={1.1}>+10% Surge (1.10x)</option>
@@ -203,11 +203,11 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
 
             {/* Holiday / Event Surge Multiplier */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#9EABA3]">Public Holiday & Summit Surge</label>
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Public Holiday & Surge</label>
               <select
                 value={holidayMultiplier}
                 onChange={(e) => setHolidayMultiplier(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-2xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878] cursor-pointer"
+                className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E] cursor-pointer"
               >
                 <option value={1.15}>+15% Surge (1.15x)</option>
                 <option value={1.25}>+25% Surge (1.25x) [Standard]</option>
@@ -218,49 +218,49 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
 
             {/* Promo Discount */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#9EABA3]">Promotional Discount (%)</label>
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Promotional Discount (%)</label>
               <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#00C878]">%</span>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#0F766E] dark:text-[#14B8A6]">%</span>
                 <input
                   type="number"
                   min="0"
                   max="50"
                   value={promoDiscountPercent}
                   onChange={(e) => setPromoDiscountPercent(Number(e.target.value))}
-                  className="w-full pl-8 pr-4 py-2.5 rounded-2xl bg-[#18201B] border border-[#232D28] text-xs font-mono font-bold text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full pl-8 pr-4 py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs font-mono font-bold text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
                 />
               </div>
             </div>
 
             {/* Promo Code */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#9EABA3]">Active Promo Code</label>
+              <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Active Promo Code</label>
               <div className="relative">
-                <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#718079]" />
+                <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
                 <input
                   type="text"
                   value={promoCode}
                   onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-[#18201B] border border-[#232D28] text-xs font-mono font-bold text-[#00C878] focus:outline-none focus:border-[#00C878]"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs font-mono font-bold text-[#0F766E] dark:text-[#14B8A6] focus:outline-none focus:border-[#0F766E]"
                 />
               </div>
             </div>
 
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-[#1E2522]">
+          <div className="flex items-center justify-between pt-4 border-t border-[#E5E7EB] dark:border-[#374151]">
             {savedSuccess ? (
-              <span className="text-xs font-bold text-[#00C878] flex items-center space-x-1.5">
+              <span className="text-xs font-bold text-[#0F766E] dark:text-[#14B8A6] flex items-center space-x-1.5">
                 <Check className="w-4 h-4" />
                 <span>Pricing Rules Saved & Live!</span>
               </span>
             ) : (
-              <span className="text-xs text-[#718079]">Changes apply instantly across search & checkout</span>
+              <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">Changes apply instantly across search & checkout</span>
             )}
 
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-2xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-bold text-xs flex items-center space-x-1.5 cursor-pointer shadow-lg shadow-[#00C878]/15"
+              className="px-6 py-2.5 rounded-2xl bg-[#0F766E] hover:bg-[#0D625C] text-white font-bold text-xs flex items-center space-x-1.5 cursor-pointer shadow-sm transition-colors"
             >
               <span>Save & Publish Rules</span>
             </button>
@@ -270,49 +270,49 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
 
         {/* Live Simulator Preview (1/3) */}
         <div className="space-y-4">
-          <div className="p-5 rounded-3xl bg-[#141816] border border-[#00C878]/30 space-y-4">
+          <div className="p-5 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#0F766E]/30 space-y-4 shadow-xs">
             
-            <div className="flex items-center space-x-2 border-b border-[#1E2522] pb-3">
-              <Calculator className="w-4 h-4 text-[#00C878]" />
-              <h4 className="text-xs font-bold text-[#F2F2F2]">Live Guest Pricing Simulator</h4>
+            <div className="flex items-center space-x-2 border-b border-[#E5E7EB] dark:border-[#374151] pb-3">
+              <Calculator className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+              <h4 className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB]">Live Guest Pricing Simulator</h4>
             </div>
 
             <div className="space-y-2.5 text-xs">
               <div className="flex justify-between items-center">
-                <span className="text-[#718079]">Weekday Hourly:</span>
-                <span className="font-mono font-bold text-[#F2F2F2]">₦{(hourlyRate || 0).toLocaleString()}/hr</span>
+                <span className="text-[#6B7280] dark:text-[#9CA3AF]">Weekday Hourly:</span>
+                <span className="font-mono font-bold text-[#111827] dark:text-[#F9FAFB]">₦{(hourlyRate || 0).toLocaleString()}/hr</span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-[#718079]">Weekend Hourly ({weekendMultiplier}x):</span>
-                <span className="font-mono font-bold text-[#00C878]">₦{(weekendHourly || 0).toLocaleString()}/hr</span>
+                <span className="text-[#6B7280] dark:text-[#9CA3AF]">Weekend Hourly ({weekendMultiplier}x):</span>
+                <span className="font-mono font-bold text-[#0F766E] dark:text-[#14B8A6]">₦{(weekendHourly || 0).toLocaleString()}/hr</span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-[#718079]">Holiday Surge ({holidayMultiplier}x):</span>
-                <span className="font-mono font-bold text-[#E0A82E]">₦{(holidayHourly || 0).toLocaleString()}/hr</span>
+                <span className="text-[#6B7280] dark:text-[#9CA3AF]">Holiday Surge ({holidayMultiplier}x):</span>
+                <span className="font-mono font-bold text-amber-600 dark:text-amber-400">₦{(holidayHourly || 0).toLocaleString()}/hr</span>
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-[#718079]">With Promo ({promoDiscountPercent}% off):</span>
-                <span className="font-mono font-bold text-[#00C878]">₦{(promoHourly || 0).toLocaleString()}/hr</span>
+                <span className="text-[#6B7280] dark:text-[#9CA3AF]">With Promo ({promoDiscountPercent}% off):</span>
+                <span className="font-mono font-bold text-[#0F766E] dark:text-[#14B8A6]">₦{(promoHourly || 0).toLocaleString()}/hr</span>
               </div>
             </div>
 
             {/* Payout Breakdown Simulation */}
-            <div className="pt-3 border-t border-[#1E2522] space-y-2 font-mono text-[11px]">
-              <div className="text-[10px] text-[#718079] uppercase font-sans font-bold">
+            <div className="pt-3 border-t border-[#E5E7EB] dark:border-[#374151] space-y-2 font-mono text-[11px]">
+              <div className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] uppercase font-sans font-bold">
                 Sample 4-Hour Reservation:
               </div>
-              <div className="flex justify-between text-[#9EABA3]">
+              <div className="flex justify-between text-[#111827] dark:text-[#F9FAFB]">
                 <span>Gross Guest Total:</span>
                 <span>₦{(simGross || 0).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-[#718079]">
+              <div className="flex justify-between text-[#6B7280] dark:text-[#9CA3AF]">
                 <span>OFIS Escrow (8%):</span>
                 <span>-₦{(simPlatformFee || 0).toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-xs font-bold text-[#00C878] pt-1 border-t border-[#1E2522]">
+              <div className="flex justify-between text-xs font-bold text-[#0F766E] dark:text-[#14B8A6] pt-1 border-t border-[#E5E7EB] dark:border-[#374151]">
                 <span>Your Net Payout:</span>
                 <span>₦{(simNetHostPayout || 0).toLocaleString()}</span>
               </div>
@@ -320,13 +320,13 @@ export const HostPricingRulesTab: React.FC<HostPricingRulesTabProps> = ({
 
           </div>
 
-          <div className="p-4 rounded-3xl bg-[#0D0D0D] border border-[#232D28] space-y-2 text-[11px] text-[#718079]">
-            <div className="flex items-center space-x-1.5 text-[#00C878] font-bold">
+          <div className="p-4 rounded-3xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] space-y-2 text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+            <div className="flex items-center space-x-1.5 text-[#0F766E] dark:text-[#14B8A6] font-bold">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Smart Surge Recommendation</span>
             </div>
             <p>
-              Victoria Island & Ikoyi hubs see 40% higher weekend demand from tech founders and remote teams. A 15% weekend multiplier optimizes both occupancy and revenue.
+              Victoria Island &amp; Ikoyi hubs see 40% higher weekend demand from tech founders and remote teams. A 15% weekend multiplier optimizes both occupancy and revenue.
             </p>
           </div>
         </div>

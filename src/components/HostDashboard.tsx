@@ -109,10 +109,10 @@ export const HostDashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#111827] pb-32 transition-colors">
+    <div className="min-h-screen bg-[#FFF9F4] dark:bg-[#07383D] pb-32 transition-colors">
       
       {/* Sticky Top Header Bar */}
-      <div className="sticky top-16 z-30 bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md border-b border-[#E5E7EB] dark:border-[#374151] py-3.5 px-4 sm:px-6 lg:px-8">
+      <div className="sticky top-16 z-30 bg-[#FFF9F4]/95 dark:bg-[#07383D]/95 backdrop-blur-md border-b border-[#E2ECEB] dark:border-[#166D74] py-3.5 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           
           {/* Left Brand & Title */}
@@ -121,19 +121,19 @@ export const HostDashboard: React.FC = () => {
               type="button"
               onClick={handleSwitchToGuestMode}
               title="Switch to Guest Mode"
-              className="p-2 rounded-xl bg-white dark:bg-[#1F2937] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#16A34A] dark:hover:text-[#16A34A] border border-[#E5E7EB] dark:border-[#374151] cursor-pointer transition-colors shadow-xs"
+              className="p-2 rounded-xl bg-white dark:bg-[#0B4A50] text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#14BEB8] dark:hover:text-[#28D2CB] border border-[#E2ECEB] dark:border-[#166D74] cursor-pointer transition-colors shadow-xs"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div>
               <div className="flex items-center space-x-2">
-                <h1 className="text-lg sm:text-xl font-bold text-[#111827] dark:text-[#F9FAFB]">Host Operations & Property Portal</h1>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#DCFCE7] dark:bg-[#16A34A]/20 text-[#16A34A] font-bold border border-[#16A34A]/30">
+                <h1 className="text-lg sm:text-xl font-bold text-[#12383B] dark:text-white">Host Operations &amp; Property Portal</h1>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 text-[#006B70] dark:text-[#28D2CB] font-bold border border-[#14BEB8]/30">
                   Host Mode Active
                 </span>
               </div>
-              <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
-                Logged in as <span className="text-[#111827] dark:text-[#F9FAFB] font-semibold">{currentUser.name}</span> ({hostSpaces.length} Workspaces)
+              <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
+                Logged in as <span className="text-[#12383B] dark:text-white font-semibold">{currentUser.name}</span> ({hostSpaces.length} Workspaces)
               </p>
             </div>
           </div>
@@ -145,34 +145,34 @@ export const HostDashboard: React.FC = () => {
             <button
               type="button"
               onClick={handleSwitchToGuestMode}
-              className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#1F2937] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] border border-[#E5E7EB] dark:border-[#374151] text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] flex items-center space-x-1.5 cursor-pointer whitespace-nowrap transition-colors shadow-xs"
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] text-xs font-semibold text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white flex items-center space-x-1.5 cursor-pointer whitespace-nowrap transition-colors shadow-xs"
             >
-              <Repeat className="w-3.5 h-3.5 text-[#16A34A]" />
+              <Repeat className="w-3.5 h-3.5 text-[#14BEB8]" />
               <span>Switch to Guest View</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsDiagnosticsModalOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#1F2937] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] border border-[#E5E7EB] dark:border-[#374151] text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] flex items-center space-x-1.5 cursor-pointer whitespace-nowrap shadow-xs"
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] text-xs font-semibold text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white flex items-center space-x-1.5 cursor-pointer whitespace-nowrap shadow-xs"
             >
-              <Activity className="w-3.5 h-3.5 text-[#16A34A]" />
+              <Activity className="w-3.5 h-3.5 text-[#14BEB8]" />
               <span>Health</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsHostPayoutModalOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-[#DCFCE7] dark:bg-[#16A34A]/20 hover:bg-[#BBF7D0] dark:hover:bg-[#16A34A]/30 border border-[#16A34A]/30 text-xs font-bold text-[#16A34A] flex items-center space-x-1.5 cursor-pointer whitespace-nowrap shadow-xs"
+              className="px-3 py-1.5 rounded-xl bg-[#FFA987]/20 hover:bg-[#FFA987]/30 border border-[#FFA987]/40 text-xs font-bold text-[#12383B] dark:text-white flex items-center space-x-1.5 cursor-pointer whitespace-nowrap shadow-xs"
             >
-              <Wallet className="w-3.5 h-3.5" />
+              <Wallet className="w-3.5 h-3.5 text-[#006B70] dark:text-[#28D2CB]" />
               <span>Withdraw ₦</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsListSpaceModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+              className="px-3.5 py-1.5 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white font-bold text-xs flex items-center space-x-1.5 shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
             >
               <PlusCircle className="w-4 h-4" />
               <span>List Space</span>
@@ -183,7 +183,7 @@ export const HostDashboard: React.FC = () => {
       </div>
 
       {/* Navigation Sub-Tabs Bar */}
-      <div className="bg-white dark:bg-[#1F2937] border-b border-[#E5E7EB] dark:border-[#374151] sticky top-[125px] sm:top-[129px] z-20 px-4 sm:px-6 lg:px-8 shadow-xs">
+      <div className="bg-white dark:bg-[#0B4A50] border-b border-[#E2ECEB] dark:border-[#166D74] sticky top-[125px] sm:top-[129px] z-20 px-4 sm:px-6 lg:px-8 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center space-x-1 overflow-x-auto py-2 scrollbar-none">
           {[
             { id: 'home', label: 'Host Home', icon: LayoutDashboard },
@@ -206,15 +206,15 @@ export const HostDashboard: React.FC = () => {
                 onClick={() => setActiveTab(tab.id as HostDashboardTab)}
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap flex items-center space-x-2 transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-[#16A34A] text-white shadow-sm'
-                    : 'text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] hover:bg-[#F1F5F9] dark:hover:bg-[#374151]'
+                    ? 'bg-[#14BEB8] text-white shadow-sm'
+                    : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#105A60]'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
                 {tab.badge && tab.badge > 0 ? (
                   <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                    isActive ? 'bg-white text-[#16A34A]' : 'bg-[#16A34A] text-white'
+                    isActive ? 'bg-white text-[#14BEB8]' : 'bg-[#FFA987] text-[#12383B]'
                   }`}>
                     {tab.badge}
                   </span>
@@ -295,15 +295,15 @@ export const HostDashboard: React.FC = () => {
           <div className="space-y-6 animate-in fade-in duration-200">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-[#111827] dark:text-[#F9FAFB]">Live Facility Power & Connectivity Telemetry</h3>
-                <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">Continuous IoT monitoring for Victoria Island and Ikoyi hubs</p>
+                <h3 className="text-lg font-bold text-[#12383B] dark:text-white">Live Facility Power &amp; Connectivity Telemetry</h3>
+                <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">Continuous IoT monitoring for Victoria Island and Ikoyi hubs</p>
               </div>
 
               <button
                 type="button"
                 disabled={generatorTesting}
                 onClick={handleRunGeneratorTest}
-                className="px-4 py-2 rounded-xl bg-[#DCFCE7] dark:bg-[#16A34A]/20 hover:bg-[#BBF7D0] dark:hover:bg-[#16A34A]/30 border border-[#16A34A]/30 text-xs font-bold text-[#16A34A] flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                className="px-4 py-2 rounded-xl bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 hover:bg-[#14BEB8]/25 border border-[#14BEB8]/30 text-xs font-bold text-[#006B70] dark:text-[#28D2CB] flex items-center space-x-1.5 cursor-pointer shadow-xs"
               >
                 <Zap className={`w-3.5 h-3.5 ${generatorTesting ? 'animate-bounce' : ''}`} />
                 <span>{generatorTesting ? 'Running Test...' : 'Run Auto-Switch Test'}</span>
@@ -311,67 +311,67 @@ export const HostDashboard: React.FC = () => {
             </div>
 
             {testResult && (
-              <div className="p-4 rounded-2xl bg-[#DCFCE7] dark:bg-[#16A34A]/20 border border-[#16A34A]/30 text-xs text-[#16A34A] flex items-center space-x-2">
+              <div className="p-4 rounded-2xl bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border border-[#14BEB8]/30 text-xs text-[#006B70] dark:text-[#28D2CB] flex items-center space-x-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span className="font-semibold">{testResult}</span>
               </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-5 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] space-y-2 shadow-xs">
-                <div className="flex items-center justify-between text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+              <div className="p-5 rounded-3xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2 shadow-xs">
+                <div className="flex items-center justify-between text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
                   <span>Generator Load</span>
-                  <Zap className="w-4 h-4 text-[#16A34A]" />
+                  <Zap className="w-4 h-4 text-[#14BEB8]" />
                 </div>
-                <div className="text-2xl font-extrabold text-[#111827] dark:text-[#F9FAFB] font-mono">
+                <div className="text-2xl font-extrabold text-[#12383B] dark:text-white font-mono">
                   145 kVA
                 </div>
-                <div className="w-full bg-[#F1F5F9] dark:bg-[#374151] h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-[#16A34A] h-full w-[58%]" />
+                <div className="w-full bg-[#E2ECEB] dark:bg-[#166D74] h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#14BEB8] h-full w-[58%]" />
                 </div>
-                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">58% of 250 kVA Perkins Genset</p>
+                <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">58% of 250 kVA Perkins Genset</p>
               </div>
 
-              <div className="p-5 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] space-y-2 shadow-xs">
-                <div className="flex items-center justify-between text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+              <div className="p-5 rounded-3xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2 shadow-xs">
+                <div className="flex items-center justify-between text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
                   <span>Solar Battery SoC</span>
-                  <BatteryCharging className="w-4 h-4 text-[#16A34A]" />
+                  <BatteryCharging className="w-4 h-4 text-[#14BEB8]" />
                 </div>
-                <div className="text-2xl font-extrabold text-[#16A34A] font-mono">
+                <div className="text-2xl font-extrabold text-[#006B70] dark:text-[#28D2CB] font-mono">
                   94% Full
                 </div>
-                <div className="w-full bg-[#F1F5F9] dark:bg-[#374151] h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-[#16A34A] h-full w-[94%]" />
+                <div className="w-full bg-[#E2ECEB] dark:bg-[#166D74] h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#14BEB8] h-full w-[94%]" />
                 </div>
-                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Lithium-Iron Phosphate Bank</p>
+                <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">Lithium-Iron Phosphate Bank</p>
               </div>
 
-              <div className="p-5 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] space-y-2 shadow-xs">
-                <div className="flex items-center justify-between text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+              <div className="p-5 rounded-3xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2 shadow-xs">
+                <div className="flex items-center justify-between text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
                   <span>Diesel Fuel Reserves</span>
-                  <Fuel className="w-4 h-4 text-[#F59E0B]" />
+                  <Fuel className="w-4 h-4 text-[#FFA987]" />
                 </div>
-                <div className="text-2xl font-extrabold text-[#111827] dark:text-[#F9FAFB] font-mono">
+                <div className="text-2xl font-extrabold text-[#12383B] dark:text-white font-mono">
                   1,420 Liters
                 </div>
-                <div className="w-full bg-[#F1F5F9] dark:bg-[#374151] h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-[#F59E0B] h-full w-[78%]" />
+                <div className="w-full bg-[#E2ECEB] dark:bg-[#166D74] h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#FFA987] h-full w-[78%]" />
                 </div>
-                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Est. 86 hours continuous runtime</p>
+                <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">Est. 86 hours continuous runtime</p>
               </div>
 
-              <div className="p-5 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] space-y-2 shadow-xs">
-                <div className="flex items-center justify-between text-xs text-[#6B7280] dark:text-[#9CA3AF]">
-                  <span>Dual Fiber & Starlink Ping</span>
-                  <Wifi className="w-4 h-4 text-[#16A34A]" />
+              <div className="p-5 rounded-3xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2 shadow-xs">
+                <div className="flex items-center justify-between text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
+                  <span>Dual Fiber &amp; Starlink Ping</span>
+                  <Wifi className="w-4 h-4 text-[#14BEB8]" />
                 </div>
-                <div className="text-2xl font-extrabold text-[#16A34A] font-mono">
+                <div className="text-2xl font-extrabold text-[#006B70] dark:text-[#28D2CB] font-mono">
                   6 ms
                 </div>
-                <div className="w-full bg-[#F1F5F9] dark:bg-[#374151] h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-[#16A34A] h-full w-[98%]" />
+                <div className="w-full bg-[#E2ECEB] dark:bg-[#166D74] h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#14BEB8] h-full w-[98%]" />
                 </div>
-                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">MainOne Fiber + Starlink Failover</p>
+                <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">MainOne Fiber + Starlink Failover</p>
               </div>
             </div>
           </div>

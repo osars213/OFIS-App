@@ -34,17 +34,17 @@ export const QuickFactsBar: React.FC<QuickFactsBarProps> = ({
         <button
           type="button"
           onClick={onReviewsClick}
-          className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-[#141816] border border-[#1E2522] hover:border-[#00C878]/50 transition-colors group cursor-pointer"
+          className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/50 transition-colors group cursor-pointer shadow-2xs"
         >
-          <div className="p-1.5 rounded-xl bg-[#00C878]/10 text-[#00C878]">
-            <Star className="w-4 h-4 fill-[#00C878]" />
+          <div className="p-1.5 rounded-xl bg-[#FFA987]/20 text-[#FFA987]">
+            <Star className="w-4 h-4 fill-[#FFA987] text-[#FFA987]" />
           </div>
           <div className="text-left">
             <div className="flex items-center space-x-1.5">
-              <span className="text-xs font-bold text-[#F2F2F2] font-mono">{space.rating}</span>
-              <span className="text-[10px] text-[#718079]">({space.reviewsCount})</span>
+              <span className="text-xs font-bold text-[#12383B] dark:text-white font-mono">{space.rating}</span>
+              <span className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">({space.reviewsCount})</span>
             </div>
-            <div className="text-[10px] text-[#00C878] font-medium group-hover:underline">
+            <div className="text-[10px] text-[#006B70] dark:text-[#28D2CB] font-medium group-hover:underline">
               Verified Reviews
             </div>
           </div>
@@ -54,76 +54,76 @@ export const QuickFactsBar: React.FC<QuickFactsBarProps> = ({
         <button
           type="button"
           onClick={onMapClick}
-          className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-[#141816] border border-[#1E2522] hover:border-[#00C878]/50 transition-colors group cursor-pointer"
+          className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/50 transition-colors group cursor-pointer shadow-2xs"
         >
-          <div className="p-1.5 rounded-xl bg-[#00C878]/10 text-[#00C878]">
+          <div className="p-1.5 rounded-xl bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB]">
             <MapPin className="w-4 h-4" />
           </div>
           <div className="text-left">
-            <div className="text-xs font-bold text-[#F2F2F2] truncate max-w-[130px]">
+            <div className="text-xs font-bold text-[#12383B] dark:text-white truncate max-w-[130px]">
               {space.neighborhood}
             </div>
-            <div className="text-[10px] text-[#9EABA3]">
-              {space.city} • <span className="text-[#00C878]">View Map</span>
+            <div className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">
+              {space.city} • <span className="text-[#006B70] dark:text-[#28D2CB]">View Map</span>
             </div>
           </div>
         </button>
 
         {/* 3. Internet Speed & Tier */}
-        <div className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-[#141816] border border-[#1E2522]">
-          <div className="p-1.5 rounded-xl bg-[#00C878]/10 text-[#00C878]">
+        <div className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] shadow-2xs">
+          <div className="p-1.5 rounded-xl bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB]">
             <Wifi className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-[#F2F2F2] font-mono">
+            <div className="text-xs font-bold text-[#12383B] dark:text-white font-mono">
               {space.internetSpeedMbps} Mbps
             </div>
-            <div className="text-[10px] text-[#718079] truncate max-w-[120px]">
+            <div className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] truncate max-w-[120px]">
               {space.internetIsp || 'Dedicated Fiber'}
             </div>
           </div>
         </div>
 
         {/* 4. Power Guarantee & Type */}
-        <div className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-[#141816] border border-[#1E2522]">
-          <div className="p-1.5 rounded-xl bg-[#00C878]/10 text-[#00C878]">
+        <div className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] shadow-2xs">
+          <div className="p-1.5 rounded-xl bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB]">
             <Zap className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-[#00C878] font-mono">
+            <div className="text-xs font-bold text-[#006B70] dark:text-[#28D2CB] font-mono">
               {space.powerUptimeGuaranteePercent}% Uptime
             </div>
-            <div className="text-[10px] text-[#718079] truncate max-w-[130px]">
+            <div className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] truncate max-w-[130px]">
               {space.powerType || 'Dual Generator + Solar'}
             </div>
           </div>
         </div>
 
         {/* 5. Capacity */}
-        <div className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-[#141816] border border-[#1E2522]">
-          <div className="p-1.5 rounded-xl bg-[#00C878]/10 text-[#00C878]">
+        <div className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] shadow-2xs">
+          <div className="p-1.5 rounded-xl bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB]">
             <Users className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-[#F2F2F2]">
+            <div className="text-xs font-bold text-[#12383B] dark:text-white">
               {space.capacity} Capacity
             </div>
-            <div className="text-[10px] text-[#718079]">
+            <div className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">
               Seats & Suites
             </div>
           </div>
         </div>
 
         {/* 6. Operating Hours */}
-        <div className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-[#141816] border border-[#1E2522]">
-          <div className="p-1.5 rounded-xl bg-[#00C878]/10 text-[#00C878]">
+        <div className="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-2xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] shadow-2xs">
+          <div className="p-1.5 rounded-xl bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB]">
             <Clock className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-[#F2F2F2] font-mono">
+            <div className="text-xs font-bold text-[#12383B] dark:text-white font-mono">
               {formatTime(space.operatingHours.open)} - {formatTime(space.operatingHours.close)}
             </div>
-            <div className="text-[10px] text-[#718079]">
+            <div className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">
               {space.operatingHours.days}
             </div>
           </div>

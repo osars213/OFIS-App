@@ -217,7 +217,24 @@ export const spacesService = {
     // 4. Category
     if (filters.category && filters.category !== 'all') {
       const targetNormalized = normalizeCategory(filters.category);
-      spaces = spaces.filter(s => normalizeCategory(s.category) === targetNormalized);
+      spaces = spaces.filter(s => {
+        const spaceNormalized = normalizeCategory(s.category);
+        if (spaceNormalized !== targetNormalized) return false;
+
+        // Specific subcategory discrimination for photography vs podcast within studio category
+        if (filters.category === 'photography') {
+          if (s.category === 'photography') return true;
+          const text = `${s.title} ${s.description} ${s.tagline}`.toLowerCase();
+          return text.includes('photo') || text.includes('cyclorama') || text.includes('video') || text.includes('camera') || !text.includes('podcast');
+        }
+        if (filters.category === 'podcast') {
+          if (s.category === 'podcast') return true;
+          const text = `${s.title} ${s.description} ${s.tagline}`.toLowerCase();
+          return text.includes('podcast') || text.includes('audio') || text.includes('recording') || text.includes('mic') || text.includes('sound');
+        }
+
+        return true;
+      });
     }
 
     // 5. Pricing Period

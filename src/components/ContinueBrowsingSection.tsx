@@ -53,7 +53,7 @@ export const ContinueBrowsingSection: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center space-x-2 text-[#111827] dark:text-[#F9FAFB] font-mono text-[11px] font-bold tracking-wider uppercase">
-            <History className="w-3.5 h-3.5 text-[#16A34A]" />
+            <History className="w-3.5 h-3.5 text-[#0F766E]" />
             <span>Continue Browsing</span>
           </div>
           <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">

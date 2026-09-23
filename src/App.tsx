@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { MobileBottomNav } from './components/MobileBottomNav';
@@ -26,9 +26,7 @@ import { EmailVerificationModal } from './components/EmailVerificationModal';
 import { InfoModal } from './components/InfoModal';
 import { CompareFloatingBar } from './components/compare/CompareFloatingBar';
 import { WorkspaceCompareModal } from './components/compare/WorkspaceCompareModal';
-import { LogoGalleryModal, LogoConcept } from './components/LogoGalleryModal';
 import { AppSplashScreen } from './components/AppSplashScreen';
-
 export const App: React.FC = () => {
   const { 
     currentView, 
@@ -37,14 +35,10 @@ export const App: React.FC = () => {
     setIsInfoModalOpen, 
     infoModalTab, 
     setIsListSpaceModalOpen,
-    isLogoGalleryOpen,
-    setIsLogoGalleryOpen,
-    selectedLogoConceptId,
-    setSelectedLogoConceptId
   } = useApp();
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#111827] text-[#111827] dark:text-[#F9FAFB] flex flex-col font-sans selection:bg-[#16A34A] selection:text-white transition-colors duration-150">
+    <div className="min-h-screen bg-[#FFF9F4] dark:bg-[#07383D] text-[#12383B] dark:text-[#FFFFFF] flex flex-col font-sans selection:bg-[#14BEB8] selection:text-white transition-colors duration-150">
       {/* Top Navbar */}
       <Navbar />
 
@@ -70,7 +64,7 @@ export const App: React.FC = () => {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
 
-      {/* Navigation & Global Modals */}
+      {/* Navigation & Global Modals (Accessible from both Landing and Marketplace) */}
       <OfisNavigationDrawer />
       <InfoModal 
         isOpen={isInfoModalOpen} 
@@ -94,15 +88,8 @@ export const App: React.FC = () => {
       <DirectionsModal />
       <ContactHostModal />
       <WriteReviewModal />
-      <LogoGalleryModal
-        isOpen={isLogoGalleryOpen}
-        onClose={() => setIsLogoGalleryOpen(false)}
-        selectedConceptId={selectedLogoConceptId}
-        onSelectConcept={(concept: LogoConcept) => {
-          setSelectedLogoConceptId(concept.id);
-        }}
-      />
-      {/* App Load-Up Splash Screen with Breathing Logo Emblem */}
+
+      {/* App Load-Up Splash Screen with Minimal Teal Accent */}
       <AppSplashScreen />
     </div>
   );

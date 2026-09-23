@@ -216,23 +216,23 @@ export const ListSpaceModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="relative w-full max-w-2xl bg-[#141816] rounded-3xl border border-[#232D28] shadow-2xl p-6 sm:p-7 space-y-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="relative w-full max-w-2xl bg-white dark:bg-[#1F2937] rounded-3xl border border-[#E5E7EB] dark:border-[#374151] shadow-2xl p-6 sm:p-7 space-y-6 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
         
-        <div className="flex items-center justify-between border-b border-[#1E2522] pb-4">
+        <div className="flex items-center justify-between border-b border-[#E5E7EB] dark:border-[#374151] pb-4">
           <div className="flex items-center space-x-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-[#00C878]/15 border border-[#00C878]/30 flex items-center justify-center text-[#00C878]">
+            <div className="w-10 h-10 rounded-2xl bg-[#0F766E]/10 border border-[#0F766E]/20 flex items-center justify-center text-[#0F766E] dark:text-[#14B8A6]">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[#F2F2F2]">List a Workspace on OFIS</h3>
-              <p className="text-xs text-[#718079] mt-0.5">Publish your facility with flexible pricing &amp; photo verification</p>
+              <h3 className="text-lg font-bold text-[#111827] dark:text-[#F9FAFB]">List a Workspace on OFIS</h3>
+              <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">Publish your facility with flexible pricing &amp; photo verification</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setIsListSpaceModalOpen(false)}
-            className="p-2 rounded-xl text-[#718079] hover:text-[#F2F2F2] hover:bg-[#18201B] cursor-pointer"
+            className="p-2 rounded-xl text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] cursor-pointer transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -240,17 +240,17 @@ export const ListSpaceModal: React.FC = () => {
 
         {isSuccess ? (
           <div className="py-12 text-center space-y-4 animate-fadeIn">
-            <div className="w-14 h-14 rounded-full bg-[#00C878]/15 border border-[#00C878]/30 text-[#00C878] flex items-center justify-center mx-auto shadow-lg">
+            <div className="w-14 h-14 rounded-full bg-[#0F766E]/10 border border-[#0F766E]/30 text-[#0F766E] dark:text-[#14B8A6] flex items-center justify-center mx-auto shadow-sm">
               <ShieldCheck className="w-8 h-8" />
             </div>
             <div>
-              <h4 className="text-base font-bold text-[#F2F2F2]">Hub Submitted for Admin Verification!</h4>
-              <p className="text-xs text-[#718079] max-w-md mx-auto mt-1.5">
-                Your photos and facility specs have been sent to the <span className="text-[#00C878] font-bold">OFIS Admin Verification Agent</span>. Once approved, your listing will go live automatically.
+              <h4 className="text-base font-bold text-[#111827] dark:text-[#F9FAFB]">Hub Submitted for Admin Verification!</h4>
+              <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] max-w-md mx-auto mt-1.5">
+                Your photos and facility specs have been sent to the <span className="text-[#0F766E] dark:text-[#14B8A6] font-bold">OFIS Admin Verification Agent</span>. Once approved, your listing will go live automatically.
               </p>
             </div>
-            <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#FFB020]/15 text-[#FFB020] text-xs font-mono">
-              <span className="w-2 h-2 rounded-full bg-[#FFB020] animate-ping" />
+            <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 text-xs font-mono">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
               <span>Status: Pending Admin Agent Review</span>
             </div>
           </div>
@@ -260,35 +260,35 @@ export const ListSpaceModal: React.FC = () => {
             {/* Section 1: Basic Info */}
             <div className="space-y-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#F2F2F2]">Workspace Name *</label>
+                <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Workspace Name *</label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Executive Boardroom Alpha, Victoria Island Cowork Hot Desk"
                   required
-                  className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#718079]">Short Tagline</label>
+                <label className="text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF]">Short Tagline</label>
                 <input
                   type="text"
                   value={tagline}
                   onChange={(e) => setTagline(e.target.value)}
                   placeholder="e.g. Ultra high-speed fiber & continuous solar generator in Victoria Island"
-                  className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2] focus:outline-none focus:border-[#00C878]"
+                  className="w-full p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[#F2F2F2]">Category</label>
+                  <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Category</label>
                   <select
                     value={category}
                     onChange={(e) => handleCategoryChange(e.target.value as SpaceCategory)}
-                    className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2]"
+                    className="w-full p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E] cursor-pointer"
                   >
                     <option value="coworking">Coworking &amp; Hot Desk</option>
                     <option value="private-office">Private Office</option>
@@ -300,11 +300,11 @@ export const ListSpaceModal: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-[#F2F2F2]">City</label>
+                  <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">City</label>
                   <select
                     value={city}
                     onChange={(e) => setCity(e.target.value as CityLocation)}
-                    className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2]"
+                    className="w-full p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E] cursor-pointer"
                   >
                     <option value="Lagos">Lagos</option>
                     <option value="Abuja">Abuja</option>
@@ -316,7 +316,7 @@ export const ListSpaceModal: React.FC = () => {
             </div>
 
             {/* Section 2: Photo Uploads (MANDATORY BEFORE PUBLISHING) */}
-            <div className="p-4 rounded-2xl bg-[#18201B] border border-[#232D28] space-y-3">
+            <div className="p-4 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] space-y-3">
               <PhotoUploadManager
                 images={images}
                 onChange={setImages}
@@ -326,7 +326,7 @@ export const ListSpaceModal: React.FC = () => {
                 minPhotos={1}
               />
               {photoError && (
-                <div className="p-3 rounded-xl bg-[#FF5C5C]/10 border border-[#FF5C5C]/30 text-xs text-[#FF5C5C] flex items-center space-x-2">
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-600 dark:text-red-400 flex items-center space-x-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{photoError}</span>
                 </div>
@@ -344,24 +344,24 @@ export const ListSpaceModal: React.FC = () => {
             />
 
             {/* Section 4: Flexible Pricing Model Configuration */}
-            <div className="p-4 rounded-2xl bg-[#18201B] border border-[#232D28] space-y-3">
+            <div className="p-4 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold text-[#00C878] uppercase flex items-center space-x-1.5">
+                <span className="text-xs font-mono font-bold text-[#0F766E] dark:text-[#14B8A6] uppercase flex items-center space-x-1.5">
                   <Banknote className="w-3.5 h-3.5" />
                   <span>Pricing Model &amp; Rate</span>
                 </span>
-                <span className="text-[10px] text-[#718079]">
+                <span className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">
                   {pricingBasis === 'person' ? 'Scales with guests' : 'Flat rate for whole space'}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 <div className="space-y-1">
-                  <label className="text-[11px] text-[#9EABA3]">Pricing Basis</label>
+                  <label className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Pricing Basis</label>
                   <select
                     value={pricingBasis}
                     onChange={(e) => setPricingBasis(e.target.value as PricingBasis)}
-                    className="w-full p-2 rounded-xl bg-[#141816] border border-[#232D28] text-xs text-[#F2F2F2]"
+                    className="w-full p-2 rounded-xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] cursor-pointer"
                   >
                     <option value="person">Per Person (Seat)</option>
                     <option value="space">Per Space (Whole Area)</option>
@@ -369,11 +369,11 @@ export const ListSpaceModal: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[11px] text-[#9EABA3]">Billing Period</label>
+                  <label className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Billing Period</label>
                   <select
                     value={pricingPeriod}
                     onChange={(e) => handlePeriodChange(e.target.value as PricingPeriod)}
-                    className="w-full p-2 rounded-xl bg-[#141816] border border-[#232D28] text-xs text-[#F2F2F2]"
+                    className="w-full p-2 rounded-xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] cursor-pointer"
                   >
                     <option value="hour">Per Hour</option>
                     <option value="day">Per Day</option>
@@ -383,9 +383,9 @@ export const ListSpaceModal: React.FC = () => {
                 </div>
 
                 <div className="space-y-1 col-span-2 sm:col-span-1">
-                  <label className="text-[11px] text-[#9EABA3]">Rate (₦ NGN)</label>
+                  <label className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Rate (₦ NGN)</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-2 text-[#00C878] font-bold text-xs">₦</span>
+                    <span className="absolute left-3 top-2 text-[#0F766E] dark:text-[#14B8A6] font-bold text-xs">₦</span>
                     <input
                       type="number"
                       value={rate === '' || rate === 0 ? '' : rate}
@@ -407,22 +407,22 @@ export const ListSpaceModal: React.FC = () => {
                       required
                       min={500}
                       step={500}
-                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#141816] border border-[#232D28] text-xs text-[#F2F2F2] font-mono focus:outline-none focus:border-[#00C878]"
+                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] font-mono focus:outline-none focus:border-[#0F766E]"
                     />
                   </div>
                 </div>
               </div>
 
               {pricingPeriod === 'session' && (
-                <div className="pt-2 border-t border-[#232D28] flex items-center justify-between">
-                  <label className="text-xs text-[#9EABA3]">Session Duration (Hours)</label>
+                <div className="pt-2 border-t border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between">
+                  <label className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">Session Duration (Hours)</label>
                   <input
                     type="number"
                     value={sessionDurationHours}
                     onChange={(e) => setSessionDurationHours(Number(e.target.value))}
                     min={1}
                     max={12}
-                    className="w-24 p-1.5 rounded-lg bg-[#141816] border border-[#232D28] text-xs text-[#F2F2F2] font-mono text-center"
+                    className="w-24 p-1.5 rounded-lg bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] font-mono text-center"
                   />
                 </div>
               )}
@@ -431,50 +431,50 @@ export const ListSpaceModal: React.FC = () => {
             {/* Section 5: Capacity & Power */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#F2F2F2]">Guest Capacity</label>
+                <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Guest Capacity</label>
                 <input
                   type="number"
                   value={capacity}
                   onChange={(e) => setCapacity(Number(e.target.value))}
                   required
                   min={1}
-                  className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2]"
+                  className="w-full p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#F2F2F2]">Internet Speed (Mbps)</label>
+                <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Internet Speed (Mbps)</label>
                 <input
                   type="number"
                   value={internetSpeed}
                   onChange={(e) => setInternetSpeed(Number(e.target.value))}
                   required
                   min={10}
-                  className="w-full p-2.5 rounded-xl bg-[#18201B] border border-[#232D28] text-xs text-[#F2F2F2]"
+                  className="w-full p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
                 />
               </div>
             </div>
 
             {/* Email Verification Gate Banner */}
             {!isEmailVerified && (
-              <div className="p-3.5 rounded-2xl bg-[#FFB800]/10 border border-[#FFB800]/30 space-y-2">
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 text-[#FFB800]">
+                  <div className="flex items-center space-x-2 text-amber-700 dark:text-amber-400">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span className="text-xs font-bold">Host Email Verification Required</span>
                   </div>
-                  <span className="text-[10px] font-mono uppercase bg-[#FFB800]/20 text-[#FFB800] px-2 py-0.5 rounded-full font-bold">
+                  <span className="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold">
                     Gated
                   </span>
                 </div>
-                <p className="text-[11px] text-[#9EABA3]">
-                  To prevent unauthorized space listings and secure automated host payouts, your email (<span className="text-[#F2F2F2] font-mono">{currentUser?.email}</span>) must be verified before submitting listings.
+                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                  To prevent unauthorized space listings and secure automated host payouts, your email (<span className="text-[#111827] dark:text-[#F9FAFB] font-mono font-semibold">{currentUser?.email}</span>) must be verified before submitting listings.
                 </p>
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => openEmailVerificationModal('listing')}
-                    className="flex-1 py-2 px-3 rounded-xl bg-[#FFB800] hover:bg-[#FFC72C] text-[#0D0D0D] text-xs font-extrabold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shadow-md"
+                    className="flex-1 py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shadow-xs"
                   >
                     <Mail className="w-3.5 h-3.5" />
                     <span>Verify Host Email Now</span>
@@ -482,7 +482,7 @@ export const ListSpaceModal: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => verifyUserEmail()}
-                    className="py-2 px-3 rounded-xl bg-[#18201B] hover:bg-[#232D28] border border-[#FFB800]/40 text-[#FFB800] text-xs font-bold flex items-center space-x-1 transition-colors cursor-pointer"
+                    className="py-2 px-3 rounded-xl bg-white dark:bg-[#1F2937] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] border border-amber-500/40 text-amber-700 dark:text-amber-300 text-xs font-bold flex items-center space-x-1 transition-colors cursor-pointer"
                     title="Instant 1-click verification"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
@@ -493,10 +493,10 @@ export const ListSpaceModal: React.FC = () => {
             )}
 
             {/* Verification Notice Banner */}
-            <div className="p-3.5 rounded-2xl bg-[#00C878]/10 border border-[#00C878]/30 flex items-center space-x-3">
-              <ShieldCheck className="w-5 h-5 text-[#00C878] shrink-0" />
-              <p className="text-[11px] text-[#9EABA3]">
-                <strong className="text-[#00C878]">Admin Agent Verification:</strong> All submitted workspaces undergo automated audit of photos, power specs, and coordinates before becoming visible to guests.
+            <div className="p-3.5 rounded-2xl bg-[#E6F4F2] dark:bg-[#0F766E]/15 border border-[#0F766E]/30 flex items-center space-x-3">
+              <ShieldCheck className="w-5 h-5 text-[#0F766E] dark:text-[#14B8A6] shrink-0" />
+              <p className="text-[11px] text-[#4B5563] dark:text-[#D1D5DB]">
+                <strong className="text-[#0F766E] dark:text-[#14B8A6]">Admin Agent Verification:</strong> All submitted workspaces undergo automated audit of photos, power specs, and coordinates before becoming visible to guests.
               </p>
             </div>
 
@@ -504,16 +504,16 @@ export const ListSpaceModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsListSpaceModalOpen(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#718079] hover:text-[#F2F2F2] cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className={`px-5 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center space-x-2 transition-colors cursor-pointer ${
+                className={`px-5 py-2.5 rounded-xl font-bold text-xs shadow-xs flex items-center space-x-2 transition-colors cursor-pointer ${
                   !isEmailVerified
-                    ? 'bg-[#FFB800] hover:bg-[#FFC72C] text-[#0D0D0D]'
-                    : 'bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D]'
+                    ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                    : 'bg-[#0F766E] hover:bg-[#0B625C] text-white'
                 }`}
               >
                 {!isEmailVerified ? (

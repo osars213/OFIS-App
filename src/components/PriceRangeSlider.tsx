@@ -21,8 +21,8 @@ export const PriceRangeSlider: React.FC<PriceRangeSliderProps> = ({
   return (
     <div className={`space-y-2 ${className}`}>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-[#718079] font-medium">Hourly Budget Range</span>
-        <span className="font-mono font-bold text-[#00C878] bg-[#00C878]/10 px-2 py-0.5 rounded border border-[#00C878]/20">
+        <span className="text-[#5D7A7D] dark:text-[#B8D1D0] font-medium">Hourly Budget Range</span>
+        <span className="font-mono font-bold text-[#006B70] dark:text-[#28D2CB] bg-[#14BEB8]/15 px-2 py-0.5 rounded border border-[#14BEB8]/30">
           {currentValue >= max ? 'Any Price' : `Up to ${formatPrice(currentValue, { perHour: true })}`}
         </span>
       </div>
@@ -34,11 +34,11 @@ export const PriceRangeSlider: React.FC<PriceRangeSliderProps> = ({
         step={step}
         value={currentValue}
         onChange={(e) => updateFilter('maxPrice', Number(e.target.value))}
-        className="w-full h-2 bg-[#232D28] rounded-lg appearance-none cursor-pointer accent-[#00C878] focus:outline-none"
+        className="w-full h-2 bg-[#E2ECEB] dark:bg-[#166D74] rounded-lg appearance-none cursor-pointer accent-[#14BEB8] focus:outline-none"
         aria-label="Price range filter"
       />
 
-      <div className="flex items-center justify-between text-[10px] text-[#718079] font-mono">
+      <div className="flex items-center justify-between text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] font-mono">
         <span>{formatPrice(min ?? 2000)}</span>
         <span>{formatPrice(50000)}</span>
         <span>{formatPrice(100000)}</span>

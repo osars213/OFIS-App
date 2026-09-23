@@ -27,17 +27,19 @@ export const SettingsModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="relative w-full max-w-lg bg-white dark:bg-[#1F2937] rounded-3xl border border-[#E5E7EB] dark:border-[#374151] shadow-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto transition-colors">
+      <div className="relative w-full max-w-lg bg-white dark:bg-[#07383D] rounded-3xl border border-[#E2ECEB] dark:border-[#166D74] shadow-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto transition-colors">
         
-        <div className="flex items-center justify-between border-b border-[#E5E7EB] dark:border-[#374151] pb-4">
+        <div className="flex items-center justify-between border-b border-[#E2ECEB] dark:border-[#166D74] pb-4">
           <div className="flex items-center space-x-2">
-            <Settings className="w-5 h-5 text-[#16A34A]" />
-            <h3 className="text-lg font-bold text-[#111827] dark:text-[#F9FAFB]">Platform Settings</h3>
+            <div className="w-8 h-8 rounded-xl bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB] flex items-center justify-center">
+              <Settings className="w-4 h-4 text-[#14BEB8]" />
+            </div>
+            <h3 className="text-lg font-bold text-[#12383B] dark:text-white">Platform Preferences</h3>
           </div>
           <button
             type="button"
             onClick={() => setIsSettingsOpen(false)}
-            className="p-2 rounded-xl text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#0B4A50] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -46,14 +48,14 @@ export const SettingsModal: React.FC = () => {
         <div className="space-y-5">
           
           {/* Section 0: Appearance & Theme Preference */}
-          <div className="p-4 rounded-2xl bg-[#F1F5F9] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] space-y-3">
+          <div className="p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-3">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <div className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB] flex items-center gap-1.5">
-                  <Sun className="w-4 h-4 text-[#16A34A]" />
+                <div className="text-xs font-bold text-[#12383B] dark:text-white flex items-center gap-1.5">
+                  <Sun className="w-4 h-4 text-[#14BEB8]" />
                   <span>Appearance & Theme</span>
                 </div>
-                <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">
+                <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">
                   Toggle between Light, Dark, or System mode
                 </p>
               </div>
@@ -66,11 +68,11 @@ export const SettingsModal: React.FC = () => {
                 onClick={() => setTheme('light')}
                 className={`p-2.5 rounded-xl border flex flex-col items-center justify-center space-y-1.5 text-xs font-semibold transition-all cursor-pointer ${
                   theme === 'light'
-                    ? 'bg-[#DCFCE7] dark:bg-[#16A34A]/20 border-[#16A34A] text-[#16A34A] font-bold shadow-xs'
-                    : 'bg-white dark:bg-[#1F2937] border-[#E5E7EB] dark:border-[#374151] text-[#6B7280] dark:text-[#D1D5DB] hover:border-[#16A34A]/40'
+                    ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border-[#14BEB8] text-[#006B70] dark:text-[#28D2CB] font-bold shadow-xs'
+                    : 'bg-white dark:bg-[#07383D] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:border-[#14BEB8]/40'
                 }`}
               >
-                <Sun className="w-4 h-4 text-[#F59E0B]" />
+                <Sun className="w-4 h-4 text-[#14BEB8]" />
                 <span>Light</span>
               </button>
 
@@ -80,11 +82,11 @@ export const SettingsModal: React.FC = () => {
                 onClick={() => setTheme('dark')}
                 className={`p-2.5 rounded-xl border flex flex-col items-center justify-center space-y-1.5 text-xs font-semibold transition-all cursor-pointer ${
                   theme === 'dark'
-                    ? 'bg-[#DCFCE7] dark:bg-[#16A34A]/20 border-[#16A34A] text-[#16A34A] font-bold shadow-xs'
-                    : 'bg-white dark:bg-[#1F2937] border-[#E5E7EB] dark:border-[#374151] text-[#6B7280] dark:text-[#D1D5DB] hover:border-[#16A34A]/40'
+                    ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border-[#14BEB8] text-[#006B70] dark:text-[#28D2CB] font-bold shadow-xs'
+                    : 'bg-white dark:bg-[#07383D] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:border-[#14BEB8]/40'
                 }`}
               >
-                <Moon className="w-4 h-4 text-[#6366F1]" />
+                <Moon className="w-4 h-4 text-[#FFA987]" />
                 <span>Dark</span>
               </button>
 
@@ -94,51 +96,51 @@ export const SettingsModal: React.FC = () => {
                 onClick={() => setTheme('system')}
                 className={`p-2.5 rounded-xl border flex flex-col items-center justify-center space-y-1.5 text-xs font-semibold transition-all cursor-pointer ${
                   theme === 'system'
-                    ? 'bg-[#DCFCE7] dark:bg-[#16A34A]/20 border-[#16A34A] text-[#16A34A] font-bold shadow-xs'
-                    : 'bg-white dark:bg-[#1F2937] border-[#E5E7EB] dark:border-[#374151] text-[#6B7280] dark:text-[#D1D5DB] hover:border-[#16A34A]/40'
+                    ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border-[#14BEB8] text-[#006B70] dark:text-[#28D2CB] font-bold shadow-xs'
+                    : 'bg-white dark:bg-[#07383D] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:border-[#14BEB8]/40'
                 }`}
               >
-                <Monitor className="w-4 h-4 text-[#8B5CF6]" />
+                <Monitor className="w-4 h-4 text-[#14BEB8]" />
                 <span>System</span>
               </button>
             </div>
           </div>
 
           {/* Section 1: Localization & IP-Dependent Currency (Default Behavior) */}
-          <div className="p-4 rounded-2xl bg-[#F1F5F9] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] space-y-3.5">
+          <div className="p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-3.5">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <div className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB] flex items-center gap-1.5">
-                  <Globe className="w-4 h-4 text-[#16A34A]" />
+                <div className="text-xs font-bold text-[#12383B] dark:text-white flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-[#14BEB8]" />
                   <span>Currency & Exchange Rates</span>
                 </div>
-                <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">
+                <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">
                   Prices adapt automatically based on your real-time IP location
                 </p>
               </div>
-              <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-[#DCFCE7] dark:bg-[#16A34A]/15 text-[#16A34A] border border-[#16A34A]/30">
+              <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 text-[#006B70] dark:text-[#28D2CB] border border-[#14BEB8]/30">
                 {currentRateMeta.symbol} {currency}
               </span>
             </div>
 
             {/* Auto IP-Detection Status Banner */}
-            <div className="p-3 rounded-xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between gap-3 shadow-2xs">
+            <div className="p-3 rounded-xl bg-white dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] flex items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-center space-x-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-[#DCFCE7] dark:bg-[#16A34A]/15 border border-[#16A34A]/30 flex items-center justify-center text-[#16A34A] shrink-0 text-base">
+                <div className="w-8 h-8 rounded-lg bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border border-[#14BEB8]/30 flex items-center justify-center text-[#006B70] dark:text-[#28D2CB] shrink-0 text-base">
                   {detectedIpInfo.detectedFlag || '📍'}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center space-x-1.5">
-                    <span className="text-[11px] font-bold text-[#111827] dark:text-[#F9FAFB] truncate">
+                    <span className="text-[11px] font-bold text-[#12383B] dark:text-white truncate">
                       Auto-detected via IP: {detectedIpInfo.detectedCountry}
                     </span>
                     {isAutoMode && (
-                      <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase bg-[#DCFCE7] dark:bg-[#16A34A]/20 text-[#16A34A]">
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase bg-[#14BEB8]/20 text-[#006B70] dark:text-[#28D2CB]">
                         Active Default
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] font-mono truncate">
+                  <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] font-mono truncate">
                     1 {currency} ≈ ₦{currentRateMeta.rateToNgn.toLocaleString()} NGN {detectedIpInfo.ipAddress ? `• ${detectedIpInfo.ipAddress}` : ''}
                   </p>
                 </div>
@@ -149,7 +151,7 @@ export const SettingsModal: React.FC = () => {
                   type="button"
                   id="reset-currency-auto-btn"
                   onClick={resetCurrencyToAutoIp}
-                  className="px-2.5 py-1.5 rounded-lg bg-[#DCFCE7] dark:bg-[#16A34A]/15 hover:bg-[#bbf7d0] dark:hover:bg-[#16A34A]/25 border border-[#16A34A]/30 text-[10px] font-bold text-[#16A34A] transition-all flex items-center space-x-1 shrink-0 cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 hover:bg-[#14BEB8]/25 border border-[#14BEB8]/30 text-[10px] font-bold text-[#006B70] dark:text-[#28D2CB] transition-all flex items-center space-x-1 shrink-0 cursor-pointer"
                   title="Reset to automatically detected IP currency"
                 >
                   <RefreshCw className="w-3 h-3" />
@@ -160,7 +162,7 @@ export const SettingsModal: React.FC = () => {
 
             {/* Quick Currency Selector Pills */}
             <div className="space-y-1.5 pt-0.5">
-              <label className="text-[10px] font-mono text-[#6B7280] dark:text-[#9CA3AF] uppercase tracking-wider block">
+              <label className="text-[10px] font-mono text-[#5D7A7D] dark:text-[#B8D1D0] uppercase tracking-wider block">
                 Change Display Currency
               </label>
               <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
@@ -175,8 +177,8 @@ export const SettingsModal: React.FC = () => {
                       onClick={() => setCurrency(cKey)}
                       className={`p-2 rounded-xl text-center border text-xs font-semibold transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-[#16A34A] text-white font-bold border-[#16A34A] shadow-sm'
-                          : 'bg-white dark:bg-[#1F2937] text-[#4B5563] dark:text-[#D1D5DB] border-[#E5E7EB] dark:border-[#374151] hover:text-[#111827] dark:hover:text-[#F9FAFB] hover:bg-[#F8FAFC] dark:hover:bg-[#374151]'
+                          ? 'bg-[#14BEB8] text-white font-bold border-[#14BEB8] shadow-sm'
+                          : 'bg-white dark:bg-[#07383D] text-[#5D7A7D] dark:text-[#B8D1D0] border-[#E2ECEB] dark:border-[#166D74] hover:text-[#12383B] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#105A60]'
                       }`}
                       title={`${meta.name} (1 ${cKey} ≈ ₦${meta.rateToNgn.toLocaleString()})`}
                     >
@@ -190,13 +192,13 @@ export const SettingsModal: React.FC = () => {
           </div>
 
           {/* Section 2: Time Display Preference */}
-          <div className="p-4 rounded-2xl bg-[#F1F5F9] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between">
+          <div className="p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] flex items-center justify-between">
             <div className="space-y-0.5">
-              <div className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB] flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#16A34A]" />
+              <div className="text-xs font-bold text-[#12383B] dark:text-white flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#14BEB8]" />
                 <span>Clock & Time Format</span>
               </div>
-              <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Switch between standard 12-hour (AM/PM) and 24-hour display</p>
+              <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">Switch between standard 12-hour (AM/PM) and 24-hour display</p>
             </div>
             <div className="flex items-center space-x-1">
               <button
@@ -205,8 +207,8 @@ export const SettingsModal: React.FC = () => {
                 onClick={() => setTimeFormat('12h')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                   timeFormat === '12h'
-                    ? 'bg-[#16A34A] text-white shadow-sm'
-                    : 'bg-white dark:bg-[#1F2937] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] border border-[#E5E7EB] dark:border-transparent'
+                    ? 'bg-[#14BEB8] text-white shadow-sm'
+                    : 'bg-white dark:bg-[#07383D] text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white border border-[#E2ECEB] dark:border-[#166D74]'
                 }`}
               >
                 12h (AM/PM)
@@ -217,8 +219,8 @@ export const SettingsModal: React.FC = () => {
                 onClick={() => setTimeFormat('24h')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                   timeFormat === '24h'
-                    ? 'bg-[#16A34A] text-white shadow-sm'
-                    : 'bg-white dark:bg-[#1F2937] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] border border-[#E5E7EB] dark:border-transparent'
+                    ? 'bg-[#14BEB8] text-white shadow-sm'
+                    : 'bg-white dark:bg-[#07383D] text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white border border-[#E2ECEB] dark:border-[#166D74]'
                 }`}
               >
                 24h
@@ -228,13 +230,13 @@ export const SettingsModal: React.FC = () => {
 
           {/* Diagnostics Trigger (Host Only) */}
           {currentUser.role === 'host' && (
-            <div className="p-4 rounded-2xl bg-[#F1F5F9] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] flex items-center justify-between">
               <div>
-                <div className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB] flex items-center space-x-1.5">
-                  <Activity className="w-3.5 h-3.5 text-[#16A34A]" />
+                <div className="text-xs font-bold text-[#12383B] dark:text-white flex items-center space-x-1.5">
+                  <Activity className="w-3.5 h-3.5 text-[#14BEB8]" />
                   <span>System Health & Diagnostics</span>
                 </div>
-                <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Run full diagnostic test on currency, telemetry & auth</p>
+                <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">Run full diagnostic test on currency, telemetry & auth</p>
               </div>
               <button
                 type="button"
@@ -243,7 +245,7 @@ export const SettingsModal: React.FC = () => {
                   setIsSettingsOpen(false);
                   setIsDiagnosticsModalOpen(true);
                 }}
-                className="px-3 py-1.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs shadow-md cursor-pointer shrink-0"
+                className="px-3 py-1.5 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white font-bold text-xs shadow-md cursor-pointer shrink-0"
               >
                 Run Diagnosis
               </button>
@@ -251,12 +253,12 @@ export const SettingsModal: React.FC = () => {
           )}
 
           {/* Telemetry Status */}
-          <div className="p-4 rounded-2xl bg-[#F1F5F9] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] space-y-2">
-            <div className="flex items-center space-x-2 text-xs font-bold text-[#16A34A]">
-              <Zap className="w-4 h-4" />
+          <div className="p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2">
+            <div className="flex items-center space-x-2 text-xs font-bold text-[#006B70] dark:text-[#28D2CB]">
+              <Zap className="w-4 h-4 text-[#14BEB8]" />
               <span>Real-time Grid & Power Telemetry</span>
             </div>
-            <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] leading-relaxed">
+            <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0] leading-relaxed">
               OFIS synchronizes with hardware IoT telemetry across partner hubs in Lagos, Abuja, Port Harcourt, and Ibadan to ensure uninterrupted power.
             </p>
           </div>

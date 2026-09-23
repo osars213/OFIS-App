@@ -1,5 +1,8 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import ofisLogoLight from '../assets/ofis-logo.png';
+import ofisLogoDark from '../assets/ofis-logo-dark.png';
+import ofisIcon from '../assets/ofis-icon.png';
 
 interface OFISWordmarkProps {
   className?: string;
@@ -68,47 +71,43 @@ export const OFISWordmark: React.FC<OFISWordmarkProps> = ({
     }
   };
 
-  // Harmonized Mode Filtering & Glow (35% reduction for subtle luxury):
-  // In Dark Mode: subtle emerald portal luminescence and crisp titanium letters
-  // In Light Mode: crisp contrast
-  const filterStyleClass = isDark
-    ? 'filter brightness-[1.02] drop-shadow-[0_0_5px_rgba(16,185,129,0.18)]'
-    : 'filter brightness-[1.0] drop-shadow-[0_1px_2px_rgba(15,23,42,0.06)]';
-
   if (variant === 'mark-only') {
     return (
       <div className={`relative inline-flex items-center justify-center select-none ${className}`}>
         {shouldBreathe && (
-          <div className="absolute inset-0 rounded-full bg-emerald-500/15 blur-sm animate-ping opacity-30 pointer-events-none" />
+          <div className="absolute inset-0 rounded-full bg-teal-500/15 blur-sm animate-ping opacity-30 pointer-events-none" />
         )}
-        <img
-          src="/ofis-icon.png"
-          alt="OFIS Emblem"
-          className={`${getIconClass()} object-contain transition-all duration-300 hover:scale-105 ${filterStyleClass} ${getBreathingClass()}`}
-          loading="eager"
-          decoding="async"
-        />
+        <div className="reflective-emblem-wrap p-0.5">
+          <img
+            src={ofisIcon}
+            alt="OFIS Emblem"
+            className={`${getIconClass()} object-contain transition-all duration-300 hover:scale-105 ${getBreathingClass()}`}
+            loading="eager"
+            decoding="async"
+          />
+        </div>
       </div>
     );
   }
 
-  // Automatic Theme Switcher for Horizontal Logo:
-  // Dark mode -> /ofis-logo-dark.png (crisp white text + emerald portal)
-  // Light mode -> /ofis-logo.png (dark charcoal text + emerald portal)
-  const logoSrc = isDark ? '/ofis-logo-dark.png' : '/ofis-logo.png';
+  // Master Brand Logo (Pixel-perfect authentic artwork with full door glow and zero patch artifacts):
+  // Dark mode -> ofisLogoDark (crisp white text + radiant teal/peach portal + glowing floor beam)
+  // Light mode -> ofisLogoLight (deep teal text + vibrant teal/peach portal + warm floor glow)
+  const logoSrc = isDark ? ofisLogoDark : ofisLogoLight;
 
   return (
     <div className={`relative inline-flex items-center select-none ${className}`}>
       {shouldBreathe && (
-        <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/15 via-lime-400/15 to-emerald-500/15 blur-xs rounded-xl animate-pulse pointer-events-none" />
+        <div className="absolute -inset-1 bg-gradient-to-r from-teal-500/15 via-[#F4A261]/15 to-teal-500/15 blur-xs rounded-xl animate-pulse pointer-events-none" />
       )}
       <img
         src={logoSrc}
         alt="OFIS"
-        className={`${getHeightClass()} w-auto max-w-[190px] sm:max-w-[240px] object-contain transition-all duration-300 hover:scale-[1.015] ${filterStyleClass} ${getBreathingClass()}`}
+        className={`${getHeightClass()} w-auto max-w-[190px] sm:max-w-[240px] object-contain transition-all duration-300 hover:scale-[1.015] ${getBreathingClass()}`}
         loading="eager"
         decoding="async"
       />
     </div>
   );
 };
+

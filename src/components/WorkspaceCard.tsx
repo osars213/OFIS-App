@@ -89,13 +89,13 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
   return (
     <div
       id={`workspace-card-${space.id}`}
-      className={`group bg-white dark:bg-[#172033] rounded-[20px] border border-[#E5E7EB] dark:border-[#1E293B] hover:border-[#10B981]/50 overflow-hidden shadow-2xs dark:shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-2xl flex flex-col justify-between ${
+      className={`group bg-white dark:bg-[#0B4A50] rounded-3xl border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/60 overflow-hidden shadow-sm dark:shadow-xl transition-all duration-200 hover:-translate-y-1 hover:shadow-xl flex flex-col justify-between ${
         isCarousel ? 'w-[285px] sm:w-[330px] shrink-0' : 'w-full'
       }`}
     >
-      {/* Card Image with 18-20px top radius */}
+      {/* Card Image with 24px top radius */}
       <div 
-        className="relative aspect-[16/10] overflow-hidden bg-[#F1F5F9] dark:bg-[#0B1220] cursor-pointer" 
+        className="relative aspect-[16/10] overflow-hidden bg-[#F3F6F5] dark:bg-[#07383D] cursor-pointer" 
         onClick={handleCardClick}
       >
         <img
@@ -111,21 +111,21 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
         {/* Subtle Dark Gradient Overlay for optimal badge and text legibility */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/30" />
 
-        {/* Top Badges (Category & Superhost) */}
+        {/* Top Badges (Category & Featured / Superhost) */}
         <div className="absolute top-3.5 left-3.5 flex flex-wrap items-center gap-1.5 max-w-[80%]">
           {badgeLabel ? (
-            <span className="px-2.5 py-1 rounded-lg bg-[#10B981] text-white text-[10px] font-semibold tracking-wide uppercase flex items-center gap-1 shadow-md">
-              <Sparkles className="w-3 h-3" />
+            <span className="px-2.5 py-1 rounded-xl bg-[#FFA987] text-[#12383B] text-[10px] font-bold tracking-wide uppercase flex items-center gap-1 shadow-xs">
+              <Sparkles className="w-3 h-3 text-[#12383B]" />
               <span>{badgeLabel}</span>
             </span>
           ) : (
-            <span className="px-2.5 py-1 rounded-lg bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-semibold tracking-wide text-[#34D399] uppercase">
+            <span className="px-2.5 py-1 rounded-xl bg-black/65 backdrop-blur-md border border-white/20 text-[10px] font-semibold tracking-wide text-[#28D2CB] uppercase">
               {categoryBadge}
             </span>
           )}
 
           {space.isSuperhost && (
-            <span className="px-2.5 py-1 rounded-lg bg-[#10B981] text-white text-[10px] font-semibold uppercase tracking-wide shadow-xs">
+            <span className="px-2.5 py-1 rounded-xl bg-[#FFA987] text-[#12383B] text-[10px] font-bold uppercase tracking-wide shadow-xs">
               Superhost
             </span>
           )}
@@ -140,7 +140,7 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
               e.stopPropagation();
               openAvailabilityAlertModal(space);
             }}
-            className="p-2 rounded-xl bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white hover:text-[#34D399] transition-all cursor-pointer shadow-xs active:scale-95"
+            className="p-2 rounded-xl bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white hover:text-[#FFA987] transition-all cursor-pointer shadow-xs active:scale-95"
             aria-label="Set availability alert"
             title="Alert me via SMS/Email when available for specific dates"
           >
@@ -156,8 +156,8 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
             }}
             className={`p-2 rounded-xl backdrop-blur-md border transition-all cursor-pointer shadow-xs active:scale-95 ${
               isCompared
-                ? 'bg-[#10B981] text-white border-[#10B981]'
-                : 'bg-black/60 hover:bg-black/80 border-white/20 text-white hover:text-[#34D399]'
+                ? 'bg-[#14BEB8] text-white border-[#14BEB8]'
+                : 'bg-black/60 hover:bg-black/80 border-white/20 text-white hover:text-[#14BEB8]'
             }`}
             aria-label={isCompared ? 'Remove from compare' : 'Add to compare'}
             title={isCompared ? 'Remove from comparison list' : 'Add to comparison list'}
@@ -171,64 +171,64 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
               e.stopPropagation();
               toggleSaveSpace(space.id);
             }}
-            className="p-2 rounded-xl bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white hover:text-[#34D399] transition-all cursor-pointer shadow-xs active:scale-95"
+            className="p-2 rounded-xl bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/20 text-white hover:text-[#FFA987] transition-all cursor-pointer shadow-xs active:scale-95"
             aria-label="Save to favorites"
           >
-            <Heart className={`w-3.5 h-3.5 ${isSaved ? 'fill-[#10B981] text-[#10B981]' : ''}`} />
+            <Heart className={`w-3.5 h-3.5 ${isSaved ? 'fill-[#FFA987] text-[#FFA987]' : ''}`} />
           </button>
         </div>
 
         {/* Bottom Image Badges: Live Status & Location */}
         <div className="absolute bottom-3 left-3.5 right-3.5 flex items-center justify-between gap-2">
           {/* Location Tag */}
-          <div className="flex items-center space-x-1.5 text-[11px] text-white bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20 truncate max-w-[55%] shadow-xs">
-            <MapPin className="w-3 h-3 text-[#34D399] shrink-0" />
+          <div className="flex items-center space-x-1.5 text-[11px] text-white bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/20 truncate max-w-[55%] shadow-xs">
+            <MapPin className="w-3 h-3 text-[#FFA987] shrink-0" />
             <span className="font-semibold truncate">{formatLocationShort(space)}</span>
           </div>
 
           {/* Live Availability Status Pill */}
           <div 
-            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg backdrop-blur-md text-[11px] font-medium tracking-wide border shrink-0 shadow-xs ${
+            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-xl backdrop-blur-md text-[11px] font-semibold tracking-wide border shrink-0 shadow-xs ${
               availability.status === 'available_now'
-                ? 'bg-black/75 text-[#34D399] border-[#10B981]/50'
+                ? 'bg-[#07383D]/90 text-[#28D2CB] border-[#14BEB8]/60'
                 : availability.status === 'available_today'
-                ? 'bg-black/75 text-[#6EE7B7] border-[#10B981]/30'
-                : 'bg-black/75 text-slate-300 border-white/20'
+                ? 'bg-[#07383D]/90 text-[#FFA987] border-[#FFA987]/50'
+                : 'bg-black/75 text-[#B8D1D0] border-white/20'
             }`}
           >
             {availability.status === 'available_now' && (
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#14BEB8] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#14BEB8]" />
               </span>
             )}
             {availability.status === 'available_today' && (
-              <span className="inline-flex rounded-full h-1.5 w-1.5 bg-[#10B981]" />
+              <span className="inline-flex rounded-full h-1.5 w-1.5 bg-[#FFA987]" />
             )}
             <span>{availability.statusLabel}</span>
           </div>
         </div>
       </div>
 
-      {/* Card Content with Generous Internal Padding (p-4 sm:p-5) */}
+      {/* Card Content with Generous Internal Spacing */}
       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3.5">
         <div className="space-y-2.5">
           {/* Workspace Name */}
           <h3
             onClick={handleCardClick}
-            className="text-base sm:text-lg font-bold text-[#111827] dark:text-[#F8FAFC] group-hover:text-[#10B981] cursor-pointer transition-colors line-clamp-1 leading-snug"
+            className="text-base sm:text-lg font-bold text-[#12383B] dark:text-white group-hover:text-[#006B70] dark:group-hover:text-[#28D2CB] cursor-pointer transition-colors line-clamp-1 leading-snug"
           >
             {space.title}
           </h3>
 
           {/* Next Available Slot Banner (If not available right now) */}
           {availability.nextSlot && availability.status !== 'available_now' && (
-            <div className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-[#F8FAFC] dark:bg-[#101827] border border-[#E5E7EB] dark:border-[#1E293B]">
-              <div className="flex items-center space-x-1.5 text-[#6B7280] dark:text-[#94A3B8]">
-                <Clock className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
+            <div className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74]">
+              <div className="flex items-center space-x-1.5 text-[#5D7A7D] dark:text-[#B8D1D0]">
+                <Clock className="w-3.5 h-3.5 text-[#14BEB8] shrink-0" />
                 <span className="text-[11px] font-medium">Next Available:</span>
               </div>
-              <span className="font-bold text-xs text-[#111827] dark:text-[#F8FAFC]">
+              <span className="font-bold text-xs text-[#12383B] dark:text-white">
                 {availability.nextSlot.label}
               </span>
             </div>
@@ -237,37 +237,37 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
           {/* Core Amenities Badges */}
           <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
             {space.isVerified !== false && (
-              <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-[#D1FAE5] dark:bg-[#101827] border border-[#10B981]/30 dark:border-[#1E293B] text-[10px] font-semibold text-[#10B981]">
-                <ShieldCheck className="w-3 h-3 text-[#10B981] shrink-0" />
+              <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border border-[#14BEB8]/30 text-[10px] font-bold text-[#006B70] dark:text-[#28D2CB]">
+                <ShieldCheck className="w-3 h-3 text-[#14BEB8] shrink-0" />
                 <span>Verified</span>
               </div>
             )}
 
-            <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-[#F1F5F9] dark:bg-[#101827] border border-[#E5E7EB] dark:border-[#1E293B] text-[10px] font-medium text-[#4B5563] dark:text-[#94A3B8]">
-              <Wifi className="w-3 h-3 text-[#10B981] shrink-0" />
-              <span>{space.internetSpeedMbps ? `${space.internetSpeedMbps} Mbps` : 'Fast Internet'}</span>
+            <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-[#F3F6F5] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-[10px] font-medium text-[#5D7A7D] dark:text-[#B8D1D0]">
+              <Wifi className="w-3 h-3 text-[#14BEB8] shrink-0" />
+              <span>{space.internetSpeedMbps ? `${space.internetSpeedMbps} Mbps` : 'Fiber'}</span>
             </div>
 
             {space.hasBackupPower && (
-              <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-[#F1F5F9] dark:bg-[#101827] border border-[#E5E7EB] dark:border-[#1E293B] text-[10px] font-medium text-[#4B5563] dark:text-[#94A3B8]">
-                <Zap className="w-3 h-3 text-[#10B981] shrink-0" />
+              <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-[#F3F6F5] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-[10px] font-medium text-[#5D7A7D] dark:text-[#B8D1D0]">
+                <Zap className="w-3 h-3 text-[#FFA987] shrink-0" />
                 <span>24/7 Power</span>
               </div>
             )}
 
             {availability.occupancyLabel && (
-              <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-md bg-[#F1F5F9] dark:bg-[#101827] border border-[#E5E7EB] dark:border-[#1E293B] text-[10px] text-[#6B7280] dark:text-[#94A3B8]">
-                <Activity className={`w-3 h-3 ${availability.occupancyLevel === 'low' ? 'text-[#10B981]' : 'text-[#6B7280] dark:text-[#94A3B8]'}`} />
+              <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-[#F3F6F5] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">
+                <Activity className={`w-3 h-3 ${availability.occupancyLevel === 'low' ? 'text-[#14BEB8]' : 'text-[#5D7A7D] dark:text-[#B8D1D0]'}`} />
                 <span>{availability.occupancyLabel}</span>
               </div>
             )}
           </div>
 
           {/* Key Specs Row: Capacity & Rating */}
-          <div className="flex items-center justify-between text-xs text-[#6B7280] dark:text-[#94A3B8] pt-1">
+          <div className="flex items-center justify-between text-xs text-[#5D7A7D] dark:text-[#B8D1D0] pt-1">
             <div className="flex items-center space-x-1.5">
-              <Users className="w-3.5 h-3.5 text-[#10B981]" />
-              <span className="font-medium text-[#4B5563] dark:text-[#CBD5E1]">
+              <Users className="w-3.5 h-3.5 text-[#14BEB8]" />
+              <span className="font-semibold text-[#12383B] dark:text-[#B8D1D0]">
                 {space.category === 'meeting' 
                   ? `${space.capacity} Seats` 
                   : space.category === 'event' 
@@ -276,25 +276,25 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
               </span>
             </div>
 
-            <div className="flex items-center space-x-1 text-[#111827] dark:text-[#F8FAFC]">
-              <Star className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
+            <div className="flex items-center space-x-1 text-[#12383B] dark:text-white">
+              <Star className="w-3.5 h-3.5 fill-[#FFA987] text-[#FFA987]" />
               <span className="font-bold text-xs">{space.rating}</span>
-              <span className="text-[#6B7280] dark:text-[#94A3B8] text-[11px]">({space.reviewsCount})</span>
+              <span className="text-[#5D7A7D] dark:text-[#B8D1D0] text-[11px]">({space.reviewsCount})</span>
             </div>
           </div>
         </div>
 
         {/* Price & Actions Row */}
-        <div className="pt-3 border-t border-[#E5E7EB] dark:border-[#1E293B] flex items-center justify-between gap-2">
+        <div className="pt-3 border-t border-[#E2ECEB] dark:border-[#166D74] flex items-center justify-between gap-2">
           <div>
-            <div className="text-[10px] text-[#6B7280] dark:text-[#94A3B8] uppercase tracking-wider font-semibold">
+            <div className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] uppercase tracking-wider font-semibold">
               {pricing.basis === 'person' ? 'Per Person' : 'Rate'}
             </div>
             <div className="flex items-baseline space-x-1">
-              <span className="text-base sm:text-lg font-bold text-[#10B981]">
+              <span className="text-base sm:text-lg font-bold text-[#006B70] dark:text-[#28D2CB] font-mono tracking-tight">
                 {formatPrice(pricing.rate)}
               </span>
-              <span className="text-xs text-[#6B7280] dark:text-[#94A3B8]">/ {pricing.period}</span>
+              <span className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">/ {pricing.period}</span>
             </div>
           </div>
 
@@ -302,17 +302,17 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
             <button
               type="button"
               onClick={handleCardClick}
-              className="px-3.5 py-2 rounded-xl bg-white dark:bg-[#101827] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-xs font-semibold text-[#111827] dark:text-[#F8FAFC] border border-[#E5E7EB] dark:border-[#1E293B] transition-all cursor-pointer shadow-2xs"
+              className="px-3.5 py-2 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] text-xs font-semibold text-[#12383B] dark:text-white border border-[#E2ECEB] dark:border-[#166D74] transition-all cursor-pointer shadow-2xs active:scale-95"
             >
               Details
             </button>
             
-            {/* Quick Book Button */}
+            {/* Quick Book Button with Primary Teal styling */}
             {availability.status !== 'available_now' && availability.nextSlot ? (
               <button
                 type="button"
                 onClick={handleQuickBookNextSlot}
-                className="px-3.5 py-2 rounded-xl bg-[#10B981] hover:bg-[#059669] text-xs font-bold text-white transition-all flex items-center space-x-1 active:scale-95 shadow-sm whitespace-nowrap cursor-pointer"
+                className="px-3.5 py-2 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-xs font-bold text-white transition-all flex items-center space-x-1 active:scale-95 shadow-sm whitespace-nowrap cursor-pointer"
                 title={`Quick book slot: ${availability.nextSlot.label}`}
               >
                 <span>Book Next</span>
@@ -322,7 +322,7 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
               <button
                 type="button"
                 onClick={handleBookClick}
-                className="px-3.5 py-2 rounded-xl bg-[#10B981] hover:bg-[#059669] text-xs font-bold text-white transition-all flex items-center space-x-1 active:scale-95 shadow-sm cursor-pointer"
+                className="px-3.5 py-2 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-xs font-bold text-white transition-all flex items-center space-x-1 active:scale-95 shadow-sm cursor-pointer"
               >
                 <span>Book</span>
                 <ChevronRight className="w-3.5 h-3.5" />

@@ -141,27 +141,27 @@ export const WorkspaceCompareModal: React.FC = () => {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 animate-fadeIn">
       <div 
-        className="relative w-full max-w-6xl bg-[#121614] border border-[#1E2522] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
+        className="relative w-full max-w-6xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ========================================================================= */}
         {/* 1. MODAL HEADER & CONTROLS                                                */}
         {/* ========================================================================= */}
-        <div className="p-4 sm:p-5 border-b border-[#1E2522] bg-[#141816]/95 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-0 z-30">
+        <div className="p-4 sm:p-5 border-b border-[#E5E7EB] dark:border-[#374151] bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-0 z-30">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#00C878]/15 border border-[#00C878]/30 flex items-center justify-center text-[#00C878]">
+            <div className="w-10 h-10 rounded-2xl bg-[#E6F4F2] dark:bg-[#0F766E]/20 border border-[#0F766E]/30 flex items-center justify-center text-[#0F766E] dark:text-[#14B8A6]">
               <ArrowLeftRight className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="text-base sm:text-lg font-bold text-[#F2F2F2]">
+                <h3 className="text-base sm:text-lg font-bold text-[#111827] dark:text-[#F9FAFB]">
                   Workspace Compare &amp; Smart Match
                 </h3>
-                <span className="px-2 py-0.5 rounded-md bg-[#00C878]/20 text-[#00C878] text-[10px] font-mono font-bold uppercase">
+                <span className="px-2 py-0.5 rounded-md bg-[#E6F4F2] dark:bg-[#0F766E]/20 text-[#0F766E] dark:text-[#14B8A6] text-[10px] font-mono font-bold uppercase border border-[#0F766E]/30">
                   {count}/3 Selected
                 </span>
               </div>
-              <p className="text-xs text-[#718079]">
+              <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
                 Side-by-side specs, proprietary match scores, and automated difference analysis
               </p>
             </div>
@@ -170,14 +170,14 @@ export const WorkspaceCompareModal: React.FC = () => {
           {/* Header Action Buttons */}
           <div className="flex items-center space-x-2 self-end sm:self-auto">
             {/* View switcher tabs */}
-            <div className="flex items-center bg-[#18201B] p-1 rounded-xl border border-[#232D28]">
+            <div className="flex items-center bg-[#F1F5F9] dark:bg-[#111827] p-1 rounded-xl border border-[#E5E7EB] dark:border-[#374151]">
               <button
                 type="button"
                 onClick={() => setActiveTab('comparison')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   activeTab === 'comparison'
-                    ? 'bg-[#00C878] text-[#0D0D0D] font-bold'
-                    : 'text-[#9EABA3] hover:text-[#F2F2F2]'
+                    ? 'bg-[#0F766E] text-white font-bold'
+                    : 'text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB]'
                 }`}
               >
                 Comparison
@@ -187,8 +187,8 @@ export const WorkspaceCompareModal: React.FC = () => {
                 onClick={() => setActiveTab('saved')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
                   activeTab === 'saved'
-                    ? 'bg-[#00C878] text-[#0D0D0D] font-bold'
-                    : 'text-[#9EABA3] hover:text-[#F2F2F2]'
+                    ? 'bg-[#0F766E] text-white font-bold'
+                    : 'text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB]'
                 }`}
               >
                 <Layers className="w-3 h-3" />
@@ -202,17 +202,17 @@ export const WorkspaceCompareModal: React.FC = () => {
                 type="button"
                 id="share-comparison-btn"
                 onClick={handleShare}
-                className="p-2 sm:px-3 sm:py-2 rounded-xl bg-[#18201B] hover:bg-[#232D28] border border-[#232D28] text-xs font-semibold text-[#F2F2F2] flex items-center space-x-1.5 transition-colors cursor-pointer"
+                className="p-2 sm:px-3 sm:py-2 rounded-xl bg-white dark:bg-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] border border-[#E5E7EB] dark:border-[#374151] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] flex items-center space-x-1.5 transition-colors cursor-pointer"
                 title="Share comparison summary"
               >
                 {shareSuccess ? (
                   <>
-                    <Check className="w-4 h-4 text-[#00C878]" />
-                    <span className="text-[#00C878] hidden sm:inline">Copied!</span>
+                    <Check className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+                    <span className="text-[#0F766E] dark:text-[#14B8A6] hidden sm:inline">Copied!</span>
                   </>
                 ) : (
                   <>
-                    <Share2 className="w-4 h-4 text-[#9EABA3]" />
+                    <Share2 className="w-4 h-4 text-[#6B7280] dark:text-[#9CA3AF]" />
                     <span className="hidden sm:inline">Share</span>
                   </>
                 )}
@@ -226,17 +226,17 @@ export const WorkspaceCompareModal: React.FC = () => {
                 id="save-comparison-btn"
                 onClick={handleSave}
                 disabled={isSaving}
-                className="p-2 sm:px-3 sm:py-2 rounded-xl bg-[#18201B] hover:bg-[#232D28] border border-[#232D28] text-xs font-semibold text-[#F2F2F2] flex items-center space-x-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                className="p-2 sm:px-3 sm:py-2 rounded-xl bg-white dark:bg-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] border border-[#E5E7EB] dark:border-[#374151] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] flex items-center space-x-1.5 transition-colors cursor-pointer disabled:opacity-50"
                 title="Save comparison to profile"
               >
                 {saveSuccess ? (
                   <>
-                    <Check className="w-4 h-4 text-[#00C878]" />
-                    <span className="text-[#00C878] hidden sm:inline">Saved!</span>
+                    <Check className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+                    <span className="text-[#0F766E] dark:text-[#14B8A6] hidden sm:inline">Saved!</span>
                   </>
                 ) : (
                   <>
-                    <Bookmark className="w-4 h-4 text-[#00C878]" />
+                    <Bookmark className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
                     <span className="hidden sm:inline">Save</span>
                   </>
                 )}
@@ -248,7 +248,7 @@ export const WorkspaceCompareModal: React.FC = () => {
               type="button"
               id="close-compare-modal-btn"
               onClick={() => setIsCompareModalOpen(false)}
-              className="p-2 rounded-xl text-[#718079] hover:text-[#F2F2F2] hover:bg-[#18201B] transition-colors cursor-pointer"
+              className="p-2 rounded-xl text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] transition-colors cursor-pointer"
               title="Close modal"
             >
               <X className="w-5 h-5" />
@@ -278,25 +278,25 @@ export const WorkspaceCompareModal: React.FC = () => {
               {/* --- 2A. EMPTY OR SINGLE SPACE STATE --- */}
               {!isReady ? (
                 <div className="py-10 sm:py-14 text-center max-w-lg mx-auto space-y-5">
-                  <div className="w-16 h-16 rounded-3xl bg-[#18201B] border border-[#232D28] flex items-center justify-center mx-auto text-[#00C878]">
+                  <div className="w-16 h-16 rounded-3xl bg-[#E6F4F2] dark:bg-[#0F766E]/20 border border-[#0F766E]/30 flex items-center justify-center mx-auto text-[#0F766E] dark:text-[#14B8A6]">
                     <ArrowLeftRight className="w-8 h-8" />
                   </div>
 
                   <div className="space-y-2">
-                    <h4 className="text-lg font-bold text-[#F2F2F2]">
+                    <h4 className="text-lg font-bold text-[#111827] dark:text-[#F9FAFB]">
                       {count === 1
                         ? `1 Workspace Selected: ${selectedSpaces[0]?.title}`
                         : 'Select Workspaces to Compare'}
                     </h4>
-                    <p className="text-xs sm:text-sm text-[#718079] leading-relaxed">
+                    <p className="text-xs sm:text-sm text-[#6B7280] dark:text-[#9CA3AF] leading-relaxed">
                       Choose at least <strong>2 workspaces</strong> (up to 3) to unlock side-by-side amenity matrices, proprietary Smart Match scores, and automatic difference callouts.
                     </p>
                   </div>
 
                   {/* Suggested Spaces to Add with 1-Click */}
                   <div className="pt-4 space-y-3 text-left">
-                    <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#9EABA3] flex items-center space-x-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-[#00C878]" />
+                    <div className="text-xs font-mono font-bold uppercase tracking-wider text-[#4B5563] dark:text-[#D1D5DB] flex items-center space-x-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
                       <span>Suggested Workspaces to Compare:</span>
                     </div>
 
@@ -304,15 +304,15 @@ export const WorkspaceCompareModal: React.FC = () => {
                       {suggestedSpaces.map((space) => (
                         <div
                           key={space.id}
-                          className="p-3 rounded-2xl bg-[#18201B] border border-[#232D28] hover:border-[#00C878]/50 transition-all flex flex-col justify-between space-y-2.5"
+                          className="p-3 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] hover:border-[#0F766E]/50 transition-all flex flex-col justify-between space-y-2.5"
                         >
                           <div className="space-y-1.5">
-                            <div className="aspect-[16/10] rounded-xl overflow-hidden bg-[#121614]">
+                            <div className="aspect-[16/10] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
                               <img src={space.featuredImage} alt={space.title} className="w-full h-full object-cover" />
                             </div>
-                            <div className="text-xs font-bold text-[#F2F2F2] line-clamp-1">{space.title}</div>
-                            <div className="text-[10px] text-[#718079]">{space.neighborhood}, {space.city}</div>
-                            <div className="text-xs font-mono font-bold text-[#00C878]">
+                            <div className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB] line-clamp-1">{space.title}</div>
+                            <div className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">{space.neighborhood}, {space.city}</div>
+                            <div className="text-xs font-mono font-bold text-[#0F766E] dark:text-[#14B8A6]">
                               {formatPrice(space.pricePerHour)}/hr
                             </div>
                           </div>
@@ -320,7 +320,7 @@ export const WorkspaceCompareModal: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => addSpaceToCompare(space.id)}
-                            className="w-full py-1.5 px-2.5 rounded-xl bg-[#00C878]/15 hover:bg-[#00C878] text-[#00C878] hover:text-[#0D0D0D] border border-[#00C878]/30 text-[11px] font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer"
+                            className="w-full py-1.5 px-2.5 rounded-xl bg-[#E6F4F2] dark:bg-[#0F766E]/20 hover:bg-[#0F766E] text-[#0F766E] dark:text-[#14B8A6] hover:text-white border border-[#0F766E]/30 text-[11px] font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             <span>Add to Compare</span>
@@ -334,7 +334,7 @@ export const WorkspaceCompareModal: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setIsCompareModalOpen(false)}
-                      className="px-6 py-2.5 rounded-2xl bg-[#18201B] hover:bg-[#232D28] border border-[#232D28] text-xs font-semibold text-[#F2F2F2] transition-colors"
+                      className="px-6 py-2.5 rounded-2xl bg-white dark:bg-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] border border-[#E5E7EB] dark:border-[#374151] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer"
                     >
                       Continue Browsing Workspaces
                     </button>
@@ -346,18 +346,18 @@ export const WorkspaceCompareModal: React.FC = () => {
                   
                   {/* --- DIFFERENCE HIGHLIGHTS BANNER --- */}
                   {differenceHighlights.length > 0 && (
-                    <div className="p-4 sm:p-5 rounded-2xl bg-[#141E19] border border-[#00C878]/30 space-y-2.5">
-                      <div className="flex items-center space-x-2 text-xs font-mono font-bold uppercase tracking-wider text-[#00C878]">
-                        <Sparkles className="w-4 h-4 text-[#00C878]" />
+                    <div className="p-4 sm:p-5 rounded-2xl bg-[#E6F4F2] dark:bg-[#0F766E]/15 border border-[#0F766E]/30 space-y-2.5">
+                      <div className="flex items-center space-x-2 text-xs font-mono font-bold uppercase tracking-wider text-[#0F766E] dark:text-[#14B8A6]">
+                        <Sparkles className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
                         <span>Key Difference Highlights</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
                         {differenceHighlights.map((diff, idx) => (
                           <div
                             key={idx}
-                            className="flex items-start space-x-2 text-xs text-[#E2E8E5] bg-[#0E1511]/80 p-2.5 rounded-xl border border-[#23352B]"
+                            className="flex items-start space-x-2 text-xs text-[#111827] dark:text-[#F9FAFB] bg-white/80 dark:bg-[#111827]/80 p-2.5 rounded-xl border border-[#E5E7EB] dark:border-[#374151]"
                           >
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#00C878] shrink-0 mt-0.5" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6] shrink-0 mt-0.5" />
                             <span className="leading-snug">{diff.highlightText}</span>
                           </div>
                         ))}
@@ -381,13 +381,13 @@ export const WorkspaceCompareModal: React.FC = () => {
                         return (
                           <div
                             key={space.id}
-                            className="bg-[#18201B] border border-[#232D28] rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-5 relative group hover:border-[#00C878]/50 transition-all shadow-lg"
+                            className="bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] rounded-2xl p-4 sm:p-5 flex flex-col justify-between space-y-5 relative group hover:border-[#0F766E]/50 transition-all shadow-lg"
                           >
                             {/* Remove button */}
                             <button
                               type="button"
                               onClick={() => removeSpaceFromCompare(space.id)}
-                              className="absolute top-3 right-3 p-1.5 rounded-xl bg-black/60 hover:bg-[#FF5C5C]/20 text-[#718079] hover:text-[#FF8585] transition-colors z-20 cursor-pointer"
+                              className="absolute top-3 right-3 p-1.5 rounded-xl bg-black/60 hover:bg-[#EF4444]/20 text-[#9CA3AF] hover:text-[#EF4444] transition-colors z-20 cursor-pointer"
                               title="Remove from comparison"
                             >
                               <X className="w-4 h-4" />
@@ -395,7 +395,7 @@ export const WorkspaceCompareModal: React.FC = () => {
 
                             {/* Header: Photo + Badges */}
                             <div className="space-y-3">
-                              <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-[#121614]">
+                              <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
                                 <img
                                   src={space.featuredImage}
                                   alt={space.title}
@@ -405,15 +405,15 @@ export const WorkspaceCompareModal: React.FC = () => {
                                 
                                 {/* Top Category Tag */}
                                 <div className="absolute top-2.5 left-2.5">
-                                  <span className="px-2 py-0.5 rounded-md bg-[#0D0D0D]/85 backdrop-blur-md text-[10px] font-mono font-bold uppercase text-[#00C878] border border-[#232D28]">
+                                  <span className="px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[10px] font-mono font-bold uppercase text-[#0F766E] dark:text-[#14B8A6] border border-white/10">
                                     {space.category.toUpperCase()}
                                   </span>
                                 </div>
 
                                 {/* Bottom Live Availability */}
-                                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] text-[#F2F2F2]">
-                                  <span className="flex items-center space-x-1 bg-[#0D0D0D]/80 backdrop-blur-md px-2 py-0.5 rounded-md font-mono text-[#00C878]">
-                                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#00C878] animate-pulse" />
+                                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-[10px] text-white">
+                                  <span className="flex items-center space-x-1 bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-md font-mono text-[#14B8A6]">
+                                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#0F766E] animate-pulse" />
                                     <span>{availability.statusLabel}</span>
                                   </span>
                                 </div>
@@ -423,33 +423,33 @@ export const WorkspaceCompareModal: React.FC = () => {
                               <div className="space-y-1">
                                 <h4
                                   onClick={() => handleViewDetails(space.id)}
-                                  className="text-sm sm:text-base font-bold text-[#F2F2F2] hover:text-[#00C878] cursor-pointer transition-colors line-clamp-1"
+                                  className="text-sm sm:text-base font-bold text-[#111827] dark:text-[#F9FAFB] hover:text-[#0F766E] dark:hover:text-[#14B8A6] cursor-pointer transition-colors line-clamp-1"
                                 >
                                   {space.title}
                                 </h4>
-                                <div className="flex items-center space-x-1 text-xs text-[#718079]">
-                                  <MapPin className="w-3.5 h-3.5 text-[#00C878] shrink-0" />
+                                <div className="flex items-center space-x-1 text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+                                  <MapPin className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6] shrink-0" />
                                   <span className="truncate">{space.neighborhood}, {space.city}</span>
                                 </div>
                               </div>
 
                               {/* Smart Match Score & Best For Tag */}
                               <div className="grid grid-cols-2 gap-2 pt-1">
-                                <div className="p-2.5 rounded-xl bg-[#121E18] border border-[#00C878]/40 flex flex-col justify-center">
-                                  <div className="text-[10px] font-mono font-semibold uppercase text-[#718079]">
+                                <div className="p-2.5 rounded-xl bg-[#E6F4F2] dark:bg-[#0F766E]/15 border border-[#0F766E]/30 flex flex-col justify-center">
+                                  <div className="text-[10px] font-mono font-semibold uppercase text-[#6B7280] dark:text-[#9CA3AF]">
                                     Smart Match
                                   </div>
-                                  <div className="flex items-center space-x-1.5 text-[#00C878] font-mono font-black text-sm sm:text-base">
+                                  <div className="flex items-center space-x-1.5 text-[#0F766E] dark:text-[#14B8A6] font-mono font-black text-sm sm:text-base">
                                     <Sparkles className="w-3.5 h-3.5 shrink-0" />
                                     <span>{smartScore}%</span>
                                   </div>
                                 </div>
 
-                                <div className="p-2.5 rounded-xl bg-[#141816] border border-[#232D28] flex flex-col justify-center">
-                                  <div className="text-[10px] font-mono font-semibold uppercase text-[#718079]">
+                                <div className="p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] flex flex-col justify-center">
+                                  <div className="text-[10px] font-mono font-semibold uppercase text-[#6B7280] dark:text-[#9CA3AF]">
                                     Best For
                                   </div>
-                                  <div className="text-xs font-bold text-[#F2F2F2] truncate">
+                                  <div className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB] truncate">
                                     {bestForTag}
                                   </div>
                                 </div>
@@ -460,37 +460,37 @@ export const WorkspaceCompareModal: React.FC = () => {
                             {(() => {
                               const spacePricing = getSpacePricing(space);
                               return (
-                                <div className="space-y-2 pt-2 border-t border-[#232D28]">
-                                  <div className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider">
+                                <div className="space-y-2 pt-2 border-t border-[#E5E7EB] dark:border-[#374151]">
+                                  <div className="text-[11px] font-mono font-bold uppercase text-[#6B7280] dark:text-[#9CA3AF] tracking-wider">
                                     Rates &amp; Pricing
                                   </div>
-                                  <div className="flex items-baseline justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
-                                    <span className="text-xs text-[#9EABA3]">
+                                  <div className="flex items-baseline justify-between p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151]">
+                                    <span className="text-xs text-[#4B5563] dark:text-[#D1D5DB]">
                                       {spacePricing.basis === 'person' ? 'Per Person' : 'Base Rate'}
                                     </span>
                                     <div className="flex items-center space-x-1.5">
                                       {isLowestPrice && (
-                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#00C878]/20 text-[#00C878] uppercase">
+                                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#E6F4F2] dark:bg-[#0F766E]/20 text-[#0F766E] dark:text-[#14B8A6] uppercase">
                                           Lowest
                                         </span>
                                       )}
-                                      <span className="text-sm font-mono font-bold text-[#00C878]">
+                                      <span className="text-sm font-mono font-bold text-[#0F766E] dark:text-[#14B8A6]">
                                         {formatPrice(spacePricing.rate)}/{spacePricing.period}
                                       </span>
                                     </div>
                                   </div>
                                   {space.pricePerDay && spacePricing.period === 'hour' && (
-                                    <div className="flex items-baseline justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
-                                      <span className="text-xs text-[#9EABA3]">Full Day Pass</span>
-                                      <span className="text-xs font-mono font-bold text-[#F2F2F2]">
+                                    <div className="flex items-baseline justify-between p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151]">
+                                      <span className="text-xs text-[#4B5563] dark:text-[#D1D5DB]">Full Day Pass</span>
+                                      <span className="text-xs font-mono font-bold text-[#111827] dark:text-[#F9FAFB]">
                                         {formatPrice(space.pricePerDay)}/day
                                       </span>
                                     </div>
                                   )}
                                   {spacePricing.sessionDurationHours && (
-                                    <div className="flex items-baseline justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
-                                      <span className="text-xs text-[#9EABA3]">Session Duration</span>
-                                      <span className="text-xs font-mono font-bold text-[#00C878]">
+                                    <div className="flex items-baseline justify-between p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151]">
+                                      <span className="text-xs text-[#4B5563] dark:text-[#D1D5DB]">Session Duration</span>
+                                      <span className="text-xs font-mono font-bold text-[#0F766E] dark:text-[#14B8A6]">
                                         {spacePricing.sessionDurationHours} hours / block
                                       </span>
                                     </div>
@@ -500,87 +500,87 @@ export const WorkspaceCompareModal: React.FC = () => {
                             })()}
 
                             {/* Section 2: PERFORMANCE SPECS */}
-                            <div className="space-y-2 pt-2 border-t border-[#232D28]">
-                              <div className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider">
+                            <div className="space-y-2 pt-2 border-t border-[#E5E7EB] dark:border-[#374151]">
+                              <div className="text-[11px] font-mono font-bold uppercase text-[#6B7280] dark:text-[#9CA3AF] tracking-wider">
                                 Power &amp; Connectivity
                               </div>
                               
                               {/* Internet Speed */}
-                              <div className="flex items-center justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
-                                <div className="flex items-center space-x-1.5 text-xs text-[#9EABA3]">
-                                  <Wifi className="w-3.5 h-3.5 text-[#00C878]" />
+                              <div className="flex items-center justify-between p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151]">
+                                <div className="flex items-center space-x-1.5 text-xs text-[#4B5563] dark:text-[#D1D5DB]">
+                                  <Wifi className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
                                   <span>Internet Speed</span>
                                 </div>
                                 <div className="flex items-center space-x-1.5">
                                   {isFastestSpeed && (
-                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#00C878]/20 text-[#00C878] uppercase">
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-[#E6F4F2] dark:bg-[#0F766E]/20 text-[#0F766E] dark:text-[#14B8A6] uppercase">
                                       Fastest
                                     </span>
                                   )}
-                                  <span className="text-xs font-mono font-bold text-[#F2F2F2]">
+                                  <span className="text-xs font-mono font-bold text-[#111827] dark:text-[#F9FAFB]">
                                     {space.internetSpeedMbps} Mbps
                                   </span>
                                 </div>
                               </div>
 
                               {/* Internet ISP / Connection Type */}
-                              <div className="flex items-center justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
-                                <span className="text-xs text-[#9EABA3]">Connection Type</span>
-                                <span className="text-[11px] font-semibold text-[#F2F2F2] truncate max-w-[140px]">
+                              <div className="flex items-center justify-between p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151]">
+                                <span className="text-xs text-[#4B5563] dark:text-[#D1D5DB]">Connection Type</span>
+                                <span className="text-[11px] font-semibold text-[#111827] dark:text-[#F9FAFB] truncate max-w-[140px]">
                                   {space.internetIsp || 'Dedicated Fiber'}
                                 </span>
                               </div>
 
                               {/* Power Backup */}
-                              <div className="flex items-center justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
-                                <div className="flex items-center space-x-1.5 text-xs text-[#9EABA3]">
-                                  <Zap className="w-3.5 h-3.5 text-[#00C878]" />
+                              <div className="flex items-center justify-between p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151]">
+                                <div className="flex items-center space-x-1.5 text-xs text-[#4B5563] dark:text-[#D1D5DB]">
+                                  <Zap className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
                                   <span>24/7 Power Backup</span>
                                 </div>
-                                <span className="text-xs font-mono font-bold text-[#00C878]">
+                                <span className="text-xs font-mono font-bold text-[#0F766E] dark:text-[#14B8A6]">
                                   {space.powerUptimeGuaranteePercent || 99.8}% Uptime
                                 </span>
                               </div>
                             </div>
 
                             {/* Section 3: CAPACITY & NOISE */}
-                            <div className="space-y-2 pt-2 border-t border-[#232D28]">
-                              <div className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider">
+                            <div className="space-y-2 pt-2 border-t border-[#E5E7EB] dark:border-[#374151]">
+                              <div className="text-[11px] font-mono font-bold uppercase text-[#6B7280] dark:text-[#9CA3AF] tracking-wider">
                                 Capacity &amp; Environment
                               </div>
 
-                              <div className="flex items-center justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
-                                <div className="flex items-center space-x-1.5 text-xs text-[#9EABA3]">
-                                  <Users className="w-3.5 h-3.5 text-[#00C878]" />
+                              <div className="flex items-center justify-between p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151]">
+                                <div className="flex items-center space-x-1.5 text-xs text-[#4B5563] dark:text-[#D1D5DB]">
+                                  <Users className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
                                   <span>Capacity</span>
                                 </div>
-                                <span className="text-xs font-bold text-[#F2F2F2]">
+                                <span className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB]">
                                   {space.capacity} {space.capacity === 1 ? 'Desk' : 'Seats'}
                                 </span>
                               </div>
 
-                              <div className="flex items-center justify-between p-2 rounded-xl bg-[#141816] border border-[#232D28]">
-                                <div className="flex items-center space-x-1.5 text-xs text-[#9EABA3]">
-                                  <Volume2 className="w-3.5 h-3.5 text-[#718079]" />
+                              <div className="flex items-center justify-between p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151]">
+                                <div className="flex items-center space-x-1.5 text-xs text-[#4B5563] dark:text-[#D1D5DB]">
+                                  <Volume2 className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF]" />
                                   <span>Noise Level</span>
                                 </div>
-                                <span className="text-[11px] font-semibold text-[#F2F2F2]">
+                                <span className="text-[11px] font-semibold text-[#111827] dark:text-[#F9FAFB]">
                                   {space.noiseLevel || 'Focused / Moderate'}
                                 </span>
                               </div>
                             </div>
 
                             {/* Section 4: KEY AMENITIES CHECKLIST */}
-                            <div className="space-y-2 pt-2 border-t border-[#232D28]">
-                              <div className="text-[11px] font-mono font-bold uppercase text-[#718079] tracking-wider">
+                            <div className="space-y-2 pt-2 border-t border-[#E5E7EB] dark:border-[#374151]">
+                              <div className="text-[11px] font-mono font-bold uppercase text-[#6B7280] dark:text-[#9CA3AF] tracking-wider">
                                 Amenities Checklist
                               </div>
                               <div className="grid grid-cols-2 gap-1.5 text-xs">
                                 {/* Parking */}
                                 <div className={`p-2 rounded-xl flex items-center space-x-1.5 border ${
                                   (space.amenities || []).some(a => a && a.toLowerCase().includes('parking'))
-                                    ? 'bg-[#121E18] text-[#00C878] border-[#00C878]/30'
-                                    : 'bg-[#141816] text-[#718079] border-[#232D28]'
+                                    ? 'bg-[#E6F4F2] dark:bg-[#0F766E]/20 text-[#0F766E] dark:text-[#14B8A6] border-[#0F766E]/30'
+                                    : 'bg-[#F8FAFC] dark:bg-[#1F2937] text-[#6B7280] dark:text-[#9CA3AF] border-[#E5E7EB] dark:border-[#374151]'
                                 }`}>
                                   <Car className="w-3.5 h-3.5 shrink-0" />
                                   <span className="truncate text-[11px]">Free Parking</span>
@@ -589,8 +589,8 @@ export const WorkspaceCompareModal: React.FC = () => {
                                 {/* Air Conditioning */}
                                 <div className={`p-2 rounded-xl flex items-center space-x-1.5 border ${
                                   (space.amenities || []).some(a => a && (a.toLowerCase().includes('ac') || a.toLowerCase().includes('air') || a.toLowerCase().includes('conditioning')))
-                                    ? 'bg-[#121E18] text-[#00C878] border-[#00C878]/30'
-                                    : 'bg-[#141816] text-[#718079] border-[#232D28]'
+                                    ? 'bg-[#E6F4F2] dark:bg-[#0F766E]/20 text-[#0F766E] dark:text-[#14B8A6] border-[#0F766E]/30'
+                                    : 'bg-[#F8FAFC] dark:bg-[#1F2937] text-[#6B7280] dark:text-[#9CA3AF] border-[#E5E7EB] dark:border-[#374151]'
                                 }`}>
                                   <Wind className="w-3.5 h-3.5 shrink-0" />
                                   <span className="truncate text-[11px]">Full AC</span>
@@ -599,8 +599,8 @@ export const WorkspaceCompareModal: React.FC = () => {
                                 {/* Coffee */}
                                 <div className={`p-2 rounded-xl flex items-center space-x-1.5 border ${
                                   (space.amenities || []).some(a => a && (a.toLowerCase().includes('coffee') || a.toLowerCase().includes('tea') || a.toLowerCase().includes('cafe')))
-                                    ? 'bg-[#121E18] text-[#00C878] border-[#00C878]/30'
-                                    : 'bg-[#141816] text-[#718079] border-[#232D28]'
+                                    ? 'bg-[#E6F4F2] dark:bg-[#0F766E]/20 text-[#0F766E] dark:text-[#14B8A6] border-[#0F766E]/30'
+                                    : 'bg-[#F8FAFC] dark:bg-[#1F2937] text-[#6B7280] dark:text-[#9CA3AF] border-[#E5E7EB] dark:border-[#374151]'
                                 }`}>
                                   <Coffee className="w-3.5 h-3.5 shrink-0" />
                                   <span className="truncate text-[11px]">Coffee / Tea</span>
@@ -609,8 +609,8 @@ export const WorkspaceCompareModal: React.FC = () => {
                                 {/* Accessibility */}
                                 <div className={`p-2 rounded-xl flex items-center space-x-1.5 border ${
                                   (space.amenities || []).some(a => a && (a.toLowerCase().includes('access') || a.toLowerCase().includes('wheelchair') || a.toLowerCase().includes('elevator') || a.toLowerCase().includes('ramp')))
-                                    ? 'bg-[#121E18] text-[#00C878] border-[#00C878]/30'
-                                    : 'bg-[#141816] text-[#718079] border-[#232D28]'
+                                    ? 'bg-[#E6F4F2] dark:bg-[#0F766E]/20 text-[#0F766E] dark:text-[#14B8A6] border-[#0F766E]/30'
+                                    : 'bg-[#F8FAFC] dark:bg-[#1F2937] text-[#6B7280] dark:text-[#9CA3AF] border-[#E5E7EB] dark:border-[#374151]'
                                 }`}>
                                   <Accessibility className="w-3.5 h-3.5 shrink-0" />
                                   <span className="truncate text-[11px]">Step-Free</span>
@@ -619,30 +619,30 @@ export const WorkspaceCompareModal: React.FC = () => {
                             </div>
 
                             {/* Section 5: REPUTATION & HOURS */}
-                            <div className="space-y-2 pt-2 border-t border-[#232D28]">
+                            <div className="space-y-2 pt-2 border-t border-[#E5E7EB] dark:border-[#374151]">
                               <div className="flex items-center justify-between text-xs">
-                                <span className="text-[#9EABA3]">Rating &amp; Reviews</span>
+                                <span className="text-[#4B5563] dark:text-[#D1D5DB]">Rating &amp; Reviews</span>
                                 <div className="flex items-center space-x-1">
-                                  <Star className="w-3.5 h-3.5 fill-[#00C878] text-[#00C878]" />
-                                  <span className="font-bold text-[#F2F2F2]">{space.rating}</span>
-                                  <span className="text-[#718079]">({space.reviewsCount})</span>
+                                  <Star className="w-3.5 h-3.5 fill-[#0F766E] text-[#0F766E] dark:fill-[#14B8A6] dark:text-[#14B8A6]" />
+                                  <span className="font-bold text-[#111827] dark:text-[#F9FAFB]">{space.rating}</span>
+                                  <span className="text-[#6B7280] dark:text-[#9CA3AF]">({space.reviewsCount})</span>
                                 </div>
                               </div>
 
                               <div className="flex items-center justify-between text-xs">
-                                <span className="text-[#9EABA3]">Operating Hours</span>
-                                <span className="text-[11px] font-mono text-[#F2F2F2]">
+                                <span className="text-[#4B5563] dark:text-[#D1D5DB]">Operating Hours</span>
+                                <span className="text-[11px] font-mono text-[#111827] dark:text-[#F9FAFB]">
                                   {space.operatingHours?.open || '08:00'} - {space.operatingHours?.close || '20:00'}
                                 </span>
                               </div>
                             </div>
 
                             {/* CTAs */}
-                            <div className="pt-3 border-t border-[#232D28] space-y-2">
+                            <div className="pt-3 border-t border-[#E5E7EB] dark:border-[#374151] space-y-2">
                               <button
                                 type="button"
                                 onClick={() => handleBook(space)}
-                                className="w-full py-2.5 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-extrabold text-xs transition-all flex items-center justify-center space-x-1.5 shadow-md active:scale-98 cursor-pointer"
+                                className="w-full py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#0D625C] text-white font-extrabold text-xs transition-all flex items-center justify-center space-x-1.5 shadow-md active:scale-98 cursor-pointer"
                               >
                                 <span>Book This Workspace</span>
                                 <ChevronRight className="w-3.5 h-3.5" />
@@ -651,7 +651,7 @@ export const WorkspaceCompareModal: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => handleViewDetails(space.id)}
-                                className="w-full py-2 rounded-xl bg-[#141816] hover:bg-[#1A201D] border border-[#232D28] text-xs font-semibold text-[#9EABA3] hover:text-[#F2F2F2] transition-colors cursor-pointer"
+                                className="w-full py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#1F2937] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] border border-[#E5E7EB] dark:border-[#374151] text-xs font-semibold text-[#4B5563] dark:text-[#D1D5DB] hover:text-[#111827] dark:hover:text-[#F9FAFB] transition-colors cursor-pointer"
                               >
                                 View Listing Details
                               </button>
@@ -665,8 +665,8 @@ export const WorkspaceCompareModal: React.FC = () => {
 
                   {/* Add another workspace CTA if count === 2 */}
                   {count === 2 && (
-                    <div className="p-4 rounded-2xl bg-[#18201B] border border-dashed border-[#2E3B34] flex flex-col sm:flex-row items-center justify-between gap-3">
-                      <div className="text-xs text-[#9EABA3]">
+                    <div className="p-4 rounded-2xl bg-[#F8FAFC] dark:bg-[#1F2937] border border-dashed border-[#E5E7EB] dark:border-[#374151] flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div className="text-xs text-[#4B5563] dark:text-[#D1D5DB]">
                         You can compare <strong>1 more workspace</strong> (up to 3 total).
                       </div>
                       <div className="flex items-center space-x-2">
@@ -675,7 +675,7 @@ export const WorkspaceCompareModal: React.FC = () => {
                             key={s.id}
                             type="button"
                             onClick={() => addSpaceToCompare(s.id)}
-                            className="px-3 py-1.5 rounded-xl bg-[#141816] hover:bg-[#00C878] text-[#9EABA3] hover:text-[#0D0D0D] border border-[#232D28] text-xs font-semibold transition-all flex items-center space-x-1 cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#111827] hover:bg-[#0F766E] text-[#4B5563] dark:text-[#D1D5DB] hover:text-white border border-[#E5E7EB] dark:border-[#374151] text-xs font-semibold transition-all flex items-center space-x-1 cursor-pointer"
                           >
                             <Plus className="w-3.5 h-3.5" />
                             <span>Add {s.title.split(' ')[0]}</span>
@@ -695,9 +695,9 @@ export const WorkspaceCompareModal: React.FC = () => {
         {/* ========================================================================= */}
         {/* 3. MODAL FOOTER                                                           */}
         {/* ========================================================================= */}
-        <div className="p-4 sm:p-5 border-t border-[#1E2522] bg-[#141816]/95 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky bottom-0 z-30">
-          <div className="flex items-center space-x-2 text-xs text-[#718079]">
-            <ShieldCheck className="w-4 h-4 text-[#00C878]" />
+        <div className="p-4 sm:p-5 border-t border-[#E5E7EB] dark:border-[#374151] bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky bottom-0 z-30">
+          <div className="flex items-center space-x-2 text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+            <ShieldCheck className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
             <span>All workspaces audited for continuous 24/7 power, verified internet &amp; digital access pass</span>
           </div>
 
@@ -706,7 +706,7 @@ export const WorkspaceCompareModal: React.FC = () => {
               <button
                 type="button"
                 onClick={clearCompareList}
-                className="px-3 py-2 rounded-xl text-[#718079] hover:text-[#FF8585] text-xs font-semibold transition-colors cursor-pointer"
+                className="px-3 py-2 rounded-xl text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#EF4444] text-xs font-semibold transition-colors cursor-pointer"
               >
                 Clear All
               </button>
@@ -715,7 +715,7 @@ export const WorkspaceCompareModal: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsCompareModalOpen(false)}
-              className="px-5 py-2.5 rounded-xl bg-[#18201B] hover:bg-[#232D28] border border-[#232D28] text-xs font-bold text-[#F2F2F2] transition-all cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-white dark:bg-[#1F2937] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] border border-[#E5E7EB] dark:border-[#374151] text-xs font-bold text-[#111827] dark:text-[#F9FAFB] transition-all cursor-pointer"
             >
               Done
             </button>

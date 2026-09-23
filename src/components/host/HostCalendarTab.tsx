@@ -73,8 +73,8 @@ export const HostCalendarTab: React.FC<HostCalendarTabProps> = ({
       {/* Header & Space Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-[#F2F2F2]">Hub Availability & Maintenance Calendar</h2>
-          <p className="text-xs text-[#718079]">
+          <h2 className="text-xl font-bold text-[#111827] dark:text-[#F9FAFB]">Hub Availability & Maintenance Calendar</h2>
+          <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
             Click any calendar day to block or unblock for private corporate buyouts or maintenance
           </p>
         </div>
@@ -82,11 +82,11 @@ export const HostCalendarTab: React.FC<HostCalendarTabProps> = ({
         {/* Space Selector Dropdown */}
         {hostSpaces.length > 1 && (
           <div className="flex items-center space-x-2">
-            <Building2 className="w-4 h-4 text-[#00C878]" />
+            <Building2 className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
             <select
               value={activeSpaceId}
               onChange={(e) => setActiveSpaceId(e.target.value)}
-              className="px-3.5 py-2 rounded-2xl bg-[#141816] border border-[#1E2522] text-xs font-bold text-[#F2F2F2] focus:outline-none focus:border-[#00C878] cursor-pointer"
+              className="px-3.5 py-2 rounded-2xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] text-xs font-bold text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E] cursor-pointer"
             >
               {hostSpaces.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -99,26 +99,26 @@ export const HostCalendarTab: React.FC<HostCalendarTabProps> = ({
       </div>
 
       {/* Calendar Card */}
-      <div className="p-6 rounded-3xl bg-[#141816] border border-[#1E2522] space-y-6">
+      <div className="p-6 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] space-y-6 shadow-xs">
         
         {/* Month Navigation & Legend */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1E2522] pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E7EB] dark:border-[#374151] pb-4">
           <div className="flex items-center space-x-3">
-            <div className="text-lg font-bold text-[#F2F2F2]">
+            <div className="text-lg font-bold text-[#111827] dark:text-[#F9FAFB]">
               {monthNames[month]} {year}
             </div>
             <div className="flex items-center space-x-1">
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="p-1.5 rounded-xl bg-[#18201B] hover:bg-[#232D28] text-[#F2F2F2] cursor-pointer"
+                className="p-1.5 rounded-xl bg-[#F1F5F9] dark:bg-[#374151] hover:bg-[#E5E7EB] dark:hover:bg-[#4B5563] text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="p-1.5 rounded-xl bg-[#18201B] hover:bg-[#232D28] text-[#F2F2F2] cursor-pointer"
+                className="p-1.5 rounded-xl bg-[#F1F5F9] dark:bg-[#374151] hover:bg-[#E5E7EB] dark:hover:bg-[#4B5563] text-[#111827] dark:text-[#F9FAFB] transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -128,16 +128,16 @@ export const HostCalendarTab: React.FC<HostCalendarTabProps> = ({
           {/* Status Legend */}
           <div className="flex items-center space-x-4 text-xs">
             <div className="flex items-center space-x-1.5">
-              <div className="w-3 h-3 rounded-md bg-[#00C878]" />
-              <span className="text-[#9EABA3]">Available</span>
+              <div className="w-3 h-3 rounded-md bg-[#0F766E]" />
+              <span className="text-[#6B7280] dark:text-[#9CA3AF]">Available</span>
             </div>
             <div className="flex items-center space-x-1.5">
-              <div className="w-3 h-3 rounded-md bg-[#E0A82E]" />
-              <span className="text-[#9EABA3]">Booked Desks</span>
+              <div className="w-3 h-3 rounded-md bg-amber-500" />
+              <span className="text-[#6B7280] dark:text-[#9CA3AF]">Booked Desks</span>
             </div>
             <div className="flex items-center space-x-1.5">
-              <div className="w-3 h-3 rounded-md bg-[#FF5C5C]/60" />
-              <span className="text-[#9EABA3]">Blocked (Private)</span>
+              <div className="w-3 h-3 rounded-md bg-red-500" />
+              <span className="text-[#6B7280] dark:text-[#9CA3AF]">Blocked (Private)</span>
             </div>
           </div>
         </div>
@@ -145,14 +145,14 @@ export const HostCalendarTab: React.FC<HostCalendarTabProps> = ({
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-2 text-center">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
-            <div key={i} className="text-xs font-bold text-[#718079] pb-2">
+            <div key={i} className="text-xs font-bold text-[#6B7280] dark:text-[#9CA3AF] pb-2">
               {d}
             </div>
           ))}
 
           {/* Blank padding days */}
           {blankDays.map((_, i) => (
-            <div key={`blank-${i}`} className="h-20 rounded-2xl bg-[#0D0D0D]/40 border border-transparent" />
+            <div key={`blank-${i}`} className="h-20 rounded-2xl bg-[#F8FAFC]/50 dark:bg-[#111827]/40 border border-transparent" />
           ))}
 
           {/* Month Days */}
@@ -173,37 +173,37 @@ export const HostCalendarTab: React.FC<HostCalendarTabProps> = ({
                 onClick={() => handleToggleBlock(day)}
                 className={`h-20 rounded-2xl border p-2 flex flex-col justify-between text-left transition-all cursor-pointer group relative overflow-hidden ${
                   isBlocked
-                    ? 'bg-[#FF5C5C]/10 border-[#FF5C5C]/40 hover:border-[#FF5C5C]'
+                    ? 'bg-red-500/10 border-red-500/40 hover:border-red-500'
                     : dayBookings.length > 0
-                    ? 'bg-[#E0A82E]/10 border-[#E0A82E]/40 hover:border-[#E0A82E]'
-                    : 'bg-[#18201B] border-[#232D28] hover:border-[#00C878]/50'
+                    ? 'bg-amber-500/10 border-amber-500/40 hover:border-amber-500'
+                    : 'bg-[#F8FAFC] dark:bg-[#111827] border-[#E5E7EB] dark:border-[#374151] hover:border-[#0F766E]/50'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className={`text-xs font-bold ${
                     isToday 
-                      ? 'w-5 h-5 rounded-full bg-[#00C878] text-[#0D0D0D] flex items-center justify-center' 
-                      : 'text-[#F2F2F2]'
+                      ? 'w-5 h-5 rounded-full bg-[#0F766E] text-white flex items-center justify-center' 
+                      : 'text-[#111827] dark:text-[#F9FAFB]'
                   }`}>
                     {day}
                   </span>
 
                   {isBlocked ? (
-                    <Lock className="w-3.5 h-3.5 text-[#FF5C5C]" />
+                    <Lock className="w-3.5 h-3.5 text-red-500" />
                   ) : dayBookings.length > 0 ? (
-                    <Users className="w-3.5 h-3.5 text-[#E0A82E]" />
+                    <Users className="w-3.5 h-3.5 text-amber-500" />
                   ) : (
-                    <Unlock className="w-3.5 h-3.5 text-[#718079] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Unlock className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF] opacity-0 group-hover:opacity-100 transition-opacity" />
                   )}
                 </div>
 
                 <div className="text-[10px] truncate">
                   {isBlocked ? (
-                    <span className="text-[#FF8C8C] font-semibold">Blocked</span>
+                    <span className="text-red-600 dark:text-red-400 font-semibold">Blocked</span>
                   ) : dayBookings.length > 0 ? (
-                    <span className="text-[#E0A82E] font-semibold">{dayBookings.length} Booked</span>
+                    <span className="text-amber-600 dark:text-amber-400 font-semibold">{dayBookings.length} Booked</span>
                   ) : (
-                    <span className="text-[#718079] group-hover:text-[#00C878] transition-colors">Open</span>
+                    <span className="text-[#6B7280] dark:text-[#9CA3AF] group-hover:text-[#0F766E] dark:group-hover:text-[#14B8A6] transition-colors">Open</span>
                   )}
                 </div>
               </div>
@@ -212,10 +212,10 @@ export const HostCalendarTab: React.FC<HostCalendarTabProps> = ({
         </div>
 
         {/* Info Banner */}
-        <div className="p-4 rounded-2xl bg-[#0D0D0D] border border-[#232D28] flex items-start space-x-3 text-xs text-[#718079]">
-          <Info className="w-4 h-4 text-[#00C878] shrink-0 mt-0.5" />
+        <div className="p-4 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] flex items-start space-x-3 text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+          <Info className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6] shrink-0 mt-0.5" />
           <p>
-            <strong className="text-[#F2F2F2]">Host Pro-Tip:</strong> Blocked dates immediately hide this workspace from customer search and quick-booking flows, preventing scheduling conflicts during private events.
+            <strong className="text-[#111827] dark:text-[#F9FAFB]">Host Pro-Tip:</strong> Blocked dates immediately hide this workspace from customer search and quick-booking flows, preventing scheduling conflicts during private events.
           </p>
         </div>
 

@@ -45,7 +45,7 @@ export const CheckoutModal: React.FC = () => {
   const [startTime, setStartTime] = useState('10:00');
   const [guests, setGuests] = useState(1);
   const [remindMe, setRemindMe] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<'paystack' | 'flutterwave' | 'wallet'>('paystack');
+  const [paymentMethod, setPaymentMethod] = useState<'sznd' | 'card' | 'wallet'>('card');
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
@@ -123,8 +123,8 @@ export const CheckoutModal: React.FC = () => {
         pricingPeriod: pricing.period,
         pricingModel: pricing,
         priceBreakdown: breakdown,
-        paymentMethod: paymentMethod === 'wallet' ? 'wallet' : 'paystack',
-        paymentReference: `pstk_${Math.random().toString(36).substring(7)}`,
+        paymentMethod: paymentMethod === 'wallet' ? 'wallet' : 'sznd',
+        paymentReference: `sznd_${Math.random().toString(36).substring(2, 11)}`,
       });
 
       // Confetti celebration
@@ -133,7 +133,7 @@ export const CheckoutModal: React.FC = () => {
           particleCount: 80,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ['#00C878', '#FFFFFF', '#141816'],
+          colors: ['#14BEB8', '#FFA987', '#006B70', '#FFFFFF'],
         });
       } catch (e) {
         // Safe fallback if confetti canvas not ready
@@ -153,44 +153,44 @@ export const CheckoutModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="relative w-full max-w-lg bg-white dark:bg-[#141816] rounded-3xl border border-[#E5E7EB] dark:border-[#232D28] shadow-2xl p-6 space-y-5">
+      <div className="relative w-full max-w-lg bg-white dark:bg-[#0B4A50] rounded-3xl border border-[#E2ECEB] dark:border-[#166D74] shadow-2xl p-6 space-y-5">
         
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#E5E7EB] dark:border-[#1E2522] pb-4">
+        <div className="flex items-center justify-between border-b border-[#E2ECEB] dark:border-[#166D74] pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-bold text-[#111827] dark:text-[#F2F2F2]">Instant Pass Reservation</h3>
-              <span className="text-[10px] font-mono font-bold bg-[#DCFCE7] dark:bg-[#16A34A]/15 text-[#16A34A] px-2 py-0.5 rounded-full border border-[#16A34A]/30 uppercase">
+              <h3 className="text-lg font-bold text-[#12383B] dark:text-white">Instant Pass Reservation</h3>
+              <span className="text-[10px] font-mono font-bold bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB] px-2.5 py-0.5 rounded-full border border-[#14BEB8]/30 uppercase">
                 {pricing.basis === 'person' ? 'Per Person' : 'Whole Space'} • {pricing.period}
               </span>
             </div>
-            <p className="text-xs text-[#6B7280] dark:text-[#718079] mt-0.5 truncate max-w-sm">{checkoutSpace.title}</p>
+            <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0] mt-0.5 truncate max-w-sm">{checkoutSpace.title}</p>
           </div>
           <button
             type="button"
             onClick={() => setIsCheckoutOpen(false)}
-            className="p-2 rounded-xl text-[#6B7280] dark:text-[#718079] hover:text-[#111827] dark:hover:text-[#F2F2F2] hover:bg-[#F1F5F9] dark:hover:bg-[#18201B] transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Space Summary Card */}
-        <div className="flex items-center space-x-3 p-3 rounded-2xl bg-[#F8FAFC] dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28]">
+        <div className="flex items-center space-x-3 p-3 rounded-2xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74]">
           <img
             src={checkoutSpace.featuredImage}
             alt={checkoutSpace.title}
             className="w-16 h-16 rounded-xl object-cover"
           />
           <div className="flex-1 min-w-0">
-            <h4 className="text-xs font-bold text-[#111827] dark:text-[#F2F2F2] truncate">{checkoutSpace.title}</h4>
-            <p className="text-[11px] text-[#6B7280] dark:text-[#718079]">{checkoutSpace.neighborhood}, {checkoutSpace.city}</p>
+            <h4 className="text-xs font-bold text-[#12383B] dark:text-white truncate">{checkoutSpace.title}</h4>
+            <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">{checkoutSpace.neighborhood}, {checkoutSpace.city}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs font-mono font-bold text-[#16A34A]">
+              <span className="text-xs font-mono font-bold text-[#006B70] dark:text-[#28D2CB]">
                 {formatSpaceRate(checkoutSpace)}
               </span>
               {pricing.sessionDurationHours && (
-                <span className="text-[10px] text-[#6B7280] dark:text-[#718079] bg-white dark:bg-[#141816] px-1.5 py-0.5 rounded border border-[#E5E7EB] dark:border-[#232D28]">
+                <span className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] bg-white dark:bg-[#0B4A50] px-1.5 py-0.5 rounded border border-[#E2ECEB] dark:border-[#166D74]">
                   {pricing.sessionDurationHours}h block
                 </span>
               )}
@@ -202,8 +202,8 @@ export const CheckoutModal: React.FC = () => {
         <div className="space-y-3">
           {/* Reservation Date */}
           <div className="space-y-1">
-            <label className="text-[11px] text-[#6B7280] dark:text-[#718079] font-semibold flex items-center space-x-1.5">
-              <Calendar className="w-3.5 h-3.5 text-[#16A34A]" />
+            <label className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-semibold flex items-center space-x-1.5">
+              <Calendar className="w-3.5 h-3.5 text-[#14BEB8]" />
               <span>Reservation Date</span>
             </label>
             <div className="flex items-center gap-2">
@@ -212,15 +212,15 @@ export const CheckoutModal: React.FC = () => {
                 value={date}
                 min={todayStr}
                 onChange={(e) => setDate(e.target.value)}
-                className="flex-1 p-2.5 rounded-xl bg-white dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] text-xs text-[#111827] dark:text-[#F2F2F2] focus:outline-none focus:border-[#16A34A] font-mono cursor-pointer"
+                className="flex-1 p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8] font-mono cursor-pointer"
               />
               <button
                 type="button"
                 onClick={() => setDate(todayStr)}
                 className={`px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   date === todayStr
-                    ? 'bg-[#16A34A] text-white shadow-2xs'
-                    : 'bg-white dark:bg-[#18201B] text-[#6B7280] dark:text-[#9EABA3] border border-[#E5E7EB] dark:border-[#232D28] hover:text-[#111827] dark:hover:text-[#F2F2F2]'
+                    ? 'bg-[#14BEB8] text-white shadow-2xs'
+                    : 'bg-[#FFF9F4] dark:bg-[#07383D] text-[#5D7A7D] dark:text-[#B8D1D0] border border-[#E2ECEB] dark:border-[#166D74] hover:text-[#12383B] dark:hover:text-white'
                 }`}
               >
                 Today
@@ -231,8 +231,8 @@ export const CheckoutModal: React.FC = () => {
           <div className="grid grid-cols-2 gap-3">
             {/* Period / Quantity Selector */}
             <div className="space-y-1">
-              <label className="text-[11px] text-[#6B7280] dark:text-[#718079] font-semibold flex items-center space-x-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#16A34A]" />
+              <label className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-semibold flex items-center space-x-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#14BEB8]" />
                 <span>
                   {pricing.period === 'hour' && 'Duration (Hours)'}
                   {pricing.period === 'day' && 'Duration (Days)'}
@@ -245,7 +245,7 @@ export const CheckoutModal: React.FC = () => {
                 <select
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl bg-white dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] text-xs text-[#111827] dark:text-[#F2F2F2] focus:outline-none focus:border-[#16A34A] cursor-pointer font-mono"
+                  className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8] cursor-pointer font-mono"
                 >
                   <option value={1}>1 Hour</option>
                   <option value={2}>2 Hours</option>
@@ -260,7 +260,7 @@ export const CheckoutModal: React.FC = () => {
                 <select
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl bg-white dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] text-xs text-[#111827] dark:text-[#F2F2F2] focus:outline-none focus:border-[#16A34A] cursor-pointer font-mono"
+                  className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8] cursor-pointer font-mono"
                 >
                   <option value={1}>1 Day Pass</option>
                   <option value={2}>2 Days</option>
@@ -275,7 +275,7 @@ export const CheckoutModal: React.FC = () => {
                 <select
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl bg-white dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] text-xs text-[#111827] dark:text-[#F2F2F2] focus:outline-none focus:border-[#16A34A] cursor-pointer font-mono"
+                  className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8] cursor-pointer font-mono"
                 >
                   <option value={1}>1 Month (Flexible)</option>
                   <option value={3}>3 Months (Quarterly)</option>
@@ -288,7 +288,7 @@ export const CheckoutModal: React.FC = () => {
                 <select
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl bg-white dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] text-xs text-[#111827] dark:text-[#F2F2F2] focus:outline-none focus:border-[#16A34A] cursor-pointer font-mono"
+                  className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8] cursor-pointer font-mono"
                 >
                   <option value={1}>1 Session {pricing.sessionDurationHours ? `(${pricing.sessionDurationHours} hrs)` : ''}</option>
                   <option value={2}>2 Sessions</option>
@@ -300,14 +300,14 @@ export const CheckoutModal: React.FC = () => {
 
             {/* Start Time */}
             <div className="space-y-1">
-              <label className="text-[11px] text-[#6B7280] dark:text-[#718079] font-semibold flex items-center space-x-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#16A34A]" />
+              <label className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-semibold flex items-center space-x-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#14BEB8]" />
                 <span>Start Time</span>
               </label>
               <select
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full p-2.5 rounded-xl bg-white dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] text-xs text-[#111827] dark:text-[#F2F2F2] focus:outline-none focus:border-[#16A34A] cursor-pointer font-mono"
+                className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8] cursor-pointer font-mono"
               >
                 {timeOptions.map((t) => (
                   <option key={t} value={t}>
@@ -321,40 +321,40 @@ export const CheckoutModal: React.FC = () => {
           {/* Guest Count (If Per Person basis or multiple people) */}
           {pricing.basis === 'person' ? (
             <div className="space-y-1">
-              <label className="text-[11px] text-[#6B7280] dark:text-[#718079] font-semibold flex items-center justify-between">
+              <label className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-semibold flex items-center justify-between">
                 <span className="flex items-center space-x-1.5">
-                  <Users className="w-3.5 h-3.5 text-[#16A34A]" />
+                  <Users className="w-3.5 h-3.5 text-[#14BEB8]" />
                   <span>Number of People / Seats</span>
                 </span>
-                <span className="text-[10px] text-[#6B7280] dark:text-[#718079]">Max: {maxCapacity} seats</span>
+                <span className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">Max: {maxCapacity} seats</span>
               </label>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setGuests(Math.max(1, guests - 1))}
-                  className="w-10 h-9 rounded-xl bg-white dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] text-sm font-bold text-[#111827] dark:text-[#F2F2F2] hover:bg-[#F1F5F9] dark:hover:bg-[#232D28] cursor-pointer flex items-center justify-center shadow-2xs"
+                  className="w-10 h-9 rounded-xl bg-white dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-sm font-bold text-[#12383B] dark:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] cursor-pointer flex items-center justify-center shadow-2xs"
                 >
                   -
                 </button>
-                <div className="flex-1 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] text-center font-mono text-xs font-bold text-[#16A34A]">
+                <div className="flex-1 py-2 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-center font-mono text-xs font-bold text-[#006B70] dark:text-[#28D2CB]">
                   {guests} {guests === 1 ? 'Person' : 'People'}
                 </div>
                 <button
                   type="button"
                   onClick={() => setGuests(Math.min(maxCapacity, guests + 1))}
-                  className="w-10 h-9 rounded-xl bg-white dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] text-sm font-bold text-[#111827] dark:text-[#F2F2F2] hover:bg-[#F1F5F9] dark:hover:bg-[#232D28] cursor-pointer flex items-center justify-center shadow-2xs"
+                  className="w-10 h-9 rounded-xl bg-white dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-sm font-bold text-[#12383B] dark:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] cursor-pointer flex items-center justify-center shadow-2xs"
                 >
                   +
                 </button>
               </div>
             </div>
           ) : (
-            <div className="p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#18201B]/60 border border-[#E5E7EB] dark:border-[#232D28] flex items-center justify-between text-xs text-[#6B7280] dark:text-[#718079]">
+            <div className="p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] flex items-center justify-between text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
               <span className="flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-[#16A34A]" />
+                <Layers className="w-3.5 h-3.5 text-[#14BEB8]" />
                 <span>Entire Space Buyout</span>
               </span>
-              <span className="text-[11px] text-[#4B5563] dark:text-[#9EABA3] font-mono">
+              <span className="text-[11px] text-[#12383B] dark:text-white font-mono">
                 Up to {maxCapacity} Attendees Included
               </span>
             </div>
@@ -365,31 +365,31 @@ export const CheckoutModal: React.FC = () => {
         <div 
           id="checkout-remind-toggle"
           onClick={() => setRemindMe(!remindMe)}
-          className="flex items-center justify-between p-3 rounded-2xl bg-[#F8FAFC] dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] hover:border-[#16A34A]/30 transition-all cursor-pointer select-none"
+          className="flex items-center justify-between p-3 rounded-2xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/40 transition-all cursor-pointer select-none"
         >
           <div className="flex items-center space-x-3">
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-              remindMe ? 'bg-[#DCFCE7] dark:bg-[#16A34A]/20 text-[#16A34A]' : 'bg-white dark:bg-[#141816] text-[#6B7280] dark:text-[#718079]'
+              remindMe ? 'bg-[#14BEB8]/20 text-[#006B70] dark:text-[#28D2CB]' : 'bg-white dark:bg-[#0B4A50] text-[#5D7A7D] dark:text-[#B8D1D0]'
             }`}>
               <Bell className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-xs font-bold text-[#111827] dark:text-[#F2F2F2] flex items-center gap-1.5">
+              <div className="text-xs font-bold text-[#12383B] dark:text-white flex items-center gap-1.5">
                 <span>Remind Me</span>
-                <span className="text-[10px] font-mono text-[#16A34A] bg-[#DCFCE7] dark:bg-[#16A34A]/10 px-1.5 py-0.2 rounded border border-[#16A34A]/20">
+                <span className="text-[10px] font-mono text-[#006B70] dark:text-[#28D2CB] bg-[#14BEB8]/15 px-1.5 py-0.2 rounded border border-[#14BEB8]/30">
                   30m before
                 </span>
               </div>
-              <p className="text-[10px] text-[#6B7280] dark:text-[#718079]">
+              <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">
                 Get instant notification & entrance pass code 30 minutes before {formatTime(startTime)}
               </p>
             </div>
           </div>
 
           <div className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ease-in-out ${
-            remindMe ? 'bg-[#16A34A]' : 'bg-[#E5E7EB] dark:bg-[#232D28]'
+            remindMe ? 'bg-[#14BEB8]' : 'bg-[#E2ECEB] dark:bg-[#166D74]'
           }`}>
-            <div className={`bg-white dark:bg-[#0D0D0D] w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+            <div className={`bg-white dark:bg-[#07383D] w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
               remindMe ? 'translate-x-5' : 'translate-x-0'
             }`} />
           </div>
@@ -397,22 +397,22 @@ export const CheckoutModal: React.FC = () => {
 
         {/* Payment Channels */}
         <div className="space-y-2">
-          <label className="text-[11px] text-[#6B7280] dark:text-[#718079] font-semibold uppercase tracking-wider font-mono">
+          <label className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-semibold uppercase tracking-wider font-mono">
             Payment Method
           </label>
           
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => setPaymentMethod('paystack')}
+              onClick={() => setPaymentMethod('card')}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                paymentMethod === 'paystack'
-                  ? 'bg-[#DCFCE7] dark:bg-[#16A34A]/15 border-[#16A34A] text-[#111827] dark:text-[#F2F2F2]'
-                  : 'bg-[#F8FAFC] dark:bg-[#18201B] border-[#E5E7EB] dark:border-[#232D28] text-[#6B7280] dark:text-[#9EABA3]'
+                paymentMethod !== 'wallet'
+                  ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/25 border-[#14BEB8] text-[#12383B] dark:text-white font-semibold'
+                  : 'bg-[#FFF9F4] dark:bg-[#07383D] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0]'
               }`}
             >
-              <div className="text-xs font-bold">Paystack / Bank Card</div>
-              <p className="text-[10px] text-[#6B7280] dark:text-[#718079]">Mastercard, Visa, Verve</p>
+              <div className="text-xs font-bold">Bank Card / SZND Checkout</div>
+              <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">Mastercard, Visa, Verve</p>
             </button>
 
             <button
@@ -420,58 +420,58 @@ export const CheckoutModal: React.FC = () => {
               onClick={() => setPaymentMethod('wallet')}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                 paymentMethod === 'wallet'
-                  ? 'bg-[#DCFCE7] dark:bg-[#16A34A]/15 border-[#16A34A] text-[#111827] dark:text-[#F2F2F2]'
-                  : 'bg-[#F8FAFC] dark:bg-[#18201B] border-[#E5E7EB] dark:border-[#232D28] text-[#6B7280] dark:text-[#9EABA3]'
+                  ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/25 border-[#14BEB8] text-[#12383B] dark:text-white font-semibold'
+                  : 'bg-[#FFF9F4] dark:bg-[#07383D] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0]'
               }`}
             >
               <div className="text-xs font-bold">OFIS Wallet</div>
-              <p className="text-[10px] text-[#6B7280] dark:text-[#718079]">₦{(currentUser?.walletBalanceNgn ?? 0).toLocaleString()} Avail.</p>
+              <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">₦{(currentUser?.walletBalanceNgn ?? 0).toLocaleString()} Avail.</p>
             </button>
           </div>
         </div>
 
         {/* Cost Breakdown */}
-        <div className="p-4 rounded-2xl bg-[#F8FAFC] dark:bg-[#18201B] border border-[#E5E7EB] dark:border-[#232D28] space-y-2 text-xs">
-          <div className="flex justify-between text-[#6B7280] dark:text-[#718079]">
+        <div className="p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] space-y-2 text-xs">
+          <div className="flex justify-between text-[#5D7A7D] dark:text-[#B8D1D0]">
             <span>Base Rate ({breakdown.rateDescription})</span>
-            <span className="text-[#111827] dark:text-[#F2F2F2] font-mono">{formatPrice(breakdown.subtotal)}</span>
+            <span className="text-[#12383B] dark:text-white font-mono">{formatPrice(breakdown.subtotal)}</span>
           </div>
           {breakdown.discount > 0 && (
-            <div className="flex justify-between text-[#16A34A]">
+            <div className="flex justify-between text-[#FFA987] font-semibold">
               <span>Duration Discount</span>
               <span className="font-mono">-{formatPrice(breakdown.discount)}</span>
             </div>
           )}
-          <div className="flex justify-between text-[#6B7280] dark:text-[#718079]">
+          <div className="flex justify-between text-[#5D7A7D] dark:text-[#B8D1D0]">
             <span>Power & High-Speed Internet Access</span>
-            <span className="text-[#16A34A] font-medium">Included Free</span>
+            <span className="text-[#006B70] dark:text-[#28D2CB] font-semibold">Included Free</span>
           </div>
-          <div className="pt-2 border-t border-[#E5E7EB] dark:border-[#232D28] flex justify-between font-bold text-sm text-[#111827] dark:text-[#F2F2F2]">
+          <div className="pt-2 border-t border-[#E2ECEB] dark:border-[#166D74] flex justify-between font-bold text-sm text-[#12383B] dark:text-white">
             <span>Total Pass Cost</span>
-            <span className="text-[#16A34A] font-mono">{formatPrice(breakdown.totalAmount)}</span>
+            <span className="text-[#006B70] dark:text-[#28D2CB] font-mono text-base font-extrabold">{formatPrice(breakdown.totalAmount)}</span>
           </div>
         </div>
 
         {/* Email Verification Gate Banner */}
         {!isEmailVerified && (
-          <div className="p-3.5 rounded-2xl bg-[#FEF3C7] dark:bg-[#FFB800]/10 border border-[#F59E0B]/30 space-y-2.5">
+          <div className="p-3.5 rounded-2xl bg-[#FFA987]/15 dark:bg-[#FFA987]/10 border border-[#FFA987]/40 space-y-2.5">
             <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center space-x-2 text-[#D97706] dark:text-[#FFB800]">
+              <div className="flex items-center space-x-2 text-[#C05621] dark:text-[#FFA987]">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 <span className="text-xs font-bold">Email Verification Required to Pay</span>
               </div>
-              <span className="text-[10px] font-mono uppercase bg-[#FDE68A] dark:bg-[#FFB800]/20 text-[#B45309] dark:text-[#FFB800] px-2 py-0.5 rounded-full font-bold">
+              <span className="text-[10px] font-mono uppercase bg-[#FFA987]/20 text-[#C05621] dark:text-[#FFA987] px-2 py-0.5 rounded-full font-bold">
                 Unverified
               </span>
             </div>
-            <p className="text-[11px] text-[#6B7280] dark:text-[#9EABA3]">
-              To protect the community and guarantee turnstile pass delivery, OFIS requires email confirmation (<span className="text-[#111827] dark:text-[#F2F2F2] font-mono">{currentUser?.email}</span>) before processing payments.
+            <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">
+              To protect the community and guarantee turnstile pass delivery, OFIS requires email confirmation (<span className="text-[#12383B] dark:text-white font-mono">{currentUser?.email}</span>) before processing payments.
             </p>
             <div className="flex items-center gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => openEmailVerificationModal('payment')}
-                className="flex-1 py-2 px-3 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-white text-xs font-extrabold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shadow-md"
+                className="flex-1 py-2 px-3 rounded-xl bg-[#FFA987] hover:bg-[#FF956B] text-[#006B70] text-xs font-extrabold flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shadow-xs"
               >
                 <Mail className="w-3.5 h-3.5" />
                 <span>Verify Email Address Now</span>
@@ -479,7 +479,7 @@ export const CheckoutModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => verifyUserEmail()}
-                className="py-2 px-3 rounded-xl bg-white dark:bg-[#18201B] hover:bg-[#F1F5F9] dark:hover:bg-[#232D28] border border-[#F59E0B]/40 text-[#D97706] dark:text-[#FFB800] text-xs font-bold flex items-center space-x-1 transition-colors cursor-pointer"
+                className="py-2 px-3 rounded-xl bg-white dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#FFA987]/50 text-[#C05621] dark:text-[#FFA987] text-xs font-bold flex items-center space-x-1 transition-colors cursor-pointer"
                 title="Instant 1-click verification for testing"
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -496,8 +496,8 @@ export const CheckoutModal: React.FC = () => {
           onClick={handleConfirmPay}
           className={`w-full py-3.5 rounded-2xl font-extrabold text-sm shadow-md transition-all active:scale-95 flex items-center justify-center space-x-2 cursor-pointer ${
             !isEmailVerified
-              ? 'bg-[#F59E0B] hover:bg-[#D97706] text-white'
-              : 'bg-[#16A34A] hover:bg-[#15803D] text-white'
+              ? 'bg-[#FFA987] hover:bg-[#FF956B] text-[#006B70]'
+              : 'bg-[#14BEB8] hover:bg-[#0EA8A2] text-white'
           }`}
         >
           {isProcessing ? (

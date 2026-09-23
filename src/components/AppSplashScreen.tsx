@@ -58,29 +58,29 @@ export const AppSplashScreen: React.FC<AppSplashScreenProps> = ({
 
   return (
     <div 
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#F8FAFC] dark:bg-[#0B0F17] text-[#111827] dark:text-[#F9FAFB] transition-all duration-500 select-none overflow-hidden ${
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#071521] text-[#F8FAFC] transition-all duration-500 select-none overflow-hidden ${
         isFadingOut ? 'opacity-0 pointer-events-none scale-105 filter blur-xs' : 'opacity-100'
       }`}
     >
       {/* Background Architectural Ambient Radial Orbs */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/10 dark:bg-emerald-500/15 rounded-full blur-3xl pointer-events-none animate-pulse duration-1000" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] bg-lime-400/10 dark:bg-lime-400/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] bg-[#0F766E]/12 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#14B8A6]/8 rounded-full blur-2xl pointer-events-none" />
 
       {/* Decorative Revolving Arcs */}
-      <div className="absolute w-[360px] h-[360px] sm:w-[460px] sm:h-[460px] rounded-full border border-emerald-500/15 dark:border-emerald-500/25 animate-[ofis-spin-slow_24s_linear_infinite] pointer-events-none" />
-      <div className="absolute w-[280px] h-[280px] sm:w-[380px] sm:h-[380px] rounded-full border border-dashed border-lime-500/20 dark:border-lime-500/30 animate-[ofis-spin-reverse_30s_linear_infinite] pointer-events-none" />
+      <div className="absolute w-[360px] h-[360px] sm:w-[440px] sm:h-[440px] rounded-full border border-[#0F766E]/20 animate-[ofis-spin-slow_28s_linear_infinite] pointer-events-none" />
+      <div className="absolute w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] rounded-full border border-dashed border-[#F4A261]/20 animate-[ofis-spin-reverse_36s_linear_infinite] pointer-events-none" />
 
       {/* Main Logo & Breathing Centerpiece */}
       <div className="relative z-10 flex flex-col items-center px-6 max-w-md w-full">
         {/* Breathing Logo Icon Emblem with Light Rays */}
-        <div className="relative mb-6">
-          {/* Breathing Glow Halo */}
-          <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-emerald-500/30 to-lime-400/30 blur-xl animate-pulse" />
+        <div className="relative mb-5">
+          <div className="absolute -inset-3 rounded-2xl bg-[#0F766E]/20 blur-lg" />
           
-          <div className="relative p-3 rounded-2xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-emerald-500/20 dark:border-emerald-500/30 shadow-2xl animate-bounce-subtle">
+          <div className="relative p-3.5 rounded-2xl bg-[#1F2937]/90 border border-[#374151] shadow-2xl">
             <OFISWordmark 
               variant="mark-only" 
               size="hero" 
+              theme="dark"
               isBreathing={true}
               breathingSpeed="medium"
             />
@@ -92,39 +92,40 @@ export const AppSplashScreen: React.FC<AppSplashScreenProps> = ({
           <OFISWordmark 
             variant="compact" 
             size="lg" 
+            theme="dark"
             isBreathing={true}
             breathingSpeed="slow"
           />
         </div>
 
         {/* Tagline */}
-        <div className="flex flex-col items-center text-center space-y-0.5 mb-8">
-          <span className="text-[11px] sm:text-xs font-black uppercase tracking-[0.22em] text-slate-800 dark:text-slate-200">
-            FIND THE RIGHT SPACE.
+        <div className="flex flex-col items-center text-center space-y-1 mb-7">
+          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#CBD5E1]">
+            NIGERIA'S PHYSICAL SPACE NETWORK
           </span>
-          <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.25em] text-emerald-600 dark:text-lime-400">
-            BOOK IT WHEN YOU NEED IT.
+          <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-[#14B8A6]">
+            FIND THE RIGHT SPACE. BOOK IT WHEN YOU NEED IT.
           </span>
         </div>
 
         {/* Progress Bar & Status Text */}
         <div className="w-full max-w-xs space-y-2.5">
-          <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden p-0.5 border border-emerald-500/20">
+          <div className="h-1.5 w-full bg-[#1F2937] rounded-full overflow-hidden p-0.5 border border-[#374151]">
             <div 
-              className="h-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-lime-400 rounded-full transition-all duration-300 ease-out shadow-[0_0_10px_rgba(74,222,128,0.5)]"
+              className="h-full bg-gradient-to-r from-[#0F766E] to-[#14B8A6] rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 dark:text-slate-400 px-1">
+          <div className="flex items-center justify-between text-[11px] font-mono text-[#94A3B8] px-1">
             <span className="truncate pr-2">{statusMessage}</span>
-            <span className="font-bold text-emerald-600 dark:text-emerald-400">{progress}%</span>
+            <span className="font-bold text-[#14B8A6]">{progress}%</span>
           </div>
         </div>
       </div>
 
       {/* Bottom Footer Assurance */}
-      <div className="absolute bottom-6 text-center text-[10px] text-slate-400 dark:text-slate-500 font-medium tracking-wide">
+      <div className="absolute bottom-6 text-center text-[10px] text-[#64748B] font-medium tracking-wide">
         Physical Workspaces, Studios & Offices Across Nigeria
       </div>
     </div>

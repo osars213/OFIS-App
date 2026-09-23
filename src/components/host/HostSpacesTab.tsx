@@ -217,7 +217,7 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
           className={`px-4 py-2.5 rounded-2xl font-bold text-xs flex items-center justify-center space-x-2 shadow-sm cursor-pointer active:scale-95 transition-all ${
             !isEmailVerified
               ? 'bg-amber-500 hover:bg-amber-600 text-white'
-              : 'bg-[#16A34A] hover:bg-[#15803D] text-white'
+              : 'bg-[#0F766E] hover:bg-[#0B625C] text-white'
           }`}
         >
           {!isEmailVerified ? (
@@ -245,7 +245,7 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
           <button
             type="button"
             onClick={() => setIsListSpaceModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs shadow-xs cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#0F766E] hover:bg-[#0B625C] text-white font-bold text-xs shadow-xs cursor-pointer"
           >
             Create Your First Listing
           </button>
@@ -259,7 +259,7 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
             return (
               <div
                 key={space.id}
-                className="rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] overflow-hidden hover:border-[#16A34A]/50 transition-all flex flex-col justify-between group shadow-xs"
+                className="rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] overflow-hidden hover:border-[#0F766E]/50 transition-all flex flex-col justify-between group shadow-xs"
               >
                 {/* Image Banner */}
                 <div className="relative h-48 w-full bg-[#F1F5F9] dark:bg-[#111827] overflow-hidden">
@@ -283,7 +283,7 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
                         <span>Action Required</span>
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#16A34A]/90 text-white backdrop-blur-md flex items-center space-x-1 shadow-xs">
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#0F766E]/90 text-white backdrop-blur-md flex items-center space-x-1 shadow-xs">
                         <ShieldCheck className="w-3 h-3" />
                         <span>Verified</span>
                       </span>
@@ -291,10 +291,10 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
 
                     <span className={`px-2 py-1 rounded-full text-[10px] font-bold flex items-center space-x-1 backdrop-blur-md ${
                       isActive 
-                        ? 'bg-black/60 text-[#16A34A]' 
+                        ? 'bg-black/60 text-[#0F766E]' 
                         : 'bg-black/70 text-red-400 border border-red-500/30'
                     }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#16A34A]' : 'bg-red-500'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-[#0F766E]' : 'bg-red-500'}`} />
                       <span>{isActive ? 'Active' : 'Paused'}</span>
                     </span>
                   </div>
@@ -306,17 +306,17 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
                       title={isActive ? 'Pause listing' : 'Activate listing'}
                       className="p-2 rounded-xl bg-black/60 hover:bg-black text-white backdrop-blur-md cursor-pointer transition-colors shadow-xs"
                     >
-                      <Power className={`w-4 h-4 ${isActive ? 'text-[#16A34A]' : 'text-neutral-400'}`} />
+                      <Power className={`w-4 h-4 ${isActive ? 'text-[#0F766E]' : 'text-neutral-400'}`} />
                     </button>
                   </div>
 
                   <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl">
                     <div className="flex items-center space-x-1">
-                      <Star className="w-3.5 h-3.5 fill-[#16A34A] text-[#16A34A]" />
+                      <Star className="w-3.5 h-3.5 fill-[#0F766E] text-[#0F766E]" />
                       <span className="font-bold">{space.rating || 4.9}</span>
                       <span className="text-neutral-300">({space.reviewsCount || 42} reviews)</span>
                     </div>
-                    <div className="font-mono font-bold text-[#16A34A]">
+                    <div className="font-mono font-bold text-[#0F766E]">
                       {formatPrice(space.pricePerHour, { perHour: true })}
                     </div>
                   </div>
@@ -325,17 +325,23 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
                 {/* Body Content */}
                 <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                   <div className="space-y-1.5">
-                    <h3 className="text-sm font-bold text-[#111827] dark:text-[#F9FAFB] line-clamp-1 group-hover:text-[#16A34A] transition-colors">
+                    <h3 className="text-sm font-bold text-[#111827] dark:text-[#F9FAFB] line-clamp-1 group-hover:text-[#0F766E] transition-colors">
                       {space.title}
                     </h3>
                     <div className="flex items-center space-x-1.5 text-xs text-[#6B7280] dark:text-[#9CA3AF]">
-                      <MapPin className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
+                      <MapPin className="w-3.5 h-3.5 text-[#0F766E] shrink-0" />
                       <span className="line-clamp-1">{space.neighborhood}, {space.city}</span>
                     </div>
-                    <div className="flex items-center space-x-1.5 text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenHoursManager(space)}
+                      className="flex items-center space-x-1.5 text-[11px] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#0F766E] dark:hover:text-[#14B8A6] cursor-pointer transition-colors"
+                      title="Click to edit operating schedule"
+                    >
                       <Clock className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF]" />
                       <span>{space.operatingHours?.days || 'Mon - Sat'} • {space.operatingHours?.open || '08:00'} - {space.operatingHours?.close || '20:00'}</span>
-                    </div>
+                      <Edit3 className="w-3 h-3 ml-1 opacity-60" />
+                    </button>
                   </div>
 
                   {/* Amenities Preview */}
@@ -404,7 +410,7 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
                       className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] text-[#111827] dark:text-[#F9FAFB] flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors border border-[#E5E7EB] dark:border-[#374151]"
                       title="Edit Space Info"
                     >
-                      <Edit3 className="w-3.5 h-3.5 text-[#16A34A]" />
+                      <Edit3 className="w-3.5 h-3.5 text-[#0F766E]" />
                       <span className="text-[9px]">Edit</span>
                     </button>
 
@@ -415,7 +421,7 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
                       className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] text-[#111827] dark:text-[#F9FAFB] flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors border border-[#E5E7EB] dark:border-[#374151]"
                       title="Photo Gallery"
                     >
-                      <ImageIcon className="w-3.5 h-3.5 text-[#16A34A]" />
+                      <ImageIcon className="w-3.5 h-3.5 text-[#0F766E]" />
                       <span className="text-[9px]">Photos</span>
                     </button>
 
@@ -426,7 +432,7 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
                       className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] text-[#111827] dark:text-[#F9FAFB] flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors border border-[#E5E7EB] dark:border-[#374151]"
                       title="Manage Amenities"
                     >
-                      <Zap className="w-3.5 h-3.5 text-[#16A34A]" />
+                      <Zap className="w-3.5 h-3.5 text-[#0F766E]" />
                       <span className="text-[9px]">Amenities</span>
                     </button>
 
@@ -437,7 +443,7 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
                       className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] text-[#111827] dark:text-[#F9FAFB] flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors border border-[#E5E7EB] dark:border-[#374151]"
                       title="Pricing Rules"
                     >
-                      <Sliders className="w-3.5 h-3.5 text-[#16A34A]" />
+                      <Sliders className="w-3.5 h-3.5 text-[#0F766E]" />
                       <span className="text-[9px]">Pricing</span>
                     </button>
 
@@ -474,7 +480,7 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
                 <div key={idx} className="relative group rounded-2xl overflow-hidden h-28 bg-[#F1F5F9] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151]">
                   <img src={img} alt="" className="w-full h-full object-cover" />
                   {idx === 0 && (
-                    <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-[#16A34A] text-white font-bold text-[9px] shadow-xs">
+                    <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-[#0F766E] text-white font-bold text-[9px] shadow-xs">
                       Featured Cover
                     </span>
                   )}
@@ -498,13 +504,13 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
                   placeholder="https://images.unsplash.com/photo-..."
                   value={newPhotoUrl}
                   onChange={(e) => setNewPhotoUrl(e.target.value)}
-                  className="flex-1 px-4 py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] placeholder-[#6B7280] dark:placeholder-[#9CA3AF] focus:outline-none focus:border-[#16A34A]"
+                  className="flex-1 px-4 py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] placeholder-[#6B7280] dark:placeholder-[#9CA3AF] focus:outline-none focus:border-[#0F766E]"
                 />
                 <button
                   type="button"
                   onClick={handleAddPhoto}
                   disabled={!newPhotoUrl.trim()}
-                  className="px-4 py-2.5 rounded-2xl bg-[#16A34A] hover:bg-[#15803D] disabled:opacity-40 text-white font-bold text-xs flex items-center space-x-1 cursor-pointer shadow-xs"
+                  className="px-4 py-2.5 rounded-2xl bg-[#0F766E] hover:bg-[#0B625C] disabled:opacity-40 text-white font-bold text-xs flex items-center space-x-1 cursor-pointer shadow-xs"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Add</span>
@@ -558,12 +564,12 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
                     onClick={() => handleToggleAmenity(amenity)}
                     className={`p-3 rounded-2xl border text-left flex items-center justify-between text-xs transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[#DCFCE7] dark:bg-[#16A34A]/20 border-[#16A34A] text-[#16A34A] font-bold'
+                        ? 'bg-[#E6F4F2] dark:bg-[#0F766E]/20 border-[#0F766E] text-[#0F766E] font-bold'
                         : 'bg-[#F8FAFC] dark:bg-[#111827] border-[#E5E7EB] dark:border-[#374151] text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB]'
                     }`}
                   >
                     <span className="pr-2">{amenity}</span>
-                    {isSelected && <Check className="w-4 h-4 shrink-0 text-[#16A34A]" />}
+                    {isSelected && <Check className="w-4 h-4 shrink-0 text-[#0F766E]" />}
                   </button>
                 );
               })}
@@ -580,9 +586,82 @@ export const HostSpacesTab: React.FC<HostSpacesTabProps> = ({
               <button
                 type="button"
                 onClick={handleSaveAmenities}
-                className="px-5 py-2.5 rounded-2xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs cursor-pointer shadow-sm"
+                className="px-5 py-2.5 rounded-2xl bg-[#0F766E] hover:bg-[#0B625C] text-white font-bold text-xs cursor-pointer shadow-sm"
               >
                 Save Amenities
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Operating Hours Manager Modal */}
+      {hoursModalSpace && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative w-full max-w-md bg-white dark:bg-[#1F2937] rounded-3xl border border-[#E5E7EB] dark:border-[#374151] shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] dark:border-[#374151] pb-3">
+              <div>
+                <h3 className="text-base font-bold text-[#111827] dark:text-[#F9FAFB]">Operating Hours & Schedule</h3>
+                <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">{hoursModalSpace.title}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHoursModalSpace(null)}
+                className="p-2 rounded-xl text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB] cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Operating Days</label>
+                <input
+                  type="text"
+                  value={activeDays}
+                  onChange={(e) => setActiveDays(e.target.value)}
+                  placeholder="e.g. Mon - Sat, 7 Days a Week"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Opening Time</label>
+                  <input
+                    type="time"
+                    value={openTime}
+                    onChange={(e) => setOpenTime(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#374151] dark:text-[#D1D5DB]">Closing Time</label>
+                  <input
+                    type="time"
+                    value={closeTime}
+                    onChange={(e) => setCloseTime(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-xs text-[#111827] dark:text-[#F9FAFB] focus:outline-none focus:border-[#0F766E]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-3 border-t border-[#E5E7EB] dark:border-[#374151]">
+              <button
+                type="button"
+                onClick={() => setHoursModalSpace(null)}
+                className="px-4 py-2 rounded-xl bg-[#F1F5F9] dark:bg-[#374151] text-[#6B7280] dark:text-[#9CA3AF] text-xs font-bold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveHours}
+                className="px-5 py-2.5 rounded-2xl bg-[#0F766E] hover:bg-[#0B625C] text-white font-bold text-xs cursor-pointer shadow-sm"
+              >
+                Save Schedule
               </button>
             </div>
           </div>

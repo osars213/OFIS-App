@@ -30,12 +30,12 @@ export const SavedComparisonsSection: React.FC<SavedComparisonsSectionProps> = (
 
   if (savedComparisons.length === 0) {
     return (
-      <div className="p-6 rounded-2xl bg-[#18201B] border border-[#232D28] text-center space-y-2">
-        <div className="w-10 h-10 rounded-xl bg-[#141816] border border-[#232D28] text-[#718079] flex items-center justify-center mx-auto">
-          <Layers className="w-5 h-5" />
+      <div className="p-6 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-center space-y-2">
+        <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center justify-center mx-auto">
+          <Layers className="w-5 h-5 text-[#14BEB8]" />
         </div>
-        <p className="text-xs font-semibold text-[#F2F2F2]">No Saved Comparisons Yet</p>
-        <p className="text-[11px] text-[#718079] max-w-xs mx-auto leading-relaxed">
+        <p className="text-xs font-semibold text-[#12383B] dark:text-white">No Saved Comparisons Yet</p>
+        <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] max-w-xs mx-auto leading-relaxed">
           Compare up to 3 workspaces and tap &ldquo;Save Comparison&rdquo; to review or reopen them anytime.
         </p>
       </div>
@@ -53,8 +53,8 @@ export const SavedComparisonsSection: React.FC<SavedComparisonsSectionProps> = (
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#9EABA3] flex items-center space-x-1.5">
-          <Layers className="w-3.5 h-3.5 text-[#00C878]" />
+        <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center space-x-1.5">
+          <Layers className="w-3.5 h-3.5 text-[#006B70] dark:text-[#28D2CB]" />
           <span>Saved Comparisons ({savedComparisons.length})</span>
         </h4>
       </div>
@@ -74,25 +74,25 @@ export const SavedComparisonsSection: React.FC<SavedComparisonsSectionProps> = (
           return (
             <div
               key={comp.id}
-              className="p-3.5 rounded-2xl bg-[#18201B] border border-[#232D28] hover:border-[#00C878]/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+              className="p-3.5 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
             >
               <div className="space-y-1.5 flex-1 min-w-0">
                 <div className="flex items-center space-x-2">
-                  <span className="px-2 py-0.5 rounded-md bg-[#00C878]/15 text-[#00C878] text-[10px] font-mono font-bold uppercase">
+                  <span className="px-2 py-0.5 rounded-md bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB] text-[10px] font-mono font-bold uppercase">
                     {comp.spacesCount} Spaces
                   </span>
-                  <span className="text-[10px] text-[#718079] flex items-center space-x-1">
-                    <Clock className="w-3 h-3 text-[#718079]" />
+                  <span className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center space-x-1">
+                    <Clock className="w-3 h-3 text-[#5D7A7D] dark:text-[#B8D1D0]" />
                     <span>{formattedDate}</span>
                   </span>
                 </div>
 
-                <h5 className="text-xs font-bold text-[#F2F2F2] truncate group-hover:text-[#00C878] transition-colors">
+                <h5 className="text-xs font-bold text-[#12383B] dark:text-white truncate group-hover:text-[#14BEB8] transition-colors">
                   {comp.title}
                 </h5>
 
                 {comp.highlightSummary && (
-                  <p className="text-[11px] text-[#718079] line-clamp-1">
+                  <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] line-clamp-1">
                     {comp.highlightSummary}
                   </p>
                 )}
@@ -102,7 +102,7 @@ export const SavedComparisonsSection: React.FC<SavedComparisonsSectionProps> = (
                   {matchedSpaces.map((space) => space && (
                     <div
                       key={space.id}
-                      className="w-6 h-6 rounded-lg overflow-hidden border border-[#232D28] shrink-0"
+                      className="w-6 h-6 rounded-lg overflow-hidden border border-[#E2ECEB] dark:border-[#166D74] shrink-0"
                       title={space.title}
                     >
                       <img src={space.featuredImage} alt={space.title} className="w-full h-full object-cover" />
@@ -112,11 +112,11 @@ export const SavedComparisonsSection: React.FC<SavedComparisonsSectionProps> = (
               </div>
 
               {/* Actions */}
-              <div className="flex items-center space-x-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#232D28] shrink-0">
+              <div className="flex items-center space-x-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E2ECEB] dark:border-[#166D74] shrink-0">
                 <button
                   type="button"
                   onClick={() => deleteSavedComparison(comp.id)}
-                  className="p-2 rounded-xl bg-[#2D1616] hover:bg-[#3D1A1A] border border-[#FF5C5C]/30 text-[#FF8585] text-xs transition-colors cursor-pointer"
+                  className="p-2 rounded-xl bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 text-xs transition-colors cursor-pointer"
                   title="Delete saved comparison"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -125,7 +125,7 @@ export const SavedComparisonsSection: React.FC<SavedComparisonsSectionProps> = (
                 <button
                   type="button"
                   onClick={() => handleOpen(comp)}
-                  className="px-3.5 py-2 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-md"
+                  className="px-3.5 py-2 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer shadow-md"
                 >
                   <span>Open Comparison</span>
                   <ChevronRight className="w-3.5 h-3.5" />

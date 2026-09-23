@@ -147,29 +147,29 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
   };
 
   return (
-    <div className="space-y-4 p-6 rounded-3xl bg-[#141816] border border-[#1E2522]">
+    <div className="space-y-4 p-6 rounded-3xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] shadow-2xs">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-bold text-[#F2F2F2]">Real-Time Availability Calendar</h3>
-          <p className="text-xs text-[#9EABA3]">
+          <h3 className="text-lg font-bold text-[#111827] dark:text-[#F9FAFB]">Real-Time Availability Calendar</h3>
+          <p className="text-xs text-[#6B7280] dark:text-[#94A3B8]">
             Select your preferred work date & hourly arrival slot
           </p>
         </div>
 
         {/* Legend */}
-        <div className="flex items-center space-x-3 text-[11px] text-[#718079]">
+        <div className="flex items-center space-x-3 text-[11px] text-[#6B7280] dark:text-[#94A3B8]">
           <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#00C878]" />
+            <span className="w-2 h-2 rounded-full bg-[#14B8A6]" />
             <span>Open</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#FFB800]" />
+            <span className="w-2 h-2 rounded-full bg-[#F4A261]" />
             <span>Limited</span>
           </div>
           <div className="flex items-center space-x-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#2E3B34]" />
+            <span className="w-2 h-2 rounded-full bg-gray-300 dark:bg-[#374151]" />
             <span>Booked</span>
           </div>
         </div>
@@ -181,12 +181,12 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
         <div className="lg:col-span-7 space-y-3">
           {/* Month Navigation */}
           <div className="flex items-center justify-between px-1">
-            <span className="text-sm font-bold text-[#F2F2F2] font-mono">{monthName}</span>
+            <span className="text-sm font-bold text-[#111827] dark:text-[#F9FAFB] font-mono">{monthName}</span>
             <div className="flex items-center space-x-1">
               <button
                 type="button"
                 onClick={handlePrevMonth}
-                className="p-2 rounded-xl bg-[#18201B] hover:bg-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2] transition-colors cursor-pointer"
+                className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F9FAFB] transition-colors cursor-pointer"
                 aria-label="Previous month"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -194,7 +194,7 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
               <button
                 type="button"
                 onClick={handleNextMonth}
-                className="p-2 rounded-xl bg-[#18201B] hover:bg-[#232D28] text-[#9EABA3] hover:text-[#F2F2F2] transition-colors cursor-pointer"
+                className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111827] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F9FAFB] transition-colors cursor-pointer"
                 aria-label="Next month"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -203,7 +203,7 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
           </div>
 
           {/* Day of Week Labels */}
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-mono font-bold text-[#718079] pb-1">
+          <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-mono font-bold text-[#6B7280] dark:text-[#94A3B8] pb-1">
             <span>SU</span>
             <span>MO</span>
             <span>TU</span>
@@ -231,10 +231,10 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
                   onClick={() => setSelectedDateStr(d.dateStr)}
                   className={`h-10 sm:h-11 rounded-xl flex flex-col items-center justify-center relative transition-all text-xs font-mono font-bold cursor-pointer ${
                     isSelected
-                      ? 'bg-[#00C878] text-[#0D0D0D] shadow-lg ring-2 ring-[#00C878]/30 scale-105 z-10'
+                      ? 'bg-[#0F766E] text-white shadow-lg ring-2 ring-[#14B8A6]/40 scale-105 z-10'
                       : isBlocked
-                      ? 'bg-[#18201B]/40 text-[#425048] cursor-not-allowed'
-                      : 'bg-[#18201B] text-[#F2F2F2] hover:bg-[#232D28] hover:border-[#00C878]/50 border border-[#232D28]'
+                      ? 'bg-gray-100/60 dark:bg-[#111827]/60 text-gray-400 dark:text-[#475569] cursor-not-allowed'
+                      : 'bg-[#F8FAFC] dark:bg-[#111827] text-[#111827] dark:text-[#F9FAFB] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] hover:border-[#0F766E]/50 border border-[#E5E7EB] dark:border-[#374151]'
                   }`}
                 >
                   <span>{d.dayNumber}</span>
@@ -243,7 +243,7 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
                   {!isSelected && !isBlocked && (
                     <span
                       className={`w-1 h-1 rounded-full mt-0.5 ${
-                        d.status === 'limited' ? 'bg-[#FFB800]' : 'bg-[#00C878]'
+                        d.status === 'limited' ? 'bg-[#F4A261]' : 'bg-[#14B8A6]'
                       }`}
                     />
                   )}
@@ -254,12 +254,12 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
         </div>
 
         {/* Slot & Duration Configuration (5 Cols) */}
-        <div className="lg:col-span-5 p-4 rounded-2xl bg-[#18201B] border border-[#232D28] flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-5 p-4 rounded-2xl bg-[#F8FAFC] dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] flex flex-col justify-between space-y-4">
           
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-bold text-[#F2F2F2] flex items-center space-x-1.5 mb-2">
-                <Clock className="w-3.5 h-3.5 text-[#00C878]" />
+              <label className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB] flex items-center space-x-1.5 mb-2">
+                <Clock className="w-3.5 h-3.5 text-[#14B8A6]" />
                 <span>Choose Arrival Time</span>
               </label>
               
@@ -271,8 +271,8 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
                     onClick={() => setSelectedTime(time)}
                     className={`py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                       selectedTime === time
-                        ? 'bg-[#00C878] text-[#0D0D0D] shadow-md'
-                        : 'bg-[#141816] text-[#9EABA3] hover:text-[#F2F2F2] border border-[#232D28]'
+                        ? 'bg-[#0F766E] text-white shadow-md'
+                        : 'bg-white dark:bg-[#1F2937] text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F9FAFB] border border-[#E5E7EB] dark:border-[#374151]'
                     }`}
                   >
                     {formatTime(time)}
@@ -283,7 +283,7 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
 
             {/* Duration Selector */}
             <div>
-              <label className="text-xs font-bold text-[#F2F2F2] mb-2 block">
+              <label className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB] mb-2 block">
                 Session Duration
               </label>
               <div className="grid grid-cols-4 gap-1.5">
@@ -294,8 +294,8 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
                     onClick={() => setDurationHours(hrs)}
                     className={`py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                       durationHours === hrs
-                        ? 'bg-[#00C878] text-[#0D0D0D] shadow-md'
-                        : 'bg-[#141816] text-[#9EABA3] hover:text-[#F2F2F2] border border-[#232D28]'
+                        ? 'bg-[#0F766E] text-white shadow-md'
+                        : 'bg-white dark:bg-[#1F2937] text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F9FAFB] border border-[#E5E7EB] dark:border-[#374151]'
                     }`}
                   >
                     {hrs === 8 ? 'Full Day' : `${hrs} hrs`}
@@ -305,14 +305,14 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
             </div>
 
             {/* Price Preview */}
-            <div className="p-3 rounded-xl bg-[#141816] border border-[#232D28] flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between">
               <div>
-                <div className="text-[10px] text-[#718079]">Estimated Amount</div>
-                <div className="text-sm font-bold text-[#00C878] font-mono">
+                <div className="text-[10px] text-[#6B7280] dark:text-[#94A3B8]">Estimated Amount</div>
+                <div className="text-sm font-bold text-[#14B8A6] font-mono">
                   {formatPrice(estimatedCost)}
                 </div>
               </div>
-              <div className="text-right text-[10px] text-[#9EABA3]">
+              <div className="text-right text-[10px] text-[#6B7280] dark:text-[#94A3B8]">
                 {selectedDateStr} • {formatTime(selectedTime)}
               </div>
             </div>
@@ -322,7 +322,7 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
           <button
             type="button"
             onClick={handleConfirm}
-            className="w-full py-3 rounded-xl bg-[#00C878] hover:bg-[#00E58B] text-[#0D0D0D] font-extrabold text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center space-x-2 cursor-pointer"
+            className="w-full py-3 rounded-xl bg-[#0F766E] hover:bg-[#14B8A6] text-white font-extrabold text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center space-x-2 cursor-pointer"
           >
             <span>Book Selected Slot ({selectedDateStr})</span>
           </button>

@@ -281,7 +281,7 @@ export interface Booking {
   isReviewed?: boolean;
   qrCodeValue: string;
   digitalPassCode: string;
-  paymentMethod: 'paystack' | 'flutterwave' | 'wallet' | 'card';
+  paymentMethod: 'sznd' | 'paystack' | 'flutterwave' | 'wallet' | 'card';
   paymentReference: string;
   createdAt: string;
   hasReminder?: boolean;

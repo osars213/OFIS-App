@@ -229,8 +229,8 @@ export const CategorizedAmenities: React.FC<CategorizedAmenitiesProps> = ({ spac
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-bold text-[#F2F2F2]">Amenities & Inclusions</h3>
-          <p className="text-xs text-[#9EABA3]">
+          <h3 className="text-lg font-bold text-[#12383B] dark:text-white">Amenities & Inclusions</h3>
+          <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
             Verified on-site facilities, hardware, and hospitality specs ({totalAmenityCount} total)
           </p>
         </div>
@@ -242,8 +242,8 @@ export const CategorizedAmenities: React.FC<CategorizedAmenitiesProps> = ({ spac
             onClick={() => setActiveTab('all')}
             className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
               activeTab === 'all'
-                ? 'bg-[#00C878] text-[#0D0D0D]'
-                : 'bg-[#141816] text-[#9EABA3] hover:text-[#F2F2F2] border border-[#1E2522]'
+                ? 'bg-[#14BEB8] text-white'
+                : 'bg-white dark:bg-[#0B4A50] text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white border border-[#E2ECEB] dark:border-[#166D74]'
             }`}
           >
             All Categories
@@ -255,8 +255,8 @@ export const CategorizedAmenities: React.FC<CategorizedAmenitiesProps> = ({ spac
               onClick={() => setActiveTab(cat.id)}
               className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                 activeTab === cat.id
-                  ? 'bg-[#00C878] text-[#0D0D0D]'
-                  : 'bg-[#141816] text-[#9EABA3] hover:text-[#F2F2F2] border border-[#1E2522]'
+                  ? 'bg-[#14BEB8] text-white'
+                  : 'bg-white dark:bg-[#0B4A50] text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white border border-[#E2ECEB] dark:border-[#166D74]'
               }`}
             >
               {cat.name.split(' ')[0]}
@@ -272,16 +272,16 @@ export const CategorizedAmenities: React.FC<CategorizedAmenitiesProps> = ({ spac
           return (
             <div
               key={group.id}
-              className="p-4 rounded-2xl bg-[#141816] border border-[#1E2522] space-y-3"
+              className="p-4 rounded-2xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-3 shadow-2xs"
             >
               {/* Category Header */}
-              <div className="flex items-center space-x-2.5 pb-2.5 border-b border-[#1E2522]">
-                <div className="p-1.5 rounded-xl bg-[#00C878]/10 text-[#00C878]">
+              <div className="flex items-center space-x-2.5 pb-2.5 border-b border-[#E2ECEB] dark:border-[#166D74]">
+                <div className="p-1.5 rounded-xl bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB]">
                   <Icon className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-[#F2F2F2]">{group.name}</h4>
-                  <p className="text-[10px] text-[#718079]">{group.description}</p>
+                  <h4 className="text-xs font-bold text-[#12383B] dark:text-white">{group.name}</h4>
+                  <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">{group.description}</p>
                 </div>
               </div>
 
@@ -290,9 +290,9 @@ export const CategorizedAmenities: React.FC<CategorizedAmenitiesProps> = ({ spac
                 {group.items.map((item, idx) => (
                   <div
                     key={`${group.id}-${idx}`}
-                    className="flex items-center space-x-2 text-xs text-[#9EABA3] p-2 rounded-xl bg-[#18201B]/60 border border-[#232D28]/60"
+                    className="flex items-center space-x-2 text-xs text-[#12383B] dark:text-[#B8D1D0] p-2 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74]/70"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#00C878] shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#14BEB8] shrink-0" />
                     <span className="leading-snug">{item}</span>
                   </div>
                 ))}
@@ -307,7 +307,7 @@ export const CategorizedAmenities: React.FC<CategorizedAmenitiesProps> = ({ spac
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full py-3 rounded-2xl bg-[#141816] hover:bg-[#18201B] border border-[#1E2522] hover:border-[#00C878]/40 text-xs font-semibold text-[#00C878] flex items-center justify-center space-x-2 transition-all cursor-pointer"
+          className="w-full py-3 rounded-2xl bg-white dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/40 text-xs font-semibold text-[#006B70] dark:text-[#28D2CB] flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-2xs"
         >
           <span>
             {isExpanded

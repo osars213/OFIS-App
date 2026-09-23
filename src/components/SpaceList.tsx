@@ -143,6 +143,8 @@ export const SpaceList: React.FC = () => {
     setIsCheckoutOpen,
     currency,
     formatPrice,
+    activeCategory,
+    setActiveCategory,
   } = useApp();
 
   const isSavedView = currentView === 'saved';
@@ -191,14 +193,14 @@ export const SpaceList: React.FC = () => {
       {/* ========================================================================= */}
       {/* 1. HERO SECTION: BRANDING & REVOLVING ARC WITH GREETING & SEARCH          */}
       {/* ========================================================================= */}
-      <section className="relative pt-9 sm:pt-12 pb-9 sm:pb-12 px-4 sm:px-6 lg:px-8 border-b border-[#E5E7EB] dark:border-[#1E293B] bg-[#F8FAFC] dark:bg-[#0B1220] overflow-hidden transition-colors duration-150">
+      <section className="relative pt-9 sm:pt-12 pb-9 sm:pb-12 px-4 sm:px-6 lg:px-8 border-b border-[#E5E7EB] dark:border-[#374151] bg-[#F8FAFC] dark:bg-[#111827] overflow-hidden transition-colors duration-150">
         
         {/* Decorative Circular Background Arc (Subtle Accent Only) */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] h-[320px] sm:w-[480px] sm:h-[480px] md:w-[600px] md:h-[600px] pointer-events-none -z-0 opacity-20 dark:opacity-25">
           <div className="ofis-hero-arc-outer w-[290px] h-[290px] sm:w-[440px] sm:h-[440px] md:w-[560px] md:h-[560px] opacity-25" />
           <div className="ofis-hero-arc-inner w-[210px] h-[210px] sm:w-[320px] sm:h-[320px] md:w-[420px] md:h-[420px] opacity-15" />
           <div className="ofis-hero-arc-conic w-[250px] h-[250px] sm:w-[380px] sm:h-[380px] md:w-[480px] md:h-[480px] opacity-10" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 sm:w-60 sm:h-60 bg-[#10B981]/5 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 sm:w-60 sm:h-60 bg-[#0F766E]/5 rounded-full blur-3xl" />
         </div>
         
         <div className="relative z-10 max-w-3xl mx-auto text-center space-y-6 sm:space-y-8">
@@ -224,15 +226,75 @@ export const SpaceList: React.FC = () => {
               What workspace do you need today?
             </p>
 
-            {/* Secondary Navigation Pillars */}
-            <div className="pt-1 text-[11px] sm:text-xs font-semibold tracking-widest text-[#94A3B8] dark:text-[#64748B] uppercase flex items-center justify-center flex-nowrap whitespace-nowrap gap-x-2 sm:gap-x-3 select-none">
-              <span>WORK</span>
-              <span className="text-[#10B981]">•</span>
-              <span>MEET</span>
-              <span className="text-[#10B981]">•</span>
-              <span>CREATE</span>
-              <span className="text-[#10B981]">•</span>
-              <span>RECORD</span>
+            {/* Secondary Navigation Pillars (Interactive & Reflective) */}
+            <div className="pt-1.5 text-[11px] sm:text-xs font-semibold tracking-wider uppercase flex items-center justify-center flex-nowrap whitespace-nowrap gap-x-1 sm:gap-x-2 select-none">
+              <button
+                type="button"
+                id="pillar-work-btn"
+                onClick={() => {
+                  setActiveCategory(activeCategory === 'coworking' || activeCategory === 'private_office' ? 'all' : 'coworking');
+                  const el = document.getElementById('spaces-results-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                  activeCategory === 'coworking' || activeCategory === 'private_office'
+                    ? 'bg-[#0F766E] text-white shadow-xs font-bold ring-2 ring-[#0F766E]/40'
+                    : 'text-[#6B7280] dark:text-[#94A3B8] hover:text-[#0F766E] dark:hover:text-[#14B8A6] hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+              >
+                WORK
+              </button>
+              <span className="text-[#0F766E]/30">•</span>
+              <button
+                type="button"
+                id="pillar-meet-btn"
+                onClick={() => {
+                  setActiveCategory(activeCategory === 'meeting' || activeCategory === 'event' ? 'all' : 'meeting');
+                  const el = document.getElementById('spaces-results-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                  activeCategory === 'meeting' || activeCategory === 'event'
+                    ? 'bg-[#0F766E] text-white shadow-xs font-bold ring-2 ring-[#0F766E]/40'
+                    : 'text-[#6B7280] dark:text-[#94A3B8] hover:text-[#0F766E] dark:hover:text-[#14B8A6] hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+              >
+                MEET
+              </button>
+              <span className="text-[#0F766E]/30">•</span>
+              <button
+                type="button"
+                id="pillar-create-btn"
+                onClick={() => {
+                  setActiveCategory(activeCategory === 'photography' ? 'all' : 'photography');
+                  const el = document.getElementById('spaces-results-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                  activeCategory === 'photography'
+                    ? 'bg-[#0F766E] text-white shadow-xs font-bold ring-2 ring-[#0F766E]/40'
+                    : 'text-[#6B7280] dark:text-[#94A3B8] hover:text-[#0F766E] dark:hover:text-[#14B8A6] hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+              >
+                CREATE
+              </button>
+              <span className="text-[#0F766E]/30">•</span>
+              <button
+                type="button"
+                id="pillar-record-btn"
+                onClick={() => {
+                  setActiveCategory(activeCategory === 'podcast' ? 'all' : 'podcast');
+                  const el = document.getElementById('spaces-results-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                  activeCategory === 'podcast'
+                    ? 'bg-[#0F766E] text-white shadow-xs font-bold ring-2 ring-[#0F766E]/40'
+                    : 'text-[#6B7280] dark:text-[#94A3B8] hover:text-[#0F766E] dark:hover:text-[#14B8A6] hover:bg-black/5 dark:hover:bg-white/5'
+                }`}
+              >
+                RECORD
+              </button>
             </div>
           </div>
 
@@ -267,9 +329,9 @@ export const SpaceList: React.FC = () => {
       <section id="spaces-results-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         
         {/* Results Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E5E7EB] dark:border-[#1E293B]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E5E7EB] dark:border-[#374151]">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-[#111827] dark:text-[#F8FAFC] tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-[#111827] dark:text-[#F9FAFB] tracking-tight">
               {isSavedView
                 ? 'Saved Workspaces'
                 : (filters.category && filters.category !== 'all')
@@ -278,7 +340,7 @@ export const SpaceList: React.FC = () => {
                 ? `Workspaces in ${filters.city}` 
                 : 'All Available Workspaces'}
             </h2>
-            <p className="text-xs sm:text-sm text-[#6B7280] dark:text-[#94A3B8] mt-1">
+            <p className="text-xs sm:text-sm text-[#6B7280] dark:text-[#9CA3AF] mt-1">
               {isSavedView
                 ? `You have saved ${displayedSpaces.length} workspace${displayedSpaces.length === 1 ? '' : 's'} to your favorites`
                 : `Showing ${displayedSpaces.length} vetted high-performance spaces ready for instant booking`}
@@ -290,7 +352,7 @@ export const SpaceList: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCurrentView('explore')}
-                className="px-4 py-2.5 rounded-xl bg-white dark:bg-[#172033] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#E5E7EB] dark:border-[#1E293B] text-xs font-semibold text-[#10B981] flex items-center space-x-2 transition-all hover:border-[#10B981]/50 shadow-2xs cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-white dark:bg-[#1F2937] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] border border-[#E5E7EB] dark:border-[#374151] text-xs font-semibold text-[#0F766E] flex items-center space-x-2 transition-all hover:border-[#0F766E]/50 shadow-2xs cursor-pointer"
               >
                 <span>Browse All Spaces</span>
               </button>
@@ -298,9 +360,9 @@ export const SpaceList: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setCurrentView('map')}
-                className="px-4 py-2.5 rounded-xl bg-white dark:bg-[#172033] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#E5E7EB] dark:border-[#1E293B] text-xs font-semibold text-[#111827] dark:text-[#F8FAFC] flex items-center space-x-2 transition-all hover:border-[#10B981]/50 shadow-2xs cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-white dark:bg-[#1F2937] hover:bg-[#F1F5F9] dark:hover:bg-[#374151] border border-[#E5E7EB] dark:border-[#374151] text-xs font-semibold text-[#111827] dark:text-[#F9FAFB] flex items-center space-x-2 transition-all hover:border-[#0F766E]/50 shadow-2xs cursor-pointer"
               >
-                <Compass className="w-4 h-4 text-[#10B981]" />
+                <Compass className="w-4 h-4 text-[#0F766E]" />
                 <span>Around Me</span>
               </button>
             )}
@@ -311,19 +373,19 @@ export const SpaceList: React.FC = () => {
         {isLoadingSpaces ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-8">
             {[1, 2, 3, 4, 5, 6].map((idx) => (
-              <div key={idx} className="rounded-[20px] bg-white dark:bg-[#172033] border border-[#E5E7EB] dark:border-[#1E293B] h-80 animate-pulse p-4 flex flex-col justify-between shadow-2xs">
-                <div className="w-full h-44 bg-[#E2E8F0] dark:bg-[#1E293B] rounded-2xl" />
+              <div key={idx} className="rounded-[20px] bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] h-80 animate-pulse p-4 flex flex-col justify-between shadow-2xs">
+                <div className="w-full h-44 bg-[#E2E8F0] dark:bg-[#374151] rounded-2xl" />
                 <div className="space-y-2 pt-3">
-                  <div className="w-2/3 h-4 bg-[#E2E8F0] dark:bg-[#1E293B] rounded" />
-                  <div className="w-1/2 h-3 bg-[#E2E8F0] dark:bg-[#1E293B] rounded" />
+                  <div className="w-2/3 h-4 bg-[#E2E8F0] dark:bg-[#374151] rounded" />
+                  <div className="w-1/2 h-3 bg-[#E2E8F0] dark:bg-[#374151] rounded" />
                 </div>
               </div>
             ))}
           </div>
         ) : displayedSpaces.length === 0 ? (
           <div className="py-20 text-center space-y-4 max-w-md mx-auto">
-            <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#172033] border border-[#E5E7EB] dark:border-[#1E293B] flex items-center justify-center mx-auto text-[#6B7280] dark:text-[#94A3B8] shadow-2xs">
-              {isSavedView ? <Heart className="w-8 h-8 text-[#10B981]" /> : <Search className="w-8 h-8" />}
+            <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151] flex items-center justify-center mx-auto text-[#6B7280] dark:text-[#9CA3AF] shadow-2xs">
+              {isSavedView ? <Heart className="w-8 h-8 text-[#0F766E]" /> : <Search className="w-8 h-8" />}
             </div>
             <h3 className="text-lg font-bold text-[#111827] dark:text-[#F8FAFC]">
               {isSavedView ? 'No saved workspaces yet' : allSpaces.length === 0 ? 'No spaces available yet' : 'No matching workspaces found'}
@@ -339,7 +401,7 @@ export const SpaceList: React.FC = () => {
               <button
                 type="button"
                 onClick={isSavedView ? () => setCurrentView('explore') : resetFilters}
-                className="px-5 py-2.5 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                className="px-5 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#0D625C] text-white text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
               >
                 {isSavedView ? 'Explore Workspaces' : 'Reset Filters'}
               </button>
