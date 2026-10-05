@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "OFIS — Nigeria's Physical Space Network",
+  "name": "OFIS — Work Meet Create Record",
   "short_name": "OFIS",
-  "description": "Find and book physical workspaces, podcast studios, meeting rooms, and event spaces across Nigeria.",
+  "description": "On-Demand Workspaces & Studios Across Nigeria — Book desks, boardrooms, podcast suites and creator spaces by the hour or day.",
   "start_url": "/?view=mobile",
   "scope": "/",
   "display": "standalone",

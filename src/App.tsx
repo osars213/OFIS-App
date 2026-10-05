@@ -28,6 +28,7 @@ import { InfoModal } from './components/InfoModal';
 import { CompareFloatingBar } from './components/compare/CompareFloatingBar';
 import { WorkspaceCompareModal } from './components/compare/WorkspaceCompareModal';
 import { AppSplashScreen } from './components/AppSplashScreen';
+import { Footer } from './components/Footer';
 import { MobileDeviceSimulator } from './components/MobileDeviceSimulator';
 
 export const App: React.FC = () => {
@@ -138,6 +139,9 @@ export const App: React.FC = () => {
           </>
         )}
       </main>
+
+      {/* Webpage Footer */}
+      {currentUser.role !== 'host' && <Footer />}
 
       {/* Comparison Floating Bar */}
       {currentUser.role !== 'host' && <CompareFloatingBar />}

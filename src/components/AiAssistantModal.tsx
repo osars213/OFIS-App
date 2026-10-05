@@ -19,7 +19,7 @@ export const AiAssistantModal: React.FC = () => {
   const [messages, setMessages] = useState<Array<{ sender: 'user' | 'ai'; text: string; matchedSpaceId?: string }>>([
     {
       sender: 'ai',
-      text: "Hello! I am your Ofis Assistant. Tell me what you're working on (e.g. 'I need a 6-person meeting room in VI with high-speed fiber for international Zoom calls') and I will curate the best physical spaces with guaranteed power uptime.",
+      text: "Hello! I am your Ofis Assistant. Tell me what you're working on (e.g. 'I need a 6-person meeting room in VI with high-speed fiber for international Zoom calls') and I will curate the best workspaces & studios with guaranteed power uptime.",
     },
   ]);
 
@@ -51,7 +51,7 @@ export const AiAssistantModal: React.FC = () => {
         {
           sender: 'ai',
           text: fallbackSpace 
-            ? `I've analyzed our physical spaces! Based on your criteria, ${fallbackSpace.title} in ${fallbackSpace.neighborhood || fallbackSpace.city} provides 24/7 solar/generator power and dedicated high-speed fiber.`
+            ? `I've analyzed our verified spaces! Based on your criteria, ${fallbackSpace.title} in ${fallbackSpace.neighborhood || fallbackSpace.city} provides 24/7 solar/generator power and dedicated high-speed fiber.`
             : "I've analyzed our network! Please browse our curated directory for verified power uptime and fiber-connected desks.",
           matchedSpaceId: fallbackSpace?.id,
         },

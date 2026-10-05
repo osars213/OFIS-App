@@ -121,7 +121,7 @@ export const SpaceTypeSlider: React.FC = () => {
             Curated Space Pillars
           </h2>
           <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0] mt-0.5">
-            Explore verified physical workspaces across Nigeria
+            On-demand workspaces & studios across Nigeria
           </p>
         </div>
 

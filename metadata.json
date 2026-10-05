@@ -1,6 +1,6 @@
 {
   "name": "OFIS",
-  "description": "Nigerian marketplace for discovering and booking physical spaces by the hour or day — Coworking desks, podcast & creator studios, meeting rooms, and event venues across Nigeria.",
+  "description": "Work Meet Create Record — On-Demand Workspaces & Studios Across Nigeria. Book desks, boardrooms, podcast studios and creator venues by the hour or day.",
   "requestFramePermissions": [
     "geolocation"
   ],

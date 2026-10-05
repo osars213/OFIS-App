@@ -62,7 +62,7 @@ export const CATEGORY_METADATA = [
   {
     id: 'all',
     label: 'All Spaces',
-    description: 'Explore entire physical space network (200 curated hubs)',
+    description: 'Explore on-demand workspaces & studios (200 curated hubs)',
     icon: 'Sparkles',
     count: 200,
   },

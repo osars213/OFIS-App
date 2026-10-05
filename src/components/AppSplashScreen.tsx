@@ -109,8 +109,8 @@ export const AppSplashScreen: React.FC<AppSplashScreenProps> = ({
             <span className="text-[#FFA987]">•</span>
             <span>RECORD</span>
           </div>
-          <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-[#94A3B8]">
-            NIGERIA'S PHYSICAL SPACE NETWORK
+          <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.16em] text-[#94A3B8]">
+            ON-DEMAND WORKSPACES & STUDIOS ACROSS NIGERIA
           </span>
         </div>
 
@@ -132,7 +132,7 @@ export const AppSplashScreen: React.FC<AppSplashScreenProps> = ({
 
       {/* Bottom Footer Assurance */}
       <div className="absolute bottom-6 text-center text-[10px] text-[#64748B] font-medium tracking-wide">
-        Physical Workspaces, Studios & Offices Across Nigeria
+        Work • Meet • Create • Record — On-Demand Workspaces & Studios Across Nigeria
       </div>
     </div>
   );
