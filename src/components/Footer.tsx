@@ -21,6 +21,7 @@ export const Footer: React.FC = () => {
     openInfoModal, 
     setIsListSpaceModalOpen, 
     setIsInstallAppModalOpen,
+    setIsAiModalOpen,
     setCurrentView 
   } = useApp();
 
@@ -88,6 +89,17 @@ export const Footer: React.FC = () => {
                   <span>Around Me Interactive Map</span>
                 </button>
               </li>
+              <li>
+                <button 
+                  type="button"
+                  id="footer-assistant-link"
+                  onClick={() => setIsAiModalOpen(true)}
+                  className="hover:text-[#FFA987] transition-colors cursor-pointer text-left flex items-center space-x-1.5 text-[#006B70] dark:text-[#FFA987] font-semibold"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#FFA987]" />
+                  <span>Ofis AI Assistant</span>
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -148,15 +160,26 @@ export const Footer: React.FC = () => {
             <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] leading-snug">
               Add OFIS to your phone’s App Drawer for instant offline turnstile QR access & 1-tap booking.
             </p>
-            <button
-              type="button"
-              id="footer-download-app-btn"
-              onClick={() => setIsInstallAppModalOpen(true)}
-              className="w-full py-2.5 px-3 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-2 active:scale-95 cursor-pointer"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download / Install App</span>
-            </button>
+            <div className="space-y-2 pt-1">
+              <button
+                type="button"
+                id="footer-assistant-card-btn"
+                onClick={() => setIsAiModalOpen(true)}
+                className="w-full py-2 px-3 rounded-xl bg-[#FFD0BD]/25 hover:bg-[#FFD0BD]/40 dark:bg-[#FFA987]/15 dark:hover:bg-[#FFA987]/25 border border-[#FFA987]/40 text-[#006B70] dark:text-[#FFA987] text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-2 active:scale-95 cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#FFA987]" />
+                <span>Ask Ofis Assistant</span>
+              </button>
+              <button
+                type="button"
+                id="footer-download-app-btn"
+                onClick={() => setIsInstallAppModalOpen(true)}
+                className="w-full py-2.5 px-3 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center space-x-2 active:scale-95 cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download / Install App</span>
+              </button>
+            </div>
             <div className="flex items-center justify-between text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] pt-1">
               <span>Android App Drawer</span>
               <span>•</span>

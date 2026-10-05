@@ -263,6 +263,45 @@ export const SettingsModal: React.FC = () => {
             </p>
           </div>
 
+          {/* App Version & Auto-Update Status */}
+          <div className="p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xs font-bold text-[#006B70] dark:text-[#28D2CB]">
+                <Sparkles className="w-4 h-4 text-[#14BEB8]" />
+                <span>App Updates & Version</span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB] font-bold">
+                v2.4.0 (Latest)
+              </span>
+            </div>
+            <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0] leading-relaxed">
+              OFIS updates automatically in the background whenever you open the app with an active internet connection. You never need to download new APK files or visit an app store.
+            </p>
+            <div className="pt-1">
+              <button
+                type="button"
+                id="check-updates-btn"
+                onClick={async () => {
+                  if ('serviceWorker' in navigator) {
+                    try {
+                      const reg = await navigator.serviceWorker.getRegistration();
+                      if (reg) {
+                        await reg.update();
+                      }
+                    } catch (e) {
+                      console.warn('Update check note:', e);
+                    }
+                  }
+                  window.location.reload();
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-white dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8] text-xs font-semibold text-[#12383B] dark:text-white flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-xs active:scale-95"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-[#14BEB8]" />
+                <span>Check for Updates & Refresh App</span>
+              </button>
+            </div>
+          </div>
+
           {/* Reset App State */}
           <div className="pt-2">
             <button

@@ -220,7 +220,7 @@ export const OfisAuthModal: React.FC = () => {
               <h3 className="text-base sm:text-lg font-bold text-[#12383B] dark:text-white">
                 {authMode === 'signup' ? 'Create OFIS Account' : authMode === 'login' ? 'Sign In to OFIS' : 'Account & Pass Credentials'}
               </h3>
-              <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">Vetted workspaces, instant digital passes & host operations</p>
+              <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">Work Meet Create Record — On-Demand Workspaces & Studios Across Nigeria</p>
             </div>
           </div>
           <button
@@ -234,7 +234,7 @@ export const OfisAuthModal: React.FC = () => {
         </div>
 
         {/* Tab Switcher */}
-        <div className="grid grid-cols-3 p-1 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs font-semibold">
+        <div className={`grid ${isGuest ? 'grid-cols-2' : 'grid-cols-3'} p-1 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs font-semibold`}>
           <button
             id="auth-tab-signup-btn"
             type="button"
@@ -260,22 +260,24 @@ export const OfisAuthModal: React.FC = () => {
             }`}
           >
             <LogIn className="w-3.5 h-3.5" />
-            <span>Log In</span>
+            <span>Sign In</span>
           </button>
 
-          <button
-            id="auth-tab-profile-btn"
-            type="button"
-            onClick={() => switchTab('profile')}
-            className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
-              authMode === 'profile' 
-                ? 'bg-[#14BEB8] text-white font-bold shadow-xs' 
-                : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
-            }`}
-          >
-            <User className="w-3.5 h-3.5" />
-            <span>Profile</span>
-          </button>
+          {!isGuest && (
+            <button
+              id="auth-tab-profile-btn"
+              type="button"
+              onClick={() => switchTab('profile')}
+              className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+                authMode === 'profile' 
+                  ? 'bg-[#14BEB8] text-white font-bold shadow-xs' 
+                  : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Profile</span>
+            </button>
+          )}
         </div>
 
         {/* Status Message Notification */}

@@ -368,13 +368,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                 aria-pressed={isActive}
               >
                 <Icon 
-                  className={`w-4 h-4 shrink-0 transition-colors ${
-                    isActive 
-                      ? 'text-[#FFA987]' 
-                      : item.id === 'podcast_studio' || item.id === 'creative_studio' || item.id === 'recommended' || item.id === 'meeting_room'
-                      ? 'text-[#FFA987]'
-                      : 'text-[#006B70] dark:text-[#28D2CB]'
-                  }`} 
+                  className="w-4 h-4 shrink-0 transition-colors text-[#FFA987]" 
                   strokeWidth={2}
                   aria-hidden="true"
                 />

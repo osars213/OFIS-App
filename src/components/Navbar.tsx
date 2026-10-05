@@ -223,21 +223,43 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Extreme Right: Unified User Account / Sign In Control */}
-          <div className="relative" ref={userMenuRef}>
-            <button
-              type="button"
-              id="navbar-user-profile-btn"
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/60 text-xs font-semibold text-[#12383B] dark:text-white transition-all cursor-pointer group shadow-2xs"
-            >
-              <div className="w-5 h-5 rounded-lg bg-[#FFD0BD]/40 text-[#006B70] dark:text-[#FFA987] flex items-center justify-center">
-                <User className="w-3.5 h-3.5" />
-              </div>
-              <span className="hidden sm:inline max-w-[90px] truncate">
-                {isGuest ? 'Sign In' : currentUser.name.split(' ')[0]}
-              </span>
-              <ChevronDown className={`w-3.5 h-3.5 text-[#5D7A7D] dark:text-[#B8D1D0] transition-transform ${isUserMenuOpen ? 'rotate-180 text-[#FFA987]' : ''}`} />
-            </button>
+          {isGuest ? (
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                id="navbar-sign-in-direct-btn"
+                onClick={() => openAuthModal('login')}
+                className="flex items-center space-x-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                title="Sign in to your OFIS account"
+              >
+                <LogIn className="w-3.5 h-3.5 text-white" />
+                <span>Sign In</span>
+              </button>
+              <button
+                type="button"
+                id="navbar-sign-up-direct-btn"
+                onClick={() => openAuthModal('signup')}
+                className="hidden sm:flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-[#FFA987]/50 hover:bg-[#FFA987]/15 text-[#006B70] dark:text-[#FFA987] text-xs font-bold transition-all cursor-pointer active:scale-95 shrink-0"
+              >
+                <span>Sign Up</span>
+              </button>
+            </div>
+          ) : (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                id="navbar-user-profile-btn"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center space-x-2 px-3 py-2 rounded-xl bg-white dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/60 text-xs font-semibold text-[#12383B] dark:text-white transition-all cursor-pointer group shadow-2xs"
+              >
+                <div className="w-5 h-5 rounded-lg bg-[#FFD0BD]/40 text-[#006B70] dark:text-[#FFA987] flex items-center justify-center">
+                  <User className="w-3.5 h-3.5" />
+                </div>
+                <span className="hidden sm:inline max-w-[90px] truncate">
+                  {currentUser.name.split(' ')[0]}
+                </span>
+                <ChevronDown className={`w-3.5 h-3.5 text-[#5D7A7D] dark:text-[#B8D1D0] transition-transform ${isUserMenuOpen ? 'rotate-180 text-[#FFA987]' : ''}`} />
+              </button>
 
             {/* Profile Dropdown Popover */}
             {isUserMenuOpen && (
@@ -363,54 +385,26 @@ export const Navbar: React.FC = () => {
                   <span>Preferences</span>
                 </button>
 
-                {/* Auth Actions (Sign In / Sign Up vs Sign Out) */}
-                <div className="pt-1 border-t border-[#E2ECEB] dark:border-[#166D74] space-y-1">
-                  {isGuest ? (
-                    <>
-                      <button
-                        type="button"
-                        id="menu-sign-up-btn"
-                        onClick={() => {
-                          setIsUserMenuOpen(false);
-                          openAuthModal('signup');
-                        }}
-                        className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold text-[#006B70] dark:text-[#28D2CB] hover:bg-[#14BEB8]/10 transition-colors text-left cursor-pointer"
-                      >
-                        <UserPlus className="w-4 h-4 text-[#FFA987]" />
-                        <span>Create Account</span>
-                      </button>
-                      <button
-                        type="button"
-                        id="menu-sign-in-btn"
-                        onClick={() => {
-                          setIsUserMenuOpen(false);
-                          openAuthModal('login');
-                        }}
-                        className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs text-[#12383B] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] transition-colors text-left cursor-pointer"
-                      >
-                        <LogIn className="w-4 h-4 text-[#5D7A7D]" />
-                        <span>Sign In</span>
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      id="menu-sign-out-btn"
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        signOut();
-                      }}
-                      className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors text-left cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Sign Out</span>
-                    </button>
-                  )}
+                {/* Sign Out */}
+                <div className="pt-1 border-t border-[#E2ECEB] dark:border-[#166D74]">
+                  <button
+                    type="button"
+                    id="menu-sign-out-btn"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      signOut();
+                    }}
+                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs text-[#EF4444] hover:bg-[#EF4444]/10 transition-colors text-left cursor-pointer font-bold"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
                 </div>
 
               </div>
             )}
           </div>
+        )}
 
         </div>
 
