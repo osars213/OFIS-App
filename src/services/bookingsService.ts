@@ -1,6 +1,10 @@
 import { Booking, BookingLifecycleStatus, BookingExtensionRecord, HostMessage } from '../types';
 import { storage } from './storageService';
-import { getSupabaseClient, isSupabaseConfigured, mapDbBookingToBooking, mapBookingToDbBooking } from './supabaseClient';
+import { 
+  getSupabaseClient, 
+  mapDbBookingToBooking, 
+  mapBookingToDbBooking 
+} from './supabaseClient';
 
 const BOOKINGS_KEY = 'user_bookings';
 const OFFLINE_PASSES_KEY = 'ofis_offline_passes_cache';
@@ -120,46 +124,122 @@ const INITIAL_BOOKINGS: Booking[] = [
 
 export const bookingsService = {
   getBookings: (): Booking[] => {
-    // If Supabase is configured, do not show fictional mock bookings
-    const defaultBookings = isSupabaseConfigured() ? [] : INITIAL_BOOKINGS;
-    return storage.get<Booking[]>(BOOKINGS_KEY, defaultBookings);
+    return storage.get<Booking[]>(BOOKINGS_KEY, INITIAL_BOOKINGS);
   },
 
   fetchBookingsAsync: async (userId?: string): Promise<{ bookings: Booking[]; source: 'supabase' | 'cache' }> => {
     const client = getSupabaseClient();
     if (client) {
       try {
-        let query = client.from('bookings').select('*').order('created_at', { ascending: false });
-        if (userId && !userId.startsWith('guest')) {
-          query = query.eq('user_id', userId);
-        }
+        const { data: sessionData } = await client.auth.getSession();
+        const activeUserId = sessionData?.session?.user?.id || (userId && !userId.startsWith('user-') && !userId.startsWith('guest') ? userId : undefined);
 
-        const { data, error } = await query;
-        if (!error && data) {
-          if (data.length > 0) {
-            const mapped: Booking[] = data.map(mapDbBookingToBooking);
-            storage.set(BOOKINGS_KEY, mapped);
-            return { bookings: mapped, source: 'supabase' };
-          } else {
-            // Live Supabase query returned 0 bookings for this user.
-            // Do NOT inject mock bookings into production view.
-            storage.set(BOOKINGS_KEY, []);
-            return { bookings: [], source: 'supabase' };
-          }
+        let q = client.from('bookings').select('*').order('created_at', { ascending: false });
+        if (activeUserId) {
+          q = q.eq('user_id', activeUserId);
         }
-      } catch (err) {
-        console.warn('[bookingsService] Error fetching bookings from Supabase:', err);
+        const { data, error } = await q;
+        if (!error && data && data.length > 0) {
+          const mapped: Booking[] = data.map(mapDbBookingToBooking);
+          storage.set(BOOKINGS_KEY, mapped);
+          return { bookings: mapped, source: 'supabase' };
+        }
+      } catch (err: any) {
+        console.warn('[bookingsService] Supabase fetch notice, using cache:', err?.message || err);
       }
     }
 
-    const fallbackBookings = isSupabaseConfigured() ? [] : INITIAL_BOOKINGS;
-    const cached = storage.get<Booking[]>(BOOKINGS_KEY, fallbackBookings);
+    const cached = storage.get<Booking[]>(BOOKINGS_KEY, INITIAL_BOOKINGS);
     return { bookings: cached, source: 'cache' };
   },
 
   getBookingById: (id: string): Booking | undefined => {
     const bookings = bookingsService.getBookings();
     return bookings.find(b => b.id === id);
+  },
+
+  getSpaceAvailability: async (spaceId: string, monthOrDate?: { month?: string; date?: string }): Promise<Array<{
+    id: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    durationHours: number;
+    selectedSeatId: string | null;
+    guestCount: number;
+    status: string;
+  }>> => {
+    try {
+      const params = new URLSearchParams();
+      if (monthOrDate?.month) params.append('month', monthOrDate.month);
+      if (monthOrDate?.date) params.append('date', monthOrDate.date);
+      const url = `/api/spaces/${encodeURIComponent(spaceId)}/availability?${params.toString()}`;
+
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.bookings && Array.isArray(json.bookings)) {
+          return json.bookings.map((b: any) => ({
+            id: b.id,
+            date: b.date,
+            startTime: b.start_time || b.startTime,
+            endTime: b.end_time || b.endTime,
+            durationHours: b.duration_hours || b.durationHours,
+            selectedSeatId: b.selected_seat_id || b.selectedSeatId || null,
+            guestCount: b.guest_count || b.guestCount || 1,
+            status: b.status,
+          }));
+        }
+      }
+    } catch (e) {
+      console.warn('[bookingsService] Error fetching space availability from API:', e);
+    }
+
+    // Direct Supabase query fallback
+    const client = getSupabaseClient();
+    if (client) {
+      try {
+        let q = client
+          .from('bookings')
+          .select('id, date, start_time, duration_hours, selected_seat_id, guest_count, status')
+          .eq('space_id', spaceId)
+          .in('status', ['confirmed', 'ready_for_checkin', 'checked_in', 'in_progress', 'active']);
+
+        if (monthOrDate?.date) {
+          q = q.eq('date', monthOrDate.date);
+        }
+
+        const { data, error } = await q;
+        if (!error && data && data.length > 0) {
+          return data.map((b: any) => ({
+            id: b.id,
+            date: b.date,
+            startTime: b.start_time,
+            endTime: calculateEndTime(b.start_time, b.duration_hours),
+            durationHours: Number(b.duration_hours) || 2,
+            selectedSeatId: b.selected_seat_id || null,
+            guestCount: Number(b.guest_count) || 1,
+            status: b.status,
+          }));
+        }
+      } catch (err: any) {
+        console.warn('[bookingsService] Direct Supabase availability query notice:', err);
+      }
+    }
+
+    // Local storage fallback
+    const local = bookingsService.getBookings();
+    return local
+      .filter(b => b.spaceId === spaceId && (b.status === 'confirmed' || b.status === 'checked_in' || b.status === 'ready_for_checkin'))
+      .map(b => ({
+        id: b.id,
+        date: b.date,
+        startTime: b.startTime,
+        endTime: b.endTime || calculateEndTime(b.startTime, b.durationHours),
+        durationHours: b.durationHours,
+        selectedSeatId: b.selectedSeatId || null,
+        guestCount: b.guestCount || 1,
+        status: b.status,
+      }));
   },
 
   createBooking: (data: Omit<Booking, 'id' | 'qrCodeValue' | 'digitalPassCode' | 'createdAt'>): Booking => {
@@ -191,10 +271,14 @@ export const bookingsService = {
     // Sync to Supabase in background
     const client = getSupabaseClient();
     if (client) {
-      const dbPayload = mapBookingToDbBooking(newBooking);
-      client.from('bookings').insert(dbPayload).then(({ error }) => {
-        if (error) console.warn('[bookingsService] Note inserting booking into Supabase:', error.message);
-      });
+      try {
+        const dbPayload = mapBookingToDbBooking(newBooking);
+        client.from('bookings').upsert(dbPayload).then(({ error }) => {
+          if (error) console.warn('[bookingsService] Note inserting booking into Supabase:', error.message);
+        });
+      } catch (err) {
+        console.warn('[bookingsService] Background sync error:', err);
+      }
     }
 
     return newBooking;
@@ -209,8 +293,8 @@ export const bookingsService = {
 
       const client = getSupabaseClient();
       if (client) {
-        client.from('bookings').update({ status: 'cancelled', booking_status: 'cancelled' }).eq('id', bookingId).then(({ error }) => {
-          if (error) console.warn('[bookingsService] Note updating booking cancellation in Supabase:', error.message);
+        client.from('bookings').update({ status: 'cancelled' }).eq('id', bookingId).then(null, err => {
+          console.warn('[bookingsService] Note updating booking cancellation in Supabase:', err);
         });
       }
     }
@@ -227,7 +311,9 @@ export const bookingsService = {
 
     const client = getSupabaseClient();
     if (client) {
-      client.from('bookings').update({ status: 'confirmed', booking_status: 'confirmed' }).eq('id', bookingId);
+      client.from('bookings').update({ status: 'confirmed' }).eq('id', bookingId).then(null, err => {
+        console.warn('[bookingsService] Approve sync error:', err);
+      });
     }
 
     return { success: true, message: 'Booking approved', booking: target };
@@ -244,7 +330,9 @@ export const bookingsService = {
 
     const client = getSupabaseClient();
     if (client) {
-      client.from('bookings').update({ status: 'cancelled', booking_status: 'cancelled', cancellation_reason: reason }).eq('id', bookingId);
+      client.from('bookings').update({ status: 'cancelled', cancellation_reason: reason }).eq('id', bookingId).then(null, err => {
+        console.warn('[bookingsService] Cancel with reason sync error:', err);
+      });
     }
 
     return { success: true, message: 'Booking cancelled', booking: target };
@@ -274,7 +362,13 @@ export const bookingsService = {
 
     const client = getSupabaseClient();
     if (client) {
-      client.from('bookings').update({ checked_in: true, checked_in_at: target.checkedInAt, status: 'checked_in' }).eq('id', target.id);
+      client.from('bookings').update({ 
+        checked_in: true, 
+        checked_in_at: target.checkedInAt, 
+        status: 'checked_in' 
+      }).eq('id', target.id).then(null, err => {
+        console.warn('[bookingsService] Checkin sync error:', err);
+      });
     }
 
     return { success: true, message: `Checked in successfully for ${target.spaceTitle}`, booking: target };
@@ -296,7 +390,7 @@ export const bookingsService = {
     bookingId: string,
     options: { additionalHours?: number; additionalDays?: number } | number,
     unitRate: number,
-    paymentMethod: 'paystack' | 'flutterwave' | 'wallet' | 'card' = 'wallet'
+    paymentMethod: 'sznd' | 'wallet' | 'card' = 'wallet'
   ): { success: boolean; message: string; booking?: Booking } => {
     const bookings = bookingsService.getBookings();
     const target = bookings.find(b => b.id === bookingId);
@@ -321,7 +415,6 @@ export const bookingsService = {
       target.extendedDaysCount = (target.extendedDaysCount || 1) + addDays;
       target.totalAmount += extensionCost;
 
-      // Compute new end date
       const baseDate = target.endDate ? new Date(target.endDate) : new Date(target.date);
       baseDate.setDate(baseDate.getDate() + addDays);
       target.endDate = baseDate.toISOString().split('T')[0];
@@ -356,7 +449,9 @@ export const bookingsService = {
         duration_hours: target.durationHours,
         total_amount: target.totalAmount,
         end_time: target.endTime,
-      }).eq('id', target.id);
+      }).eq('id', target.id).then(null, err => {
+        console.warn('[bookingsService] Extension sync error:', err);
+      });
     }
 
     return { success: true, message, booking: target };
@@ -378,7 +473,9 @@ export const bookingsService = {
         checked_out: true,
         checked_out_at: target.checkedOutAt,
         status: 'completed',
-      }).eq('id', target.id);
+      }).eq('id', target.id).then(null, err => {
+        console.warn('[bookingsService] Checkout sync error:', err);
+      });
     }
 
     return { success: true, message: `Checked out from ${target.spaceTitle}`, booking: target };
@@ -394,7 +491,12 @@ export const bookingsService = {
 
       const client = getSupabaseClient();
       if (client) {
-        client.from('bookings').update({ is_reviewed: true, status: 'reviewed' }).eq('id', bookingId);
+        client.from('bookings').update({
+          is_reviewed: true,
+          status: 'reviewed',
+        }).eq('id', bookingId).then(null, err => {
+          console.warn('[bookingsService] Review status sync error:', err);
+        });
       }
     }
   },
@@ -408,7 +510,11 @@ export const bookingsService = {
 
       const client = getSupabaseClient();
       if (client) {
-        client.from('bookings').update({ has_reminder: hasReminder }).eq('id', bookingId);
+        client.from('bookings').update({
+          has_reminder: hasReminder,
+        }).eq('id', bookingId).then(null, err => {
+          console.warn('[bookingsService] Reminder sync error:', err);
+        });
       }
     }
   },

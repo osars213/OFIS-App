@@ -21,7 +21,7 @@ export const DirectionsModal: React.FC = () => {
         
         <div className="flex items-center justify-between border-b border-[#E2ECEB] dark:border-[#166D74] pb-4">
           <div className="flex items-center space-x-2">
-            <Navigation className="w-5 h-5 text-[#14BEB8]" />
+            <Navigation className="w-5 h-5 text-[#FFA987]" />
             <h3 className="text-lg font-bold text-[#12383B] dark:text-white">Transit &amp; Navigation</h3>
           </div>
           <button
@@ -37,7 +37,7 @@ export const DirectionsModal: React.FC = () => {
           <div className="p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2">
             <h4 className="text-sm font-bold text-[#12383B] dark:text-white">{directionsSpace.title}</h4>
             <div className="flex items-start space-x-2 text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
-              <MapPin className="w-4 h-4 text-[#14BEB8] shrink-0 mt-0.5" />
+              <MapPin className="w-4 h-4 text-[#FFA987] shrink-0 mt-0.5" />
               <span>{locationLabel}</span>
             </div>
           </div>

@@ -3,7 +3,11 @@ import { storage } from './storageService';
 import { getSpaceAvailability } from '../utils/availability';
 import { normalizeCategory, getSpacePricing } from '../utils/pricing';
 import { matchesLocationOrQuery, normalizeLocationText } from '../utils/location';
-import { getSupabaseClient, isSupabaseConfigured, mapDbSpaceToSpace, mapSpaceToDbSpace } from './supabaseClient';
+import { 
+  getSupabaseClient, 
+  mapDbSpaceToSpace, 
+  mapSpaceToDbSpace 
+} from './supabaseClient';
 
 const SPACES_KEY = 'spaces_list';
 
@@ -22,13 +26,13 @@ export const spacesService = {
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
           const mappedSpaces: Space[] = data.map(mapDbSpaceToSpace);
           storage.set(SPACES_KEY, mappedSpaces);
           return { spaces: mappedSpaces, source: 'supabase' };
         }
-      } catch (err) {
-        console.warn('[spacesService] Supabase fetch error, using cache:', err);
+      } catch (err: any) {
+        console.warn('[spacesService] Supabase fetch notice, using cache:', err?.message || err);
       }
     }
 
@@ -50,7 +54,7 @@ export const spacesService = {
           .from('spaces')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
         if (!error && data) {
           return mapDbSpaceToSpace(data);
@@ -90,7 +94,7 @@ export const spacesService = {
     if (client) {
       try {
         const dbPayload = mapSpaceToDbSpace(updatedSpace);
-        await client.from('spaces').update(dbPayload).eq('id', updatedSpace.id);
+        await client.from('spaces').upsert(dbPayload);
       } catch (err) {
         console.warn('[spacesService] Error updating space in Supabase:', err);
       }
@@ -163,7 +167,11 @@ export const spacesService = {
       const client = getSupabaseClient();
       if (client) {
         try {
-          await client.from('spaces').update({ is_active: target.isActive }).eq('id', spaceId);
+          await client.from('spaces').update({ 
+            is_verified: target.isVerified,
+            is_active: target.isActive,
+            updated_at: new Date().toISOString(),
+          }).eq('id', spaceId);
         } catch (err) {
           console.warn('[spacesService] Error updating space verification in Supabase:', err);
         }

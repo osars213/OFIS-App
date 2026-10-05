@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Settings,
   Compass,
-  MapPin
+  MapPin,
+  Download
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { OFISWordmark } from './OFISWordmark';
@@ -24,6 +25,7 @@ export const OfisNavigationDrawer: React.FC = () => {
     setIsDrawerOpen,
     openInfoModal,
     setIsListSpaceModalOpen,
+    setIsInstallAppModalOpen,
     setIsSettingsOpen,
     setCurrentView,
     theme,
@@ -90,7 +92,7 @@ export const OfisNavigationDrawer: React.FC = () => {
               className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FFF9F4] dark:hover:bg-[#0B4A50] text-xs font-semibold text-[#12383B] dark:text-white transition-colors cursor-pointer"
             >
               <div className="flex items-center space-x-3">
-                <Compass className="w-4 h-4 text-[#14BEB8]" />
+                <Compass className="w-4 h-4 text-[#FFA987]" />
                 <span>Explore Spaces</span>
               </div>
               <ChevronRight className="w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
@@ -106,10 +108,26 @@ export const OfisNavigationDrawer: React.FC = () => {
               className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FFF9F4] dark:hover:bg-[#0B4A50] text-xs font-semibold text-[#12383B] dark:text-white transition-colors cursor-pointer"
             >
               <div className="flex items-center space-x-3">
-                <MapPin className="w-4 h-4 text-[#14BEB8]" />
+                <MapPin className="w-4 h-4 text-[#FFA987]" />
                 <span>Around Me Interactive Map</span>
               </div>
               <ChevronRight className="w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
+            </button>
+
+            <button
+              type="button"
+              id="drawer-install-pwa-btn"
+              onClick={() => {
+                setIsDrawerOpen(false);
+                setIsInstallAppModalOpen(true);
+              }}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#14BEB8]/15 hover:bg-[#14BEB8]/25 border border-[#14BEB8]/30 text-xs font-bold text-[#006B70] dark:text-[#28D2CB] transition-colors cursor-pointer"
+            >
+              <div className="flex items-center space-x-3">
+                <Download className="w-4 h-4 text-[#14BEB8]" />
+                <span>Download Mobile App (PWA)</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-[#14BEB8]" />
             </button>
           </div>
 
@@ -123,7 +141,7 @@ export const OfisNavigationDrawer: React.FC = () => {
               type="button"
               id="drawer-settings-btn"
               onClick={handleOpenSettings}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FFF9F4] dark:hover:bg-[#0B4A50] text-xs font-semibold text-[#12383B] dark:text-white transition-colors cursor-pointer border border-[#E2ECEB] dark:border-[#166D74] bg-[#FFF9F4]/60 dark:bg-[#0B4A50]/50 hover:border-[#14BEB8]/60"
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FFF9F4] dark:hover:bg-[#0B4A50] text-xs font-semibold text-[#12383B] dark:text-white transition-colors cursor-pointer border border-[#E2ECEB] dark:border-[#166D74] bg-[#FFF9F4]/60 dark:bg-[#0B4A50]/50 hover:border-[#FFA987]/60"
             >
               <div className="flex items-center space-x-3">
                 <div className="p-1.5 rounded-lg bg-[#FFA987]/20 text-[#006B70] dark:text-[#FFA987]">
@@ -153,7 +171,7 @@ export const OfisNavigationDrawer: React.FC = () => {
               className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FFF9F4] dark:hover:bg-[#0B4A50] text-xs font-semibold text-[#12383B] dark:text-white transition-colors cursor-pointer"
             >
               <div className="flex items-center space-x-3">
-                <Info className="w-4 h-4 text-[#14BEB8]" />
+                <Info className="w-4 h-4 text-[#FFA987]" />
                 <span>About OFIS</span>
               </div>
               <ChevronRight className="w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
@@ -166,7 +184,7 @@ export const OfisNavigationDrawer: React.FC = () => {
               className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FFF9F4] dark:hover:bg-[#0B4A50] text-xs font-semibold text-[#12383B] dark:text-white transition-colors cursor-pointer"
             >
               <div className="flex items-center space-x-3">
-                <HelpCircle className="w-4 h-4 text-[#14BEB8]" />
+                <HelpCircle className="w-4 h-4 text-[#FFA987]" />
                 <span>Frequently Asked Questions (FAQ)</span>
               </div>
               <ChevronRight className="w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
@@ -179,7 +197,7 @@ export const OfisNavigationDrawer: React.FC = () => {
               className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FFF9F4] dark:hover:bg-[#0B4A50] text-xs font-semibold text-[#12383B] dark:text-white transition-colors cursor-pointer"
             >
               <div className="flex items-center space-x-3">
-                <Mail className="w-4 h-4 text-[#14BEB8]" />
+                <Mail className="w-4 h-4 text-[#FFA987]" />
                 <span>Contact Support (hello@ofis.ng)</span>
               </div>
               <ChevronRight className="w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
@@ -209,13 +227,13 @@ export const OfisNavigationDrawer: React.FC = () => {
               type="button"
               id="drawer-become-host-btn"
               onClick={handleBecomeHost}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#14BEB8]/25 text-xs font-bold text-[#006B70] dark:text-[#28D2CB] transition-colors cursor-pointer border border-[#14BEB8]/30 bg-[#14BEB8]/15"
+              className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#14BEB8]/25 text-xs font-bold text-[#006B70] dark:text-[#28D2CB] transition-colors cursor-pointer border border-[#FFA987]/40 bg-[#FFA987]/15"
             >
               <div className="flex items-center space-x-3">
-                <Building2 className="w-4 h-4 text-[#14BEB8]" />
+                <Building2 className="w-4 h-4 text-[#FFA987]" />
                 <span>List a Space (Host)</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#14BEB8]" />
+              <ChevronRight className="w-4 h-4 text-[#FFA987]" />
             </button>
 
             <button
@@ -225,7 +243,7 @@ export const OfisNavigationDrawer: React.FC = () => {
               className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-[#FFF9F4] dark:hover:bg-[#0B4A50] text-xs font-semibold text-[#12383B] dark:text-white transition-colors cursor-pointer"
             >
               <div className="flex items-center space-x-3">
-                <Handshake className="w-4 h-4 text-[#14BEB8]" />
+                <Handshake className="w-4 h-4 text-[#FFA987]" />
                 <span>Partner With OFIS</span>
               </div>
               <ChevronRight className="w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />

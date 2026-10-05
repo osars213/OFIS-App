@@ -29,16 +29,16 @@ export const MobileBottomNav: React.FC = () => {
         <button
           type="button"
           onClick={() => setCurrentView('host_dashboard')}
-          className="flex flex-col items-center justify-center space-y-1 p-1 rounded-xl text-[#006B70] dark:text-[#28D2CB] cursor-pointer transition-transform active:scale-95"
+          className="flex flex-col items-center justify-center space-y-1 p-1 rounded-xl text-[#006B70] dark:text-[#FFA987] cursor-pointer transition-transform active:scale-95"
         >
-          <Building2 className="w-5 h-5 text-[#14BEB8]" />
+          <Building2 className="w-5 h-5 text-[#FFA987]" />
           <span className="text-[11px] font-semibold whitespace-nowrap">Hubs</span>
         </button>
 
         <button
           type="button"
           onClick={() => setIsHostPayoutModalOpen(true)}
-          className="flex flex-col items-center justify-center space-y-1 p-1 rounded-xl text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-[#28D2CB] cursor-pointer transition-transform active:scale-95"
+          className="flex flex-col items-center justify-center space-y-1 p-1 rounded-xl text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-[#FFA987] cursor-pointer transition-transform active:scale-95"
         >
           <Wallet className="w-5 h-5" />
           <span className="text-[11px] font-medium whitespace-nowrap">Payouts</span>
@@ -47,10 +47,10 @@ export const MobileBottomNav: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsDiagnosticsModalOpen(true)}
-          className="flex flex-col items-center justify-center space-y-1 p-1 text-[#006B70] dark:text-[#28D2CB] cursor-pointer transition-transform active:scale-95"
+          className="flex flex-col items-center justify-center space-y-1 p-1 text-[#006B70] dark:text-[#FFA987] cursor-pointer transition-transform active:scale-95"
         >
-          <div className="w-7 h-7 rounded-full bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border border-[#14BEB8]/40 flex items-center justify-center -mt-1 shadow-xs">
-            <Activity className="w-4 h-4 text-[#14BEB8]" />
+          <div className="w-7 h-7 rounded-full bg-[#FFA987]/15 dark:bg-[#FFA987]/20 border border-[#FFA987]/40 flex items-center justify-center -mt-1 shadow-xs">
+            <Activity className="w-4 h-4 text-[#FFA987]" />
           </div>
           <span className="text-[11px] font-semibold whitespace-nowrap">Health</span>
         </button>
@@ -99,11 +99,11 @@ export const MobileBottomNav: React.FC = () => {
       <button
         type="button"
         onClick={() => setIsAiModalOpen(true)}
-        className="flex flex-col items-center justify-center space-y-1 p-1 text-[#006B70] dark:text-[#28D2CB] cursor-pointer transition-all active:scale-95"
+        className="flex flex-col items-center justify-center space-y-1 p-1 text-[#006B70] dark:text-[#FFA987] cursor-pointer transition-all active:scale-95"
         title="Ofis Assistant"
       >
-        <div className="w-7 h-7 rounded-full bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border border-[#14BEB8]/40 flex items-center justify-center -mt-1 shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-[#14BEB8]" />
+        <div className="w-7 h-7 rounded-full bg-[#FFD0BD]/25 dark:bg-[#FFA987]/20 border border-[#FFA987]/40 flex items-center justify-center -mt-1 shadow-xs">
+          <Sparkles className="w-3.5 h-3.5 text-[#FFA987]" />
         </div>
         <span className="text-[10px] font-semibold whitespace-nowrap">Assistant</span>
       </button>

@@ -251,7 +251,7 @@ export const SpaceDetails: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-[#5D7A7D] dark:text-[#B8D1D0]">
             <div className="flex items-center space-x-1.5">
-              <MapPin className="w-4 h-4 text-[#14BEB8]" />
+              <MapPin className="w-4 h-4 text-[#FFA987]" />
               <span>{formatLocationFull(selectedSpace)}</span>
             </div>
             <button
@@ -294,7 +294,7 @@ export const SpaceDetails: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-5 rounded-3xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] shadow-xs">
               <div className="space-y-1">
                 <div className="flex items-center space-x-1.5 text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
-                  <Zap className="w-4 h-4 text-[#14BEB8]" />
+                  <Zap className="w-4 h-4 text-[#FFA987]" />
                   <span>Power Backup</span>
                 </div>
                 <div className="text-sm font-bold text-[#12383B] dark:text-white">{selectedSpace.powerType}</div>
@@ -303,7 +303,7 @@ export const SpaceDetails: React.FC = () => {
 
               <div className="space-y-1">
                 <div className="flex items-center space-x-1.5 text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
-                  <Wifi className="w-4 h-4 text-[#14BEB8]" />
+                  <Wifi className="w-4 h-4 text-[#FFA987]" />
                   <span>Internet Speed</span>
                 </div>
                 <div className="text-sm font-bold text-[#12383B] dark:text-white">{selectedSpace.internetSpeedMbps} Mbps</div>
@@ -312,7 +312,7 @@ export const SpaceDetails: React.FC = () => {
 
               <div className="space-y-1 col-span-2 sm:col-span-1">
                 <div className="flex items-center space-x-1.5 text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
-                  <Users className="w-4 h-4 text-[#14BEB8]" />
+                  <Users className="w-4 h-4 text-[#FFA987]" />
                   <span>Capacity & Noise</span>
                 </div>
                 <div className="text-sm font-bold text-[#12383B] dark:text-white">{selectedSpace.capacity} Guests</div>
@@ -455,7 +455,7 @@ export const SpaceDetails: React.FC = () => {
               ) : availability.status !== 'available_now' && availability.nextSlot ? (
                 <div className="p-3 rounded-2xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] space-y-1">
                   <div className="flex items-center space-x-1.5 text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
-                    <Clock className="w-3.5 h-3.5 text-[#14BEB8]" />
+                    <Clock className="w-3.5 h-3.5 text-[#FFA987]" />
                     <span>Next Available Reservation</span>
                   </div>
                   <div className="text-sm font-mono font-bold text-[#12383B] dark:text-white">
@@ -463,10 +463,10 @@ export const SpaceDetails: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                <div className="p-3 rounded-2xl bg-[#14BEB8]/15 dark:bg-[#07383D] border border-[#14BEB8]/30 flex items-center space-x-2">
+                <div className="p-3 rounded-2xl bg-[#FFA987]/15 dark:bg-[#07383D] border border-[#FFA987]/30 flex items-center space-x-2">
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#14BEB8] opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#14BEB8]" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FFA987] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FFA987]" />
                   </span>
                   <span className="text-xs text-[#006B70] dark:text-[#28D2CB] font-bold">Instant Pass Active Now</span>
                 </div>
@@ -521,7 +521,7 @@ export const SpaceDetails: React.FC = () => {
                     onClick={scrollToCalendar}
                     className="w-full py-2.5 rounded-2xl bg-[#FFF9F4] dark:bg-[#07383D] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] text-xs font-semibold text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white flex items-center justify-center space-x-1.5 transition-colors cursor-pointer shadow-2xs"
                   >
-                    <CalendarIcon className="w-3.5 h-3.5 text-[#14BEB8]" />
+                    <CalendarIcon className="w-3.5 h-3.5 text-[#FFA987]" />
                     <span>Choose Dates</span>
                   </button>
 

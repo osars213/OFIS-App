@@ -213,8 +213,8 @@ export const OfisAuthModal: React.FC = () => {
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-[#E2ECEB] dark:border-[#166D74] pb-4">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB] flex items-center justify-center font-bold">
-              <ShieldCheck className="w-5 h-5 text-[#14BEB8]" />
+            <div className="w-9 h-9 rounded-2xl bg-[#FFA987]/15 text-[#006B70] dark:text-[#FFA987] flex items-center justify-center font-bold">
+              <ShieldCheck className="w-5 h-5 text-[#FFA987]" />
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-[#12383B] dark:text-white">
@@ -288,7 +288,7 @@ export const OfisAuthModal: React.FC = () => {
                 : 'bg-red-50 dark:bg-red-950/30 border-red-500/30 text-red-600 dark:text-red-400'
             }`}
           >
-            {statusMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0 text-[#14BEB8]" /> : <X className="w-4 h-4 shrink-0" />}
+            {statusMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0 text-[#FFA987]" /> : <X className="w-4 h-4 shrink-0" />}
             <span className="font-medium">{statusMessage.text}</span>
           </div>
         )}
@@ -507,9 +507,9 @@ export const OfisAuthModal: React.FC = () => {
                 <button
                   id="quick-demo-user-btn"
                   type="button"
-                  onClick={() => {
-                    loginUser('tunde.adeyemi@paystack.com');
-                    setStatusMessage({ text: 'Logged in as Babatunde Adeyemi (User)', type: 'success' });
+                  onClick={async () => {
+                    await loginUser('tunde.adeyemi@paystack.com', 'Password123!');
+                    setStatusMessage({ text: 'Authenticated as Babatunde Adeyemi via Supabase Auth', type: 'success' });
                     setTimeout(() => setIsAuthModalOpen(false), 800);
                   }}
                   className="p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/50 text-left transition-all cursor-pointer"
@@ -521,9 +521,9 @@ export const OfisAuthModal: React.FC = () => {
                 <button
                   id="quick-demo-host-btn"
                   type="button"
-                  onClick={() => {
-                    loginUser('funke@creativespace.ng');
-                    setStatusMessage({ text: 'Logged in as Funke Akindele-Cole (Host)', type: 'success' });
+                  onClick={async () => {
+                    await loginUser('funke@creativespace.ng', 'Password123!');
+                    setStatusMessage({ text: 'Authenticated as Funke Akindele-Cole via Supabase Auth', type: 'success' });
                     setTimeout(() => setIsAuthModalOpen(false), 800);
                   }}
                   className="p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/50 text-left transition-all cursor-pointer"
@@ -543,12 +543,12 @@ export const OfisAuthModal: React.FC = () => {
           <form id="profile-form" onSubmit={handleProfileSave} className="space-y-4">
             <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74]">
               <div className="flex items-center space-x-3">
-                <div className="w-11 h-11 rounded-2xl bg-[#14BEB8]/15 border border-[#14BEB8]/40 text-[#006B70] dark:text-[#28D2CB] flex items-center justify-center">
-                  <User className="w-5 h-5 text-[#14BEB8]" />
+                <div className="w-11 h-11 rounded-2xl bg-[#FFA987]/15 border border-[#FFA987]/40 text-[#006B70] dark:text-[#FFA987] flex items-center justify-center">
+                  <User className="w-5 h-5 text-[#FFA987]" />
                 </div>
                 <div>
                   <div className="text-xs font-bold text-[#12383B] dark:text-white">{currentUser.name}</div>
-                  <div className="text-[10px] text-[#006B70] dark:text-[#28D2CB] font-mono uppercase font-bold flex items-center space-x-1">
+                  <div className="text-[10px] text-[#006B70] dark:text-[#FFA987] font-mono uppercase font-bold flex items-center space-x-1">
                     <span>{currentUser.role} Account</span>
                     <span>•</span>
                     <span>₦{(currentUser.walletBalanceNgn || 0).toLocaleString()} Balance</span>
@@ -598,8 +598,8 @@ export const OfisAuthModal: React.FC = () => {
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-[#12383B] dark:text-white">Email Address</label>
                 {currentUser?.isEmailVerified ? (
-                  <span className="text-[10px] text-[#006B70] dark:text-[#28D2CB] font-bold flex items-center space-x-1">
-                    <CheckCircle2 className="w-3 h-3 text-[#14BEB8]" />
+                  <span className="text-[10px] text-[#006B70] dark:text-[#FFA987] font-bold flex items-center space-x-1">
+                    <CheckCircle2 className="w-3 h-3 text-[#FFA987]" />
                     <span>Verified (List & Pay Active)</span>
                   </span>
                 ) : (
@@ -615,20 +615,20 @@ export const OfisAuthModal: React.FC = () => {
                 value={profileEmail}
                 onChange={(e) => setProfileEmail(e.target.value)}
                 required
-                className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8]"
+                className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#FFA987]"
               />
             </div>
 
             {/* Email Verification Status Card */}
             <div className={`p-3 rounded-2xl border text-xs space-y-2 ${
               currentUser?.isEmailVerified 
-                ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/15 border-[#14BEB8]/40 text-[#12383B] dark:text-white' 
+                ? 'bg-[#FFA987]/15 dark:bg-[#FFA987]/15 border-[#FFA987]/40 text-[#12383B] dark:text-white' 
                 : 'bg-[#FFA987]/15 dark:bg-[#FFA987]/10 border-[#FFA987]/30 text-[#12383B] dark:text-white'
             }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   {currentUser?.isEmailVerified ? (
-                    <ShieldCheck className="w-4 h-4 text-[#14BEB8]" />
+                    <ShieldCheck className="w-4 h-4 text-[#FFA987]" />
                   ) : (
                     <AlertTriangle className="w-4 h-4 text-[#FFA987]" />
                   )}

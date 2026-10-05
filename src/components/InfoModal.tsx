@@ -267,7 +267,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2">
-                  <div className="w-8 h-8 rounded-xl bg-[#14BEB8]/20 text-[#006B70] dark:text-[#28D2CB] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-[#FFA987]/20 text-[#FFA987] flex items-center justify-center">
                     <Headphones className="w-4 h-4" />
                   </div>
                   <h4 className="text-xs font-bold text-[#12383B] dark:text-white">Check-in Assistance</h4>
@@ -277,7 +277,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                 </div>
 
                 <div className="p-4 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2">
-                  <div className="w-8 h-8 rounded-xl bg-[#14BEB8]/20 text-[#006B70] dark:text-[#28D2CB] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-[#FFA987]/20 text-[#FFA987] flex items-center justify-center">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <h4 className="text-xs font-bold text-[#12383B] dark:text-white">Payment &amp; Wallet Security</h4>
@@ -287,7 +287,7 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#14BEB8]/10 dark:bg-[#0B4A50] border border-[#14BEB8]/30 flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-[#FFA987]/10 dark:bg-[#0B4A50] border border-[#FFA987]/30 flex items-center justify-between">
                 <div>
                   <h4 className="text-xs font-bold text-[#12383B] dark:text-white">Need immediate live agent help?</h4>
                   <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">Our Lagos support desk is active 8:00 AM – 9:00 PM WAT.</p>
@@ -307,8 +307,8 @@ export const InfoModal: React.FC<InfoModalProps> = ({
           {activeTab === 'support' && (
             <div className="space-y-4">
               {supportSubmitted ? (
-                <div className="p-6 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#14BEB8]/40 text-center space-y-2 animate-in fade-in">
-                  <div className="w-10 h-10 rounded-full bg-[#14BEB8]/20 text-[#006B70] dark:text-[#28D2CB] flex items-center justify-center mx-auto">
+                <div className="p-6 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#FFA987]/40 text-center space-y-2 animate-in fade-in">
+                  <div className="w-10 h-10 rounded-full bg-[#FFA987]/20 text-[#FFA987] flex items-center justify-center mx-auto">
                     <Check className="w-5 h-5" />
                   </div>
                   <h4 className="text-sm font-bold text-[#12383B] dark:text-white">Support Message Dispatched!</h4>
@@ -374,11 +374,11 @@ export const InfoModal: React.FC<InfoModalProps> = ({
 
               <div className="pt-3 border-t border-[#E2ECEB] dark:border-[#166D74] grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
                 <div className="flex items-center space-x-2">
-                  <Mail className="w-3.5 h-3.5 text-[#006B70] dark:text-[#28D2CB]" />
+                  <Mail className="w-3.5 h-3.5 text-[#FFA987]" />
                   <span>support@ofis.ng</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Phone className="w-3.5 h-3.5 text-[#006B70] dark:text-[#28D2CB]" />
+                  <Phone className="w-3.5 h-3.5 text-[#FFA987]" />
                   <span>+234 (0) 700 6347 6447</span>
                 </div>
               </div>
@@ -398,15 +398,15 @@ export const InfoModal: React.FC<InfoModalProps> = ({
                 </p>
                 <div className="space-y-2 pt-2">
                   <div className="flex items-center space-x-2 text-xs text-[#12383B] dark:text-white">
-                    <Check className="w-4 h-4 text-[#14BEB8]" />
+                    <Check className="w-4 h-4 text-[#FFA987]" />
                     <span>0% signup fee &amp; free high-resolution space photography</span>
                   </div>
                   <div className="flex items-center space-x-2 text-xs text-[#12383B] dark:text-white">
-                    <Check className="w-4 h-4 text-[#14BEB8]" />
+                    <Check className="w-4 h-4 text-[#FFA987]" />
                     <span>Automated next-day direct bank payouts via Paystack</span>
                   </div>
                   <div className="flex items-center space-x-2 text-xs text-[#12383B] dark:text-white">
-                    <Check className="w-4 h-4 text-[#14BEB8]" />
+                    <Check className="w-4 h-4 text-[#FFA987]" />
                     <span>Smart dynamic pricing and surge occupancy algorithms</span>
                   </div>
                 </div>

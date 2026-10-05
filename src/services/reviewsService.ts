@@ -1,14 +1,17 @@
 import { Review } from '../types';
 import { MOCK_REVIEWS } from '../mockData';
 import { storage } from './storageService';
-import { getSupabaseClient, isSupabaseConfigured, mapDbReviewToReview, mapReviewToDbReview } from './supabaseClient';
+import { 
+  getSupabaseClient, 
+  mapDbReviewToReview, 
+  mapReviewToDbReview 
+} from './supabaseClient';
 
 const REVIEWS_KEY = 'space_reviews';
 
 export const reviewsService = {
   getReviewsForSpace: (spaceId: string): Review[] => {
-    const defaultReviews = isSupabaseConfigured() ? [] : MOCK_REVIEWS;
-    const allReviews = storage.get<Review[]>(REVIEWS_KEY, defaultReviews);
+    const allReviews = storage.get<Review[]>(REVIEWS_KEY, MOCK_REVIEWS);
     return allReviews.filter(r => r.spaceId === spaceId);
   },
 
@@ -22,17 +25,14 @@ export const reviewsService = {
           .eq('space_id', spaceId)
           .order('created_at', { ascending: false });
 
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
           const mapped: Review[] = data.map(mapDbReviewToReview);
-          
-          // Update cached reviews for this space
-          const allLocal = storage.get<Review[]>(REVIEWS_KEY, []);
+          const allLocal = storage.get<Review[]>(REVIEWS_KEY, MOCK_REVIEWS);
           const otherSpaces = allLocal.filter(r => r.spaceId !== spaceId);
           storage.set(REVIEWS_KEY, [...mapped, ...otherSpaces]);
-          
           return mapped;
         }
-      } catch (err) {
+      } catch (err: any) {
         console.warn('[reviewsService] Error fetching reviews from Supabase:', err);
       }
     }
@@ -40,8 +40,7 @@ export const reviewsService = {
   },
 
   addReview: (review: Omit<Review, 'id' | 'createdAt'>): Review => {
-    const defaultReviews = isSupabaseConfigured() ? [] : MOCK_REVIEWS;
-    const allReviews = storage.get<Review[]>(REVIEWS_KEY, defaultReviews);
+    const allReviews = storage.get<Review[]>(REVIEWS_KEY, MOCK_REVIEWS);
     const newReview: Review = {
       ...review,
       id: `rev-${Date.now()}`,
@@ -55,21 +54,17 @@ export const reviewsService = {
     // Sync to Supabase in background
     const client = getSupabaseClient();
     if (client) {
-      const dbPayload = mapReviewToDbReview(newReview);
-      client.from('reviews').insert(dbPayload).then(async ({ error }) => {
-        if (!error) {
-          // Update space review count and rating
-          try {
-            const spaceReviews = allReviews.filter(r => r.spaceId === review.spaceId);
-            const avgRating = Number((spaceReviews.reduce((sum, r) => sum + r.rating, 0) / spaceReviews.length).toFixed(2));
-            await client.from('spaces').update({
-              reviews_count: spaceReviews.length,
-              rating: avgRating,
-            }).eq('id', review.spaceId);
-          } catch (updateErr) {
-            console.warn('[reviewsService] Note updating space rating in Supabase:', updateErr);
-          }
-        }
+      client.auth.getSession().then(({ data: sessionData }) => {
+        const activeUserId = sessionData?.session?.user?.id || (newReview.userId && !newReview.userId.startsWith('user-') ? newReview.userId : undefined);
+        const dbPayload = mapReviewToDbReview({
+          ...newReview,
+          userId: activeUserId || newReview.userId
+        });
+        client.from('reviews').insert(dbPayload).then(({ error }) => {
+          if (error) console.warn('[reviewsService] Note syncing review to Supabase:', error.message);
+        });
+      }).catch(err => {
+        console.warn('[reviewsService] Error saving review to Supabase:', err);
       });
     }
 
@@ -77,26 +72,24 @@ export const reviewsService = {
   },
 
   toggleHelpful: (reviewId: string): { helpfulCount: number; isHelpful: boolean } => {
-    const defaultReviews = isSupabaseConfigured() ? [] : MOCK_REVIEWS;
-    const allReviews = storage.get<Review[]>(REVIEWS_KEY, defaultReviews);
+    const allReviews = storage.get<Review[]>(REVIEWS_KEY, MOCK_REVIEWS);
     const revIndex = allReviews.findIndex(r => r.id === reviewId);
     if (revIndex === -1) return { helpfulCount: 0, isHelpful: false };
 
     const current = allReviews[revIndex];
     const isHelpful = !current.isHelpfulByUser;
     const count = Math.max(0, (current.helpfulCount || 0) + (isHelpful ? 1 : -1));
-    
+
     allReviews[revIndex] = {
       ...current,
       helpfulCount: count,
       isHelpfulByUser: isHelpful,
     };
-
     storage.set(REVIEWS_KEY, allReviews);
 
     const client = getSupabaseClient();
     if (client) {
-      client.from('reviews').update({ helpful_count: count }).eq('id', reviewId).then(() => {});
+      client.from('reviews').update({ helpful_count: count }).eq('id', reviewId).then(null, () => {});
     }
 
     return { helpfulCount: count, isHelpful };

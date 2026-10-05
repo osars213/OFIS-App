@@ -225,7 +225,7 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
           {availability.nextSlot && availability.status !== 'available_now' && (
             <div className="flex items-center justify-between text-xs py-1.5 px-3 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74]">
               <div className="flex items-center space-x-1.5 text-[#5D7A7D] dark:text-[#B8D1D0]">
-                <Clock className="w-3.5 h-3.5 text-[#14BEB8] shrink-0" />
+                <Clock className="w-3.5 h-3.5 text-[#FFA987] shrink-0" />
                 <span className="text-[11px] font-medium">Next Available:</span>
               </div>
               <span className="font-bold text-xs text-[#12383B] dark:text-white">
@@ -237,14 +237,14 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
           {/* Core Amenities Badges */}
           <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
             {space.isVerified !== false && (
-              <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border border-[#14BEB8]/30 text-[10px] font-bold text-[#006B70] dark:text-[#28D2CB]">
-                <ShieldCheck className="w-3 h-3 text-[#14BEB8] shrink-0" />
+              <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-[#FFD0BD]/20 dark:bg-[#FFA987]/15 border border-[#FFA987]/40 text-[10px] font-bold text-[#006B70] dark:text-[#FFA987]">
+                <ShieldCheck className="w-3 h-3 text-[#FFA987] shrink-0" />
                 <span>Verified</span>
               </div>
             )}
 
             <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-[#F3F6F5] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-[10px] font-medium text-[#5D7A7D] dark:text-[#B8D1D0]">
-              <Wifi className="w-3 h-3 text-[#14BEB8] shrink-0" />
+              <Wifi className="w-3 h-3 text-[#FFA987] shrink-0" />
               <span>{space.internetSpeedMbps ? `${space.internetSpeedMbps} Mbps` : 'Fiber'}</span>
             </div>
 
@@ -257,7 +257,7 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
 
             {availability.occupancyLabel && (
               <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-[#F3F6F5] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">
-                <Activity className={`w-3 h-3 ${availability.occupancyLevel === 'low' ? 'text-[#14BEB8]' : 'text-[#5D7A7D] dark:text-[#B8D1D0]'}`} />
+                <Activity className={`w-3 h-3 ${availability.occupancyLevel === 'low' ? 'text-[#FFA987]' : 'text-[#5D7A7D] dark:text-[#B8D1D0]'}`} />
                 <span>{availability.occupancyLabel}</span>
               </div>
             )}
@@ -266,7 +266,7 @@ export const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
           {/* Key Specs Row: Capacity & Rating */}
           <div className="flex items-center justify-between text-xs text-[#5D7A7D] dark:text-[#B8D1D0] pt-1">
             <div className="flex items-center space-x-1.5">
-              <Users className="w-3.5 h-3.5 text-[#14BEB8]" />
+              <Users className="w-3.5 h-3.5 text-[#FFA987]" />
               <span className="font-semibold text-[#12383B] dark:text-[#B8D1D0]">
                 {space.category === 'meeting' 
                   ? `${space.capacity} Seats` 

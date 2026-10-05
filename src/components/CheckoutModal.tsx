@@ -20,6 +20,7 @@ import {
 import confetti from 'canvas-confetti';
 import { useApp } from '../context/AppContext';
 import { getSpacePricing, calculateBookingPrice, formatSpaceRate, formatPriceNGN } from '../utils/pricing';
+import { getSupabaseClient } from '../services/supabaseClient';
 
 export const CheckoutModal: React.FC = () => {
   const {
@@ -47,6 +48,7 @@ export const CheckoutModal: React.FC = () => {
   const [remindMe, setRemindMe] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'sznd' | 'card' | 'wallet'>('card');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [conflictError, setConflictError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isCheckoutOpen && checkoutPrefillSlot) {
@@ -86,21 +88,92 @@ export const CheckoutModal: React.FC = () => {
     durationHours: pricing.period === 'hour' ? quantity : (pricing.sessionDurationHours ? pricing.sessionDurationHours * quantity : quantity * 8),
   });
 
-  const handleConfirmPay = () => {
+  const handleConfirmPay = async () => {
     // 🔒 Gating Check: User must verify email before payment
     if (!currentUser.isEmailVerified) {
       openEmailVerificationModal('payment');
       return;
     }
 
+    setConflictError(null);
     setIsProcessing(true);
     triggerAppAction(3000);
 
-    setTimeout(() => {
-      const durationHoursCalculated = pricing.period === 'hour' 
-        ? quantity 
-        : (pricing.sessionDurationHours ? pricing.sessionDurationHours * quantity : quantity * 8);
+    const durationHoursCalculated = pricing.period === 'hour' 
+      ? quantity 
+      : (pricing.sessionDurationHours ? pricing.sessionDurationHours * quantity : quantity * 8);
 
+    // Pre-flight authoritative validation check
+    try {
+      const valRes = await fetch('/api/bookings/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          spaceId: checkoutSpace.id,
+          date,
+          startTime,
+          durationHours: durationHoursCalculated,
+          guestCount: pricing.basis === 'person' ? guests : 1,
+        }),
+      });
+
+      if (!valRes.ok) {
+        const errorData = await valRes.json().catch(() => ({}));
+        if (valRes.status === 409 || errorData.conflict || errorData.code === 'SLOT_UNAVAILABLE') {
+          setConflictError(errorData.reason || errorData.error || 'This time slot is no longer available. Please select another time or date.');
+          setIsProcessing(false);
+          return;
+        }
+      } else {
+        const valData = await valRes.json();
+        if (valData.valid === false || valData.conflict) {
+          setConflictError(valData.reason || 'This time slot is no longer available. Please select another time or date.');
+          setIsProcessing(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('[CheckoutModal] Validation endpoint check notice:', e);
+    }
+
+    if (paymentMethod !== 'wallet') {
+      try {
+        const client = getSupabaseClient();
+        const { data: sessionData } = await client?.auth.getSession() || {};
+        const token = sessionData?.session?.access_token;
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const initRes = await fetch('/api/payments/initialize', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            spaceId: checkoutSpace.id,
+            date,
+            startTime,
+            durationHours: durationHoursCalculated,
+            guestCount: pricing.basis === 'person' ? guests : 1,
+            email: currentUser.email || 'coworker@ofis.ng',
+            userName: currentUser.name || 'OFIS Member',
+            phone: currentUser.phone || '+2348000000000',
+            callbackUrl: `${window.location.origin}/?payment=success`,
+          }),
+        });
+
+        const initData = await initRes.json();
+        if (initData.success && (initData.checkout_link || initData.checkoutUrl)) {
+          const redirectLink = initData.checkout_link || initData.checkoutUrl;
+          window.location.href = redirectLink;
+          return;
+        }
+      } catch (e) {
+        console.warn('[CheckoutModal] SZND direct initialize notice, using local confirmation:', e);
+      }
+    }
+
+    setTimeout(() => {
       const newBooking = createBooking({
         spaceId: checkoutSpace.id,
         spaceTitle: checkoutSpace.title,
@@ -198,12 +271,26 @@ export const CheckoutModal: React.FC = () => {
           </div>
         </div>
 
+        {/* Slot Unavailable / Concurrency Conflict Alert */}
+        {conflictError && (
+          <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 flex items-start space-x-2.5 animate-shake">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+            <div className="flex-1 text-xs">
+              <span className="font-bold block">Selected Time Slot Unavailable</span>
+              <p className="mt-0.5 text-[11px] text-red-600 dark:text-red-300/90">{conflictError}</p>
+              <p className="mt-1 text-[10px] font-medium text-red-500 dark:text-red-400">
+                Please adjust your arrival time or choose another date below.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Dynamic Controls: Date, Period Quantity & Guest Count */}
         <div className="space-y-3">
           {/* Reservation Date */}
           <div className="space-y-1">
             <label className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-semibold flex items-center space-x-1.5">
-              <Calendar className="w-3.5 h-3.5 text-[#14BEB8]" />
+              <Calendar className="w-3.5 h-3.5 text-[#FFA987]" />
               <span>Reservation Date</span>
             </label>
             <div className="flex items-center gap-2">
@@ -232,7 +319,7 @@ export const CheckoutModal: React.FC = () => {
             {/* Period / Quantity Selector */}
             <div className="space-y-1">
               <label className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-semibold flex items-center space-x-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#14BEB8]" />
+                <Clock className="w-3.5 h-3.5 text-[#FFA987]" />
                 <span>
                   {pricing.period === 'hour' && 'Duration (Hours)'}
                   {pricing.period === 'day' && 'Duration (Days)'}
@@ -301,7 +388,7 @@ export const CheckoutModal: React.FC = () => {
             {/* Start Time */}
             <div className="space-y-1">
               <label className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-semibold flex items-center space-x-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#14BEB8]" />
+                <Clock className="w-3.5 h-3.5 text-[#FFA987]" />
                 <span>Start Time</span>
               </label>
               <select
@@ -323,7 +410,7 @@ export const CheckoutModal: React.FC = () => {
             <div className="space-y-1">
               <label className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-semibold flex items-center justify-between">
                 <span className="flex items-center space-x-1.5">
-                  <Users className="w-3.5 h-3.5 text-[#14BEB8]" />
+                  <Users className="w-3.5 h-3.5 text-[#FFA987]" />
                   <span>Number of People / Seats</span>
                 </span>
                 <span className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0]">Max: {maxCapacity} seats</span>
@@ -351,7 +438,7 @@ export const CheckoutModal: React.FC = () => {
           ) : (
             <div className="p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] flex items-center justify-between text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
               <span className="flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-[#14BEB8]" />
+                <Layers className="w-3.5 h-3.5 text-[#FFA987]" />
                 <span>Entire Space Buyout</span>
               </span>
               <span className="text-[11px] text-[#12383B] dark:text-white font-mono">

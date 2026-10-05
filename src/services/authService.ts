@@ -1,7 +1,11 @@
 import { UserProfile } from '../types';
 import { INITIAL_USER, INITIAL_HOST, GUEST_USER } from '../mockData';
 import { storage } from './storageService';
-import { getSupabaseClient, mapDbProfileToUser } from './supabaseClient';
+import { 
+  getSupabaseClient, 
+  mapDbProfileToUser, 
+  mapProfileToDbProfile 
+} from './supabaseClient';
 
 const USER_KEY = 'current_user';
 const USERS_DB_KEY = 'registered_users_db';
@@ -38,50 +42,91 @@ export const authService = {
     return storage.get<StoredUserAccount[]>(USERS_DB_KEY, DEFAULT_USERS_STORE);
   },
 
-  fetchProfileAsync: async (userId: string): Promise<UserProfile | null> => {
+  fetchProfileAsync: async (userId?: string): Promise<UserProfile | null> => {
     const client = getSupabaseClient();
-    if (!client || !userId || userId.startsWith('guest')) return null;
+    if (client) {
+      try {
+        const { data: sessionData } = await client.auth.getSession();
+        const activeUserId = sessionData?.session?.user?.id || (userId && !userId.startsWith('user-') && !userId.startsWith('guest') ? userId : undefined);
 
-    try {
-      const { data, error } = await client
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+        if (activeUserId) {
+          const { data, error } = await client
+            .from('profiles')
+            .select('*')
+            .eq('id', activeUserId)
+            .maybeSingle();
 
-      if (!error && data) {
-        const user = mapDbProfileToUser(data);
-        storage.set(USER_KEY, user);
-        return user;
+          if (!error && data) {
+            const user = mapDbProfileToUser(data);
+            storage.set(USER_KEY, user);
+            return user;
+          }
+        }
+      } catch (err: any) {
+        console.warn('[authService] Error fetching profile from Supabase:', err?.message || err);
       }
-    } catch (err) {
-      console.warn('[authService] Error fetching profile from Supabase:', err);
     }
-    return null;
+
+    return authService.getCurrentUser();
   },
 
-  updateProfileAsync: async (userId: string, data: Partial<UserProfile>): Promise<void> => {
+  updateProfileAsync: async (userId?: string, data?: Partial<UserProfile>): Promise<void> => {
+    if (!data) return;
+
     const client = getSupabaseClient();
-    if (!client || !userId || userId.startsWith('guest')) return;
+    if (client) {
+      try {
+        const { data: sessionData } = await client.auth.getSession();
+        const activeUserId = sessionData?.session?.user?.id || (userId && !userId.startsWith('user-') && !userId.startsWith('guest') ? userId : undefined);
+        if (!activeUserId) return;
+
+        const updatePayload: Record<string, any> = {
+          updated_at: new Date().toISOString(),
+        };
+        if (data.name !== undefined) updatePayload.name = data.name;
+        if (data.phone !== undefined) updatePayload.phone = data.phone;
+        if (data.avatar !== undefined) updatePayload.avatar = data.avatar;
+        if (data.role !== undefined) updatePayload.role = data.role;
+        if (data.company !== undefined) updatePayload.company = data.company;
+        if (data.bio !== undefined) updatePayload.bio = data.bio;
+        if (data.walletBalanceNgn !== undefined) updatePayload.wallet_balance_ngn = data.walletBalanceNgn;
+        if (data.savedSpaceIds !== undefined) updatePayload.saved_space_ids = data.savedSpaceIds;
+
+        await client.from('profiles').update(updatePayload).eq('id', activeUserId);
+      } catch (err: any) {
+        console.warn('[authService] Error updating profile in Supabase:', err?.message || err);
+      }
+    }
+  },
+
+  loginWithGoogle: async (): Promise<{ success: boolean; user?: UserProfile; message: string }> => {
+    const client = getSupabaseClient();
+    if (!client) {
+      return { success: false, message: 'Supabase client is not configured.' };
+    }
 
     try {
-      const dbPayload: Record<string, any> = {
-        updated_at: new Date().toISOString(),
-      };
-      if (data.name !== undefined) dbPayload.name = data.name;
-      if (data.phone !== undefined) dbPayload.phone = data.phone;
-      if (data.avatar !== undefined) dbPayload.avatar = data.avatar;
-      if (data.role !== undefined) dbPayload.role = data.role;
-      if (data.company !== undefined) dbPayload.company = data.company;
-      if (data.bio !== undefined) dbPayload.bio = data.bio;
-      if (data.walletBalanceNgn !== undefined) dbPayload.wallet_balance_ngn = data.walletBalanceNgn;
-      if (data.savedSpaceIds !== undefined) dbPayload.saved_space_ids = data.savedSpaceIds;
-      if (data.isEmailVerified !== undefined) dbPayload.is_email_verified = data.isEmailVerified;
-      if (data.emailVerifiedAt !== undefined) dbPayload.email_verified_at = data.emailVerifiedAt;
+      const { error } = await client.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+        },
+      });
 
-      await client.from('profiles').update(dbPayload).eq('id', userId);
-    } catch (err) {
-      console.warn('[authService] Error updating profile in Supabase:', err);
+      if (error) {
+        return { success: false, message: error.message };
+      }
+
+      return {
+        success: true,
+        message: 'Redirecting to Google authentication...',
+      };
+    } catch (err: any) {
+      console.error('Google Sign In Error:', err);
+      return {
+        success: false,
+        message: err.message || 'Google sign-in failed. Please try again.',
+      };
     }
   },
 
@@ -92,111 +137,16 @@ export const authService = {
     const cleanCompany = (payload.company || '').trim();
     const password = (payload.password || '').trim() || 'Password123!';
 
-    if (!cleanName) {
-      return { success: false, message: 'Please provide your full name.' };
+    if (!cleanName || cleanName.length < 2) {
+      return { success: false, message: 'Please provide your full name (minimum 2 characters).' };
     }
 
     if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
       return { success: false, message: 'Please provide a valid email address.' };
     }
 
-    const client = getSupabaseClient();
-
-    // 1. Try Supabase Auth first if configured
-    if (client) {
-      try {
-        const { data: authData, error: authError } = await client.auth.signUp({
-          email: cleanEmail,
-          password: password,
-          options: {
-            data: {
-              name: cleanName,
-              phone: cleanPhone,
-              role: payload.role,
-              company: cleanCompany,
-              avatar: payload.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-            },
-          },
-        });
-
-        if (!authError && authData.user) {
-          const userProfile: UserProfile = {
-            id: authData.user.id,
-            name: cleanName,
-            email: cleanEmail,
-            phone: cleanPhone || '+234 800 000 0000',
-            avatar: payload.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-            role: payload.role,
-            isEmailVerified: authData.user.email_confirmed_at ? true : false,
-            emailVerifiedAt: authData.user.email_confirmed_at,
-            company: cleanCompany || (payload.role === 'host' ? 'OFIS Workspace Host' : 'Independent Professional'),
-            bio: payload.role === 'host' ? 'Verified Workspace Host on OFIS network.' : 'OFIS verified remote professional.',
-            walletBalanceNgn: payload.role === 'user' ? 25000 : 150000,
-            savedSpaceIds: [],
-            createdAt: new Date().toISOString(),
-          };
-
-          // Upsert into public.profiles
-          try {
-            await client.from('profiles').upsert({
-              id: authData.user.id,
-              name: userProfile.name,
-              email: userProfile.email,
-              phone: userProfile.phone,
-              avatar: userProfile.avatar,
-              role: userProfile.role,
-              company: userProfile.company,
-              bio: userProfile.bio,
-              wallet_balance_ngn: userProfile.walletBalanceNgn,
-              saved_space_ids: userProfile.savedSpaceIds,
-              is_email_verified: userProfile.isEmailVerified,
-            });
-          } catch (profileErr) {
-            console.warn('[authService] Note on upserting profile table:', profileErr);
-          }
-
-          authService.setCurrentUser(userProfile);
-          return {
-            success: true,
-            user: userProfile,
-            message: `Account created successfully with Supabase Auth! Please verify your email ${userProfile.email} to list workspaces or pay.`,
-          };
-        } else if (authError && authError.message.toLowerCase().includes('already registered')) {
-          // If already registered in Supabase, attempt sign in with provided password
-          const loginRes = await authService.login(cleanEmail, password);
-          return loginRes;
-        }
-      } catch (err: any) {
-        console.warn('[authService] Supabase signup error, falling back to local store:', err);
-      }
-    }
-
-    // 2. Local fallback storage
-    const users = authService.getAllUsers();
-    const existing = users.find(u => (u.email || '').toLowerCase() === cleanEmail);
-    if (existing) {
-      const updatedUser: UserProfile = {
-        id: existing.id,
-        name: existing.name || cleanName,
-        email: existing.email,
-        phone: existing.phone || cleanPhone,
-        avatar: existing.avatar || payload.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-        role: existing.role || payload.role,
-        isEmailVerified: existing.isEmailVerified ?? false,
-        emailVerifiedAt: existing.emailVerifiedAt,
-        company: existing.company || cleanCompany,
-        bio: existing.bio || (payload.role === 'host' ? 'Verified Workspace Host on OFIS network.' : 'OFIS verified remote professional.'),
-        walletBalanceNgn: existing.walletBalanceNgn ?? (payload.role === 'user' ? 25000 : 150000),
-        savedSpaceIds: existing.savedSpaceIds || [],
-        createdAt: existing.createdAt || new Date().toISOString(),
-      };
-
-      authService.setCurrentUser(updatedUser);
-      return {
-        success: true,
-        user: updatedUser,
-        message: `Welcome back, ${updatedUser.name}! Logged into your existing OFIS account.`,
-      };
+    if (password.length < 6) {
+      return { success: false, message: 'Password must be at least 6 characters long.' };
     }
 
     const defaultAvatars = [
@@ -206,90 +156,147 @@ export const authService = {
       'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
     ];
 
-    const newUser: StoredUserAccount = {
-      id: `usr-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+    let createdUserId = `user-${Date.now()}`;
+    let isEmailVerified = false;
+
+    const client = getSupabaseClient();
+    if (client) {
+      try {
+        const { data: authData, error: authError } = await client.auth.signUp({
+          email: cleanEmail,
+          password,
+          options: {
+            data: {
+              name: cleanName,
+              phone: cleanPhone,
+              role: payload.role || 'user',
+              company: cleanCompany,
+            },
+          },
+        });
+
+        if (authError) {
+          if (authError.message.toLowerCase().includes('already registered') || authError.message.toLowerCase().includes('unique')) {
+            return {
+              success: false,
+              message: 'An account already exists with this email address. Please sign in instead.',
+            };
+          }
+          console.warn('[authService] Supabase signUp notice:', authError.message);
+        } else if (authData.user) {
+          createdUserId = authData.user.id;
+          isEmailVerified = Boolean(authData.user.email_confirmed_at);
+        }
+      } catch (err: any) {
+        console.warn('[authService] Supabase signUp exception:', err);
+      }
+    }
+
+    const userProfile: UserProfile = {
+      id: createdUserId,
       name: cleanName,
       email: cleanEmail,
       phone: cleanPhone || '+234 800 000 0000',
       avatar: payload.avatar || defaultAvatars[Math.floor(Math.random() * defaultAvatars.length)],
-      role: payload.role,
-      isEmailVerified: false, // Must be verified before listing or paying
+      role: payload.role || 'user',
       company: cleanCompany || (payload.role === 'host' ? 'OFIS Workspace Host' : 'Independent Professional'),
       bio: payload.role === 'host' ? 'Verified Workspace Host on OFIS network.' : 'OFIS verified remote professional.',
       walletBalanceNgn: payload.role === 'user' ? 25000 : 150000,
       savedSpaceIds: [],
+      isEmailVerified,
       createdAt: new Date().toISOString(),
-      password: password || undefined,
     };
 
-    const updatedUsers = [newUser, ...users];
-    storage.set(USERS_DB_KEY, updatedUsers);
-    
-    const { password: _, ...userProfile } = newUser;
+    // Ensure profile row in Supabase profiles table
+    if (client) {
+      try {
+        await client.from('profiles').upsert(mapProfileToDbProfile(userProfile), { onConflict: 'id' });
+      } catch (profErr) {
+        console.warn('[authService] Profile upsert notice:', profErr);
+      }
+    }
+
     authService.setCurrentUser(userProfile);
+
+    // Save to local list for quick fallback
+    const users = authService.getAllUsers();
+    const updatedUsers = [{ ...userProfile, password }, ...users.filter(u => u.email !== cleanEmail)];
+    storage.set(USERS_DB_KEY, updatedUsers);
 
     return {
       success: true,
       user: userProfile,
-      message: `Account created successfully! Welcome to OFIS, ${newUser.name}. Please verify your email (${userProfile.email}) to list workspaces and authorize payments.`,
+      message: `Account created successfully! Welcome to OFIS, ${userProfile.name}.`,
     };
   },
 
   login: async (emailOrPhone: string, password?: string): Promise<{ success: boolean; user?: UserProfile; message: string }> => {
-    const query = (emailOrPhone || '').trim().toLowerCase();
-    const cleanQueryNoSpaces = query.replace(/[\s+-]/g, '');
-    const client = getSupabaseClient();
+    const query = (emailOrPhone || '').trim();
+    const cleanEmail = query.toLowerCase();
 
-    // 1. Try Supabase Auth if email and password provided
-    if (client && query.includes('@') && password) {
+    // 1. Try Supabase Auth if query is an email and password is provided
+    const client = getSupabaseClient();
+    if (client && cleanEmail.includes('@') && password) {
       try {
         const { data: authData, error: authError } = await client.auth.signInWithPassword({
-          email: query,
-          password: password,
+          email: cleanEmail,
+          password,
         });
 
         if (!authError && authData.user) {
-          // Fetch authoritative profile
-          const { data: profileData } = await client
-            .from('profiles')
-            .select('*')
-            .eq('id', authData.user.id)
-            .single();
+          let userProfile = await authService.fetchProfileAsync(authData.user.id);
 
-          const userProfile: UserProfile = profileData
-            ? mapDbProfileToUser(profileData)
-            : {
-                id: authData.user.id,
-                name: authData.user.user_metadata?.name || 'OFIS Member',
-                email: authData.user.email || query,
-                phone: authData.user.user_metadata?.phone || '+234 800 000 0000',
-                avatar: authData.user.user_metadata?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-                role: authData.user.user_metadata?.role || 'user',
-                company: authData.user.user_metadata?.company || 'Independent Professional',
-                walletBalanceNgn: 25000,
-                savedSpaceIds: [],
-                createdAt: new Date().toISOString(),
-              };
+          if (!userProfile) {
+            userProfile = {
+              id: authData.user.id,
+              name: authData.user.user_metadata?.name || cleanEmail.split('@')[0],
+              email: authData.user.email || cleanEmail,
+              phone: authData.user.user_metadata?.phone || '+234 800 000 0000',
+              avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+              role: (authData.user.user_metadata?.role as any) || 'user',
+              company: authData.user.user_metadata?.company || 'Independent Professional',
+              bio: 'Verified OFIS Member',
+              walletBalanceNgn: 25000,
+              savedSpaceIds: [],
+              isEmailVerified: Boolean(authData.user.email_confirmed_at),
+              createdAt: new Date().toISOString(),
+            };
+
+            try {
+              await client.from('profiles').upsert(mapProfileToDbProfile(userProfile), { onConflict: 'id' });
+            } catch (pErr) {
+              console.warn('[authService] Profile auto-create error:', pErr);
+            }
+          }
 
           authService.setCurrentUser(userProfile);
           return {
             success: true,
             user: userProfile,
-            message: `Welcome back, ${userProfile.name}! (Authenticated with Supabase)`,
+            message: `Welcome back, ${userProfile.name}! Signed in via Supabase.`,
           };
+        } else if (authError) {
+          console.warn('[authService] Supabase signIn notice:', authError.message);
+          if (authError.message.toLowerCase().includes('invalid login credentials')) {
+            return {
+              success: false,
+              message: 'Incorrect password or email. Please verify your credentials and try again.',
+            };
+          }
         }
-      } catch (err) {
-        console.warn('[authService] Supabase login attempt note:', err);
+      } catch (err: any) {
+        console.warn('[authService] Supabase signIn exception:', err);
       }
     }
 
-    // 2. Local registered user database check
+    // 2. Demo accounts & offline local account fallback (for phone logins or demo testing)
+    const cleanQueryNoSpaces = cleanEmail.replace(/[\s+-]/g, '');
     const users = authService.getAllUsers();
     const matched = users.find(u => {
       const uEmail = (u.email || '').toLowerCase();
       const uPhone = (u.phone || '').replace(/[\s+-]/g, '');
       const uName = (u.name || '').toLowerCase();
-      return uEmail === query || uPhone === cleanQueryNoSpaces || (cleanQueryNoSpaces.length >= 7 && uPhone.includes(cleanQueryNoSpaces)) || uName === query;
+      return uEmail === cleanEmail || uPhone === cleanQueryNoSpaces || (cleanQueryNoSpaces.length >= 7 && uPhone.includes(cleanQueryNoSpaces)) || uName === cleanEmail;
     });
 
     if (matched) {
@@ -309,19 +316,19 @@ export const authService = {
     }
 
     // Check default quick accounts
-    if (query.includes('host') || query.includes('funke')) {
+    if (cleanEmail.includes('host') || cleanEmail.includes('funke')) {
       storage.set(USER_KEY, INITIAL_HOST);
       return { success: true, user: INITIAL_HOST, message: 'Logged in as Host (Funke Akindele-Cole)' };
     }
 
-    if (query.includes('tunde') || query.includes('user') || query.includes('paystack')) {
+    if (cleanEmail.includes('tunde') || cleanEmail.includes('user') || cleanEmail.includes('paystack')) {
       storage.set(USER_KEY, INITIAL_USER);
       return { success: true, user: INITIAL_USER, message: 'Logged in as User (Babatunde Adeyemi)' };
     }
 
     return {
       success: false,
-      message: 'Account not found with this email or phone. Please create a new account.',
+      message: 'Account not found with this email or phone. Please create a new account or check credentials.',
     };
   },
 
@@ -350,12 +357,6 @@ export const authService = {
     return GUEST_USER;
   },
 
-  loginAsDefault: (role: 'user' | 'host' = 'user'): UserProfile => {
-    const user = role === 'host' ? INITIAL_HOST : INITIAL_USER;
-    storage.set(USER_KEY, user);
-    return user;
-  },
-
   verifyEmail: (userId?: string): UserProfile => {
     const current = authService.getCurrentUser();
     const updated: UserProfile = {
@@ -365,7 +366,6 @@ export const authService = {
     };
     storage.set(USER_KEY, updated);
 
-    // Update in local users store if present
     const users = authService.getAllUsers();
     const updatedUsers = users.map(u => {
       if (u.id === (userId || current.id) || (u.email && u.email.toLowerCase() === current.email.toLowerCase())) {
@@ -375,7 +375,7 @@ export const authService = {
     });
     storage.set(USERS_DB_KEY, updatedUsers);
 
-    authService.updateProfileAsync(updated.id, { isEmailVerified: true, emailVerifiedAt: updated.emailVerifiedAt });
+    authService.updateProfileAsync(updated.id, { isEmailVerified: true });
     return updated;
   },
 
@@ -401,7 +401,13 @@ export const authService = {
     });
     storage.set(USERS_DB_KEY, updatedUsers);
 
-    authService.updateProfileAsync(userId, { isEmailVerified: isVerified, emailVerifiedAt: isVerified ? new Date().toISOString() : undefined });
+    authService.updateProfileAsync(userId, { isEmailVerified: isVerified });
     return updated;
+  },
+
+  loginAsDefault: (role: 'user' | 'host' = 'user'): UserProfile => {
+    const user = role === 'host' ? INITIAL_HOST : INITIAL_USER;
+    storage.set(USER_KEY, user);
+    return user;
   },
 };

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { X, Check, Eye, Sparkles, Layout, Compass, Shield, Key, ArrowRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import ofisLogoLight from '../assets/ofis-logo.png';
-import ofisLogoDark from '../assets/ofis-logo-dark.png';
+import { OFISWordmark } from './OFISWordmark';
 
 export interface LogoConcept {
   id: number;
@@ -22,13 +21,8 @@ export const LOGO_CONCEPTS: LogoConcept[] = [
     category: 'Doorway & Portal',
     description: 'The authentic official OFIS logo: handcrafted teal & peach architectural portal, luminous door threshold glow, and precision location pin.',
     renderLogo: (mode) => {
-      const isDark = mode === 'dark';
       return (
-        <img
-          src={isDark ? ofisLogoDark : ofisLogoLight}
-          alt="OFIS Official Brand Logo"
-          className="h-10 sm:h-12 w-auto object-contain"
-        />
+        <OFISWordmark theme={mode} size="lg" showTagline={true} />
       );
     },
   },

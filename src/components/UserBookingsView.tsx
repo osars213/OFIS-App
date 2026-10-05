@@ -129,7 +129,7 @@ export const UserBookingsView: React.FC = () => {
         ) : bookings.length === 0 ? (
           <div className="py-20 text-center space-y-4 max-w-md mx-auto">
             <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] flex items-center justify-center mx-auto text-[#5D7A7D] dark:text-[#B8D1D0] shadow-sm">
-              <CalendarCheck className="w-8 h-8 text-[#14BEB8]" />
+              <CalendarCheck className="w-8 h-8 text-[#FFA987]" />
             </div>
             <h3 className="text-lg font-bold text-[#12383B] dark:text-white">No active passes</h3>
             <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0] leading-relaxed">

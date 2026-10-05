@@ -130,8 +130,8 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
       {/* Top Header */}
       <div className="p-4 border-b border-[#E2ECEB] dark:border-[#166D74] bg-[#FFF9F4] dark:bg-[#07383D] flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-xl bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border border-[#14BEB8]/30 flex items-center justify-center text-[#006B70] dark:text-[#28D2CB]">
-            <Bell className="w-4 h-4 text-[#14BEB8]" />
+          <div className="w-8 h-8 rounded-xl bg-[#FFA987]/15 dark:bg-[#FFA987]/20 border border-[#FFA987]/30 flex items-center justify-center text-[#006B70] dark:text-[#FFA987]">
+            <Bell className="w-4 h-4 text-[#FFA987]" />
           </div>
           <div>
             <h4 className="text-xs font-bold text-[#12383B] dark:text-white">Notifications</h4>
@@ -225,7 +225,7 @@ export const NotificationCenterDropdown: React.FC<NotificationCenterDropdownProp
         {filteredNotifications.length === 0 ? (
           <div className="p-8 text-center space-y-2">
             <div className="w-10 h-10 rounded-full bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center justify-center mx-auto">
-              <Bell className="w-5 h-5 text-[#14BEB8]" />
+              <Bell className="w-5 h-5 text-[#FFA987]" />
             </div>
             <p className="text-xs font-semibold text-[#12383B] dark:text-white">No notifications in this tab</p>
             <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">

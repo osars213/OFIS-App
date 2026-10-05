@@ -61,20 +61,20 @@ export const StickyBookingBar: React.FC<StickyBookingBarProps> = ({
               <div className="flex items-center space-x-1 font-medium text-[#12383B] dark:text-white">
                 {selectedDate && selectedTime ? (
                   <>
-                    <Clock className="w-3 h-3 text-[#14BEB8]" />
+                    <Clock className="w-3 h-3 text-[#FFA987]" />
                     <span className="text-[#006B70] dark:text-[#28D2CB] font-bold">{selectedDate} @ {selectedTime}</span>
                   </>
                 ) : isAvailableNow ? (
                   <>
                     <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#14BEB8] opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#14BEB8]" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FFA987] opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FFA987]" />
                     </span>
                     <span className="text-[#006B70] dark:text-[#28D2CB] font-bold">Instant Pass Available</span>
                   </>
                 ) : nextSlot ? (
                   <>
-                    <Clock className="w-3 h-3 text-[#14BEB8]" />
+                    <Clock className="w-3 h-3 text-[#FFA987]" />
                     <span>Next: {nextSlot.label}</span>
                   </>
                 ) : (

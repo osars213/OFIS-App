@@ -81,28 +81,28 @@ const SPACE_TYPES: SpaceTypeItem[] = [
 
 const PILLAR_STYLES = {
   WORK: {
-    badgeBg: 'bg-[#14BEB8]/90 text-white',
-    border: 'hover:border-[#14BEB8]',
+    badgeBg: 'bg-[#006B70]/90 text-white border border-[#14BEB8]/40',
+    border: 'hover:border-[#FFA987]/50',
     accentText: 'text-[#28D2CB]',
-    selectedBorder: 'border-[#14BEB8] ring-2 ring-[#14BEB8]/40 shadow-lg shadow-[#14BEB8]/20'
+    selectedBorder: 'border-[#14BEB8] ring-2 ring-[#FFA987]/50 shadow-lg shadow-[#14BEB8]/20'
   },
   CREATE: {
-    badgeBg: 'bg-[#0EA5E9]/90 text-white',
-    border: 'hover:border-[#0EA5E9]',
+    badgeBg: 'bg-[#0E7490]/90 text-white border border-[#FFA987]/40',
+    border: 'hover:border-[#FFA987]/50',
     accentText: 'text-[#38BDF8]',
-    selectedBorder: 'border-[#0EA5E9] ring-2 ring-[#0EA5E9]/40 shadow-lg shadow-[#0EA5E9]/20'
+    selectedBorder: 'border-[#0EA5E9] ring-2 ring-[#FFA987]/50 shadow-lg shadow-[#0EA5E9]/20'
   },
   MEET: {
-    badgeBg: 'bg-[#FFA987] text-[#12383B]',
+    badgeBg: 'bg-[#FFA987] text-[#07383D] font-extrabold shadow-xs',
     border: 'hover:border-[#FFA987]',
     accentText: 'text-[#FFD0BD]',
-    selectedBorder: 'border-[#FFA987] ring-2 ring-[#FFA987]/40 shadow-lg shadow-[#FFA987]/20'
+    selectedBorder: 'border-[#FFA987] ring-2 ring-[#FFA987]/60 shadow-lg shadow-[#FFA987]/25'
   },
   RECORD: {
-    badgeBg: 'bg-[#FF8C66] text-[#12383B]',
+    badgeBg: 'bg-[#FF8C66] text-[#07383D] font-extrabold shadow-xs',
     border: 'hover:border-[#FF8C66]',
     accentText: 'text-[#FFA987]',
-    selectedBorder: 'border-[#FF8C66] ring-2 ring-[#FF8C66]/40 shadow-lg shadow-[#FF8C66]/20'
+    selectedBorder: 'border-[#FF8C66] ring-2 ring-[#FFA987]/60 shadow-lg shadow-[#FF8C66]/25'
   },
 };
 
@@ -113,7 +113,7 @@ export const SpaceTypeSlider: React.FC = () => {
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
       <div className="flex items-center justify-between pb-4">
         <div>
-          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-[#14BEB8]/10 text-[#006B70] dark:text-[#28D2CB] text-[11px] font-bold uppercase tracking-wider mb-1">
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FFD0BD]/25 dark:bg-[#FFA987]/15 border border-[#FFA987]/40 text-[#006B70] dark:text-[#FFA987] text-[11px] font-bold uppercase tracking-wider mb-1 shadow-2xs">
             <Sparkles className="w-3 h-3 text-[#FFA987]" />
             <span>Pillars of Productivity</span>
           </div>
@@ -173,8 +173,10 @@ export const SpaceTypeSlider: React.FC = () => {
                 <span className={`px-2 py-0.5 rounded-lg text-[9px] font-bold tracking-wider uppercase backdrop-blur-md ${pillarStyle.badgeBg}`}>
                   {type.pillar}
                 </span>
-                <div className={`p-1.5 rounded-xl backdrop-blur-md transition-colors ${
-                  isSelected ? 'bg-[#14BEB8] text-white' : 'bg-black/60 text-white'
+                <div className={`p-1.5 rounded-xl backdrop-blur-md transition-all border ${
+                  isSelected 
+                    ? 'bg-gradient-to-br from-[#006B70] to-[#14BEB8] text-[#FFD0BD] border-[#FFA987]/50 shadow-xs' 
+                    : 'bg-black/65 text-[#FFA987] border-white/10 group-hover:text-[#FFD0BD] group-hover:border-[#FFA987]/40'
                 }`}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>

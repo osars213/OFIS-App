@@ -258,7 +258,7 @@ export const DigitalPassModal: React.FC = () => {
             isLight ? 'bg-[#14BEB8]/10 border-[#14BEB8]/25 text-[#12383B]' : 'bg-[#0B4A50] border-[#166D74] text-[#B8D1D0]'
           }`}>
             <div className="flex items-center space-x-2">
-              <ShieldCheck className="w-4 h-4 text-[#14BEB8] shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-[#FFA987] shrink-0" />
               <span className="text-[11px]">
                 <strong className={isLight ? 'text-[#12383B]' : 'text-white'}>Pass Cached Locally</strong> • Scannable offline without internet
               </span>
@@ -351,7 +351,7 @@ export const DigitalPassModal: React.FC = () => {
               isLight ? 'bg-white border-[#E2ECEB]' : 'bg-[#0B4A50] border-[#166D74]'
             }`}>
               <div className="flex items-center space-x-1.5 text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] font-mono">
-                <Lock className="w-3 h-3 text-[#14BEB8]" />
+                <Lock className="w-3 h-3 text-[#FFA987]" />
                 <span>KEYPAD CODE</span>
               </div>
               <div className="text-xs font-bold font-mono text-[#006B70] dark:text-[#28D2CB] flex items-center justify-between">
@@ -371,7 +371,7 @@ export const DigitalPassModal: React.FC = () => {
               isLight ? 'bg-white border-[#E2ECEB]' : 'bg-[#0B4A50] border-[#166D74]'
             }`}>
               <div className="flex items-center space-x-1.5 text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] font-mono">
-                <Wifi className="w-3 h-3 text-[#14BEB8]" />
+                <Wifi className="w-3 h-3 text-[#FFA987]" />
                 <span>WIFI ACCESS</span>
               </div>
               <div className="text-xs font-bold truncate">{booking.wifiSsid || 'OFIS-HighSpeed'}</div>
@@ -400,7 +400,7 @@ export const DigitalPassModal: React.FC = () => {
               }`}>
                 <div className="space-y-0.5">
                   <div className="text-xs font-bold flex items-center gap-1.5">
-                    <QrCode className="w-3.5 h-3.5 text-[#14BEB8]" />
+                    <QrCode className="w-3.5 h-3.5 text-[#FFA987]" />
                     <span>Venue Arrival Check-In</span>
                   </div>
                   <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">
@@ -484,7 +484,7 @@ export const DigitalPassModal: React.FC = () => {
               }`}>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-[#12383B] dark:text-white flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#14BEB8]" />
+                    <CheckCircle2 className="w-4 h-4 text-[#FFA987]" />
                     <span>Session Completed</span>
                   </span>
                   <span className="text-[10px] font-mono text-[#5D7A7D] dark:text-[#B8D1D0]">

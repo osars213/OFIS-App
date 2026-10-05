@@ -276,7 +276,7 @@ export const CategorizedAmenities: React.FC<CategorizedAmenitiesProps> = ({ spac
             >
               {/* Category Header */}
               <div className="flex items-center space-x-2.5 pb-2.5 border-b border-[#E2ECEB] dark:border-[#166D74]">
-                <div className="p-1.5 rounded-xl bg-[#14BEB8]/15 text-[#006B70] dark:text-[#28D2CB]">
+                <div className="p-1.5 rounded-xl bg-[#FFA987]/15 text-[#FFA987]">
                   <Icon className="w-4 h-4" />
                 </div>
                 <div>
@@ -292,7 +292,7 @@ export const CategorizedAmenities: React.FC<CategorizedAmenitiesProps> = ({ spac
                     key={`${group.id}-${idx}`}
                     className="flex items-center space-x-2 text-xs text-[#12383B] dark:text-[#B8D1D0] p-2 rounded-xl bg-[#FFF9F4] dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74]/70"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#14BEB8] shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#FFA987] shrink-0" />
                     <span className="leading-snug">{item}</span>
                   </div>
                 ))}

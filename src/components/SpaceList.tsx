@@ -12,7 +12,10 @@ import {
   Users,
   Compass,
   Building2,
-  Presentation
+  Presentation,
+  Laptop,
+  Camera,
+  Mic2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
@@ -226,8 +229,8 @@ export const SpaceList: React.FC = () => {
               What workspace do you need today?
             </p>
 
-            {/* Secondary Navigation Pillars (Interactive & Reflective) */}
-            <div className="pt-1.5 text-[11px] sm:text-xs font-semibold tracking-wider uppercase flex items-center justify-center flex-nowrap whitespace-nowrap gap-x-1 sm:gap-x-2 select-none">
+            {/* Secondary Navigation Pillars (Interactive & Reflective with Brand Peach Icons - Single Line) */}
+            <div className="pt-2 w-full max-w-xl mx-auto flex items-center justify-center flex-nowrap gap-1 min-[340px]:gap-1.5 sm:gap-2 px-1 select-none overflow-x-auto no-scrollbar">
               <button
                 type="button"
                 id="pillar-work-btn"
@@ -236,15 +239,15 @@ export const SpaceList: React.FC = () => {
                   const el = document.getElementById('spaces-results-section');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 min-[340px]:px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl shrink-0 text-[10px] min-[340px]:text-[11px] sm:text-xs font-bold tracking-wider transition-all duration-200 cursor-pointer ${
                   activeCategory === 'coworking' || activeCategory === 'private_office'
-                    ? 'bg-[#0F766E] text-white shadow-xs font-bold ring-2 ring-[#0F766E]/40'
-                    : 'text-[#6B7280] dark:text-[#94A3B8] hover:text-[#0F766E] dark:hover:text-[#14B8A6] hover:bg-black/5 dark:hover:bg-white/5'
+                    ? 'bg-[#006B70] text-white shadow-xs font-bold ring-2 ring-[#FFA987]/60 shadow-[#FFA987]/20'
+                    : 'bg-white/80 dark:bg-[#0B4A50]/70 border border-[#E2ECEB] dark:border-[#166D74] text-[#12383B] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-white hover:border-[#FFA987]/50 hover:shadow-xs'
                 }`}
               >
-                WORK
+                <Laptop className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FFA987] shrink-0" />
+                <span>WORK</span>
               </button>
-              <span className="text-[#0F766E]/30">•</span>
               <button
                 type="button"
                 id="pillar-meet-btn"
@@ -253,15 +256,15 @@ export const SpaceList: React.FC = () => {
                   const el = document.getElementById('spaces-results-section');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 min-[340px]:px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl shrink-0 text-[10px] min-[340px]:text-[11px] sm:text-xs font-bold tracking-wider transition-all duration-200 cursor-pointer ${
                   activeCategory === 'meeting' || activeCategory === 'event'
-                    ? 'bg-[#0F766E] text-white shadow-xs font-bold ring-2 ring-[#0F766E]/40'
-                    : 'text-[#6B7280] dark:text-[#94A3B8] hover:text-[#0F766E] dark:hover:text-[#14B8A6] hover:bg-black/5 dark:hover:bg-white/5'
+                    ? 'bg-[#006B70] text-white shadow-xs font-bold ring-2 ring-[#FFA987]/60 shadow-[#FFA987]/20'
+                    : 'bg-white/80 dark:bg-[#0B4A50]/70 border border-[#E2ECEB] dark:border-[#166D74] text-[#12383B] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-white hover:border-[#FFA987]/50 hover:shadow-xs'
                 }`}
               >
-                MEET
+                <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FFA987] shrink-0" />
+                <span>MEET</span>
               </button>
-              <span className="text-[#0F766E]/30">•</span>
               <button
                 type="button"
                 id="pillar-create-btn"
@@ -270,15 +273,15 @@ export const SpaceList: React.FC = () => {
                   const el = document.getElementById('spaces-results-section');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 min-[340px]:px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl shrink-0 text-[10px] min-[340px]:text-[11px] sm:text-xs font-bold tracking-wider transition-all duration-200 cursor-pointer ${
                   activeCategory === 'photography'
-                    ? 'bg-[#0F766E] text-white shadow-xs font-bold ring-2 ring-[#0F766E]/40'
-                    : 'text-[#6B7280] dark:text-[#94A3B8] hover:text-[#0F766E] dark:hover:text-[#14B8A6] hover:bg-black/5 dark:hover:bg-white/5'
+                    ? 'bg-[#006B70] text-white shadow-xs font-bold ring-2 ring-[#FFA987]/60 shadow-[#FFA987]/20'
+                    : 'bg-white/80 dark:bg-[#0B4A50]/70 border border-[#E2ECEB] dark:border-[#166D74] text-[#12383B] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-white hover:border-[#FFA987]/50 hover:shadow-xs'
                 }`}
               >
-                CREATE
+                <Camera className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FFA987] shrink-0" />
+                <span>CREATE</span>
               </button>
-              <span className="text-[#0F766E]/30">•</span>
               <button
                 type="button"
                 id="pillar-record-btn"
@@ -287,13 +290,14 @@ export const SpaceList: React.FC = () => {
                   const el = document.getElementById('spaces-results-section');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className={`px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer ${
+                className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 min-[340px]:px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl shrink-0 text-[10px] min-[340px]:text-[11px] sm:text-xs font-bold tracking-wider transition-all duration-200 cursor-pointer ${
                   activeCategory === 'podcast'
-                    ? 'bg-[#0F766E] text-white shadow-xs font-bold ring-2 ring-[#0F766E]/40'
-                    : 'text-[#6B7280] dark:text-[#94A3B8] hover:text-[#0F766E] dark:hover:text-[#14B8A6] hover:bg-black/5 dark:hover:bg-white/5'
+                    ? 'bg-[#006B70] text-white shadow-xs font-bold ring-2 ring-[#FFA987]/60 shadow-[#FFA987]/20'
+                    : 'bg-white/80 dark:bg-[#0B4A50]/70 border border-[#E2ECEB] dark:border-[#166D74] text-[#12383B] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-white hover:border-[#FFA987]/50 hover:shadow-xs'
                 }`}
               >
-                RECORD
+                <Mic2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#FFA987] shrink-0" />
+                <span>RECORD</span>
               </button>
             </div>
           </div>

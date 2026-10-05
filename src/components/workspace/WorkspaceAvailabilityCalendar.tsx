@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -11,12 +11,25 @@ import {
 } from 'lucide-react';
 import { Space } from '../../types';
 import { calculateBookingPrice } from '../../utils/pricing';
+import { bookingsService } from '../../services/bookingsService';
+import { getSupabaseClient } from '../../services/supabaseClient';
 
 interface WorkspaceAvailabilityCalendarProps {
   space: Space;
   formatPrice: (amountNgn?: number | null) => string;
   formatTime: (timeStr?: string | null) => string;
   onSelectSlot: (slot: { date: string; startTime: string; durationHours: number }) => void;
+}
+
+interface ActiveBookingInterval {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  durationHours: number;
+  selectedSeatId: string | null;
+  guestCount: number;
+  status: string;
 }
 
 export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalendarProps> = ({
@@ -33,7 +46,91 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
   const [selectedTime, setSelectedTime] = useState<string>('09:00');
   const [durationHours, setDurationHours] = useState<number>(2);
 
-  // Generate calendar days for the current displayed month
+  // Authoritative real booking intervals for this space
+  const [activeBookings, setActiveBookings] = useState<ActiveBookingInterval[]>([]);
+  const [isLoadingAvailability, setIsLoadingAvailability] = useState<boolean>(false);
+
+  // Month query string: YYYY-MM
+  const currentMonthStr = useMemo(() => {
+    const year = currentMonthDate.getFullYear();
+    const month = String(currentMonthDate.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  }, [currentMonthDate]);
+
+  // Refetch availability from authoritative API / service
+  const fetchAvailability = useCallback(async () => {
+    setIsLoadingAvailability(true);
+    try {
+      const data = await bookingsService.getSpaceAvailability(space.id, { month: currentMonthStr });
+      setActiveBookings(data);
+    } catch (e) {
+      console.warn('[WorkspaceAvailabilityCalendar] Availability fetch error:', e);
+    } finally {
+      setIsLoadingAvailability(false);
+    }
+  }, [space.id, currentMonthStr]);
+
+  // Initial and on month change fetch
+  useEffect(() => {
+    fetchAvailability();
+  }, [fetchAvailability]);
+
+  // Realtime subscription scoped to space bookings via Supabase
+  useEffect(() => {
+    const client = getSupabaseClient();
+    if (!client) return;
+
+    try {
+      const channel = client
+        .channel(`public:bookings:${space.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'bookings', filter: `space_id=eq.${space.id}` },
+          () => {
+            fetchAvailability();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        client.removeChannel(channel);
+      };
+    } catch (err) {
+      console.warn('[WorkspaceAvailabilityCalendar] Supabase realtime notice:', err);
+    }
+  }, [space.id, fetchAvailability]);
+
+  // Exclusivity evaluation
+  const isExclusive = useMemo(() => {
+    return (
+      space.category === 'private_office' ||
+      space.category === 'meeting' ||
+      space.category === 'podcast' ||
+      space.category === 'photography' ||
+      space.category === 'event' ||
+      (space.capacity || 1) === 1
+    );
+  }, [space.category, space.capacity]);
+
+  // Operating hours parsing
+  const operatingSlots = useMemo(() => {
+    const openHour = parseInt((space.operatingHours?.open || '08:00').split(':')[0], 10) || 8;
+    const closeHour = parseInt((space.operatingHours?.close || '20:00').split(':')[0], 10) || 20;
+    
+    const slots: string[] = [];
+    for (let h = openHour; h < closeHour; h++) {
+      slots.push(`${String(h).padStart(2, '0')}:00`);
+    }
+    return slots;
+  }, [space.operatingHours]);
+
+  // Helper to parse time string HH:MM to minutes
+  const parseMin = (t: string) => {
+    const parts = (t || '00:00').split(':');
+    return (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+  };
+
+  // Real availability calculation for each day in the month
   const calendarDays = useMemo(() => {
     const year = currentMonthDate.getFullYear();
     const month = currentMonthDate.getMonth();
@@ -64,6 +161,7 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
 
     const todayStr = today.toISOString().split('T')[0];
     const blockedDates = space.blockedDates || [];
+    const maxCapacity = space.capacity || 20;
 
     for (let d = 1; d <= daysInMonth; d++) {
       const monthPadded = String(month + 1).padStart(2, '0');
@@ -73,13 +171,49 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
       const isToday = dateStr === todayStr;
 
       let status: 'available' | 'limited' | 'blocked' = 'available';
+
       if (isPast || blockedDates.includes(dateStr)) {
         status = 'blocked';
       } else {
-        // Deterministic variation for demo realism
-        const hash = (d * 7 + month * 13) % 10;
-        if (hash === 2 || hash === 6) {
-          status = 'limited';
+        // Query genuine bookings on this date
+        const dayBookings = activeBookings.filter(b => b.date === dateStr);
+
+        if (dayBookings.length > 0) {
+          // Check capacity / booked hour coverage
+          let occupiedSlotCount = 0;
+
+          operatingSlots.forEach(slotTime => {
+            const slotStartMin = parseMin(slotTime);
+            const slotEndMin = slotStartMin + 60; // 1-hour grain
+
+            let slotOccupancy = 0;
+            let slotFull = false;
+
+            for (const b of dayBookings) {
+              const bStartMin = parseMin(b.startTime);
+              const bEndMin = bStartMin + (b.durationHours || 2) * 60;
+
+              // Overlap: slotStart < bEnd AND bStart < slotEnd
+              if (slotStartMin < bEndMin && bStartMin < slotEndMin) {
+                if (isExclusive) {
+                  slotFull = true;
+                  break;
+                } else {
+                  slotOccupancy += b.guestCount || 1;
+                }
+              }
+            }
+
+            if (slotFull || (!isExclusive && slotOccupancy >= maxCapacity)) {
+              occupiedSlotCount++;
+            }
+          });
+
+          if (occupiedSlotCount >= operatingSlots.length && operatingSlots.length > 0) {
+            status = 'blocked';
+          } else if (occupiedSlotCount > 0) {
+            status = 'limited';
+          }
         }
       }
 
@@ -94,20 +228,57 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
     }
 
     return days;
-  }, [currentMonthDate, space.blockedDates]);
+  }, [currentMonthDate, space.blockedDates, space.capacity, activeBookings, isExclusive, operatingSlots, today]);
 
-  // Available hourly time slots for the workspace's operating hours
-  const timeSlots = useMemo(() => {
-    const openHour = parseInt(space.operatingHours.open.split(':')[0], 10) || 8;
-    const closeHour = parseInt(space.operatingHours.close.split(':')[0], 10) || 20;
-    
-    const slots: string[] = [];
-    for (let h = openHour; h < closeHour; h++) {
-      slots.push(`${String(h).padStart(2, '0')}:00`);
-    }
-    return slots;
-  }, [space.operatingHours]);
+  // Hourly slot status check for selectedDateStr and durationHours
+  const evaluatedTimeSlots = useMemo(() => {
+    const todayStr = today.toISOString().split('T')[0];
+    const nowMin = today.getHours() * 60 + today.getMinutes();
+    const isSelectedToday = selectedDateStr === todayStr;
+    const maxCapacity = space.capacity || 20;
 
+    const dayBookings = activeBookings.filter(b => b.date === selectedDateStr);
+
+    return operatingSlots.map(time => {
+      const slotStartMin = parseMin(time);
+      const slotEndMin = slotStartMin + (durationHours * 60);
+
+      // Block past slots if viewing today
+      const isPastSlot = isSelectedToday && slotStartMin < nowMin;
+
+      // Check real booking conflicts
+      let isBookedConflict = false;
+      let overlappingGuests = 0;
+
+      for (const b of dayBookings) {
+        const bStartMin = parseMin(b.startTime);
+        const bEndMin = bStartMin + (b.durationHours || 2) * 60;
+
+        // Overlap: start_A < end_B AND start_B < end_A
+        if (slotStartMin < bEndMin && bStartMin < slotEndMin) {
+          if (isExclusive) {
+            isBookedConflict = true;
+            break;
+          } else {
+            overlappingGuests += b.guestCount || 1;
+          }
+        }
+      }
+
+      if (!isExclusive && overlappingGuests >= maxCapacity) {
+        isBookedConflict = true;
+      }
+
+      return {
+        time,
+        isAvailable: !isPastSlot && !isBookedConflict,
+        isPast: isPastSlot,
+        isBooked: isBookedConflict,
+      };
+    });
+  }, [operatingSlots, selectedDateStr, durationHours, activeBookings, isExclusive, space.capacity, today]);
+
+  // Month navigation
   const handlePrevMonth = () => {
     setCurrentMonthDate(new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() - 1, 1));
   };
@@ -138,7 +309,14 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
 
   const estimatedCost = bookingPricing.totalAmount;
 
+  // Selected slot availability validation
+  const isSelectedSlotAvailable = useMemo(() => {
+    const slot = evaluatedTimeSlots.find(s => s.time === selectedTime);
+    return slot ? slot.isAvailable : false;
+  }, [evaluatedTimeSlots, selectedTime]);
+
   const handleConfirm = () => {
+    if (!isSelectedSlotAvailable) return;
     onSelectSlot({
       date: selectedDateStr,
       startTime: selectedTime,
@@ -152,9 +330,14 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-bold text-[#111827] dark:text-[#F9FAFB]">Real-Time Availability Calendar</h3>
+          <div className="flex items-center space-x-2">
+            <h3 className="text-lg font-bold text-[#111827] dark:text-[#F9FAFB]">Real-Time Availability Calendar</h3>
+            {isLoadingAvailability && (
+              <span className="inline-block w-2 h-2 rounded-full bg-[#14B8A6] animate-ping" title="Syncing real-time availability" />
+            )}
+          </div>
           <p className="text-xs text-[#6B7280] dark:text-[#94A3B8]">
-            Select your preferred work date & hourly arrival slot
+            Authoritative schedule driven by verified database bookings
           </p>
         </div>
 
@@ -258,22 +441,33 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
           
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB] flex items-center space-x-1.5 mb-2">
-                <Clock className="w-3.5 h-3.5 text-[#14B8A6]" />
-                <span>Choose Arrival Time</span>
+              <label className="text-xs font-bold text-[#111827] dark:text-[#F9FAFB] flex items-center justify-between mb-2">
+                <span className="flex items-center space-x-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#14B8A6]" />
+                  <span>Choose Arrival Time</span>
+                </span>
+                {!isSelectedSlotAvailable && (
+                  <span className="text-[10px] text-red-500 font-semibold">Unavailable</span>
+                )}
               </label>
               
               <div className="grid grid-cols-3 gap-1.5 max-h-36 overflow-y-auto pr-1">
-                {timeSlots.map((time) => (
+                {evaluatedTimeSlots.map(({ time, isAvailable, isPast, isBooked }) => (
                   <button
                     key={time}
                     type="button"
+                    disabled={!isAvailable}
                     onClick={() => setSelectedTime(time)}
                     className={`py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                       selectedTime === time
-                        ? 'bg-[#0F766E] text-white shadow-md'
-                        : 'bg-white dark:bg-[#1F2937] text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F9FAFB] border border-[#E5E7EB] dark:border-[#374151]'
+                        ? isAvailable
+                          ? 'bg-[#0F766E] text-white shadow-md'
+                          : 'bg-red-600 text-white shadow-md'
+                        : isAvailable
+                        ? 'bg-white dark:bg-[#1F2937] text-[#6B7280] dark:text-[#94A3B8] hover:text-[#111827] dark:hover:text-[#F9FAFB] border border-[#E5E7EB] dark:border-[#374151]'
+                        : 'bg-gray-100/60 dark:bg-[#111827]/60 text-gray-400 dark:text-[#475569] border border-transparent cursor-not-allowed line-through'
                     }`}
+                    title={isBooked ? 'Slot already booked' : isPast ? 'Past slot' : undefined}
                   >
                     {formatTime(time)}
                   </button>
@@ -321,10 +515,19 @@ export const WorkspaceAvailabilityCalendar: React.FC<WorkspaceAvailabilityCalend
           {/* Book Slot CTA */}
           <button
             type="button"
+            disabled={!isSelectedSlotAvailable}
             onClick={handleConfirm}
-            className="w-full py-3 rounded-xl bg-[#0F766E] hover:bg-[#14B8A6] text-white font-extrabold text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center space-x-2 cursor-pointer"
+            className={`w-full py-3 rounded-xl font-extrabold text-xs shadow-lg active:scale-95 transition-all flex items-center justify-center space-x-2 ${
+              isSelectedSlotAvailable
+                ? 'bg-[#0F766E] hover:bg-[#14B8A6] text-white cursor-pointer'
+                : 'bg-gray-300 dark:bg-[#374151] text-gray-500 cursor-not-allowed'
+            }`}
           >
-            <span>Book Selected Slot ({selectedDateStr})</span>
+            <span>
+              {isSelectedSlotAvailable
+                ? `Book Selected Slot (${selectedDateStr})`
+                : 'Selected Time Unavailable'}
+            </span>
           </button>
 
         </div>

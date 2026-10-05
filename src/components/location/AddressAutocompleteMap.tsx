@@ -195,7 +195,7 @@ export const AddressAutocompleteMap: React.FC<AddressAutocompleteMapProps> = ({
       <div className="space-y-1 relative">
         <label className="text-xs font-semibold text-[#12383B] dark:text-white flex items-center justify-between">
           <span className="flex items-center space-x-1.5">
-            <MapPin className="w-3.5 h-3.5 text-[#14BEB8]" />
+            <MapPin className="w-3.5 h-3.5 text-[#FFA987]" />
             <span>Address Autocomplete &amp; Map Pin</span>
           </span>
           <span className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] font-mono">OpenStreetMap Verified</span>
@@ -210,12 +210,12 @@ export const AddressAutocompleteMap: React.FC<AddressAutocompleteMapProps> = ({
               if (results.length > 0) setIsDropdownOpen(true);
             }}
             placeholder="Type street, landmark, or area (e.g. 14 Adeola Odeku, Victoria Island)"
-            className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-white dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#9CA3AF] focus:outline-none focus:border-[#14BEB8] transition-colors"
+            className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-white dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#9CA3AF] focus:outline-none focus:border-[#FFA987] transition-colors"
           />
           <Search className="w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0] absolute left-3 top-3" />
           
           {isLoading && (
-            <Loader2 className="w-4 h-4 text-[#14BEB8] animate-spin absolute right-3 top-3" />
+            <Loader2 className="w-4 h-4 text-[#FFA987] animate-spin absolute right-3 top-3" />
           )}
         </div>
 
@@ -229,7 +229,7 @@ export const AddressAutocompleteMap: React.FC<AddressAutocompleteMapProps> = ({
                 onClick={() => handleSelectResult(item)}
                 className="w-full text-left p-3 hover:bg-[#FFF9F4] dark:hover:bg-[#0B4A50] transition-colors flex items-start space-x-2.5 text-xs text-[#12383B] dark:text-white cursor-pointer"
               >
-                <MapPin className="w-4 h-4 text-[#14BEB8] shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-[#FFA987] shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold truncate text-[#12383B] dark:text-white">
                     {item.display_name.split(',')[0]}
@@ -248,8 +248,8 @@ export const AddressAutocompleteMap: React.FC<AddressAutocompleteMapProps> = ({
       {selectedLocation && (
         <div className="p-3.5 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono font-bold text-[#006B70] dark:text-[#28D2CB] uppercase flex items-center space-x-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#14BEB8]" />
+            <span className="text-[11px] font-mono font-bold text-[#006B70] dark:text-[#FFA987] uppercase flex items-center space-x-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#FFA987]" />
               <span>Location Captured</span>
             </span>
             {selectedLocation.latitude && selectedLocation.longitude && (

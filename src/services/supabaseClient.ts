@@ -363,3 +363,20 @@ export function mapDbProfileToUser(row: any): UserProfile {
     createdAt: row.created_at || new Date().toISOString(),
   };
 }
+
+export function mapProfileToDbProfile(user: UserProfile): Record<string, any> {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    avatar: user.avatar,
+    role: user.role,
+    company: user.company,
+    bio: user.bio,
+    wallet_balance_ngn: user.walletBalanceNgn,
+    saved_space_ids: user.savedSpaceIds,
+    created_at: user.createdAt,
+    updated_at: new Date().toISOString(),
+  };
+}

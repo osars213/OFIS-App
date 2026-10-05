@@ -21,7 +21,13 @@ import {
   Trash2,
   Tv,
   Presentation,
-  Camera
+  Camera,
+  Building2,
+  Laptop,
+  Mic2,
+  Video,
+  Calendar,
+  Navigation
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
@@ -243,7 +249,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
           className="h-full px-4 sm:px-4.5 flex items-center justify-center text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-[#28D2CB] transition-colors focus:outline-none cursor-pointer"
           aria-label="Search and apply filters"
         >
-          <Search className={`w-4.5 h-4.5 sm:w-5 sm:h-5 transition-colors ${isExpanded || filters.searchQuery ? 'text-[#14BEB8]' : ''}`} />
+          <Search className={`w-4.5 h-4.5 sm:w-5 sm:h-5 transition-colors ${isExpanded || filters.searchQuery ? 'text-[#FFA987]' : ''}`} />
         </button>
 
         <input
@@ -312,23 +318,34 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
       {/* ========================================================================= */}
       {/* 2. QUICK ACTIONS ROW (HORIZONTAL SCROLLABLE WITH TOUCH-OPTIMIZED BUTTONS) */}
       {/* ========================================================================= */}
-      <div id="quick-actions-row" className="pt-3 sm:pt-4 overflow-x-auto no-scrollbar py-1">
-        <div className="flex items-center gap-2 sm:gap-2.5 whitespace-nowrap min-w-full">
+      <div id="quick-actions-row" className="pt-3 sm:pt-4 overflow-x-auto no-scrollbar py-1 scroll-smooth">
+        <div className="flex items-center gap-2 sm:gap-2.5 whitespace-nowrap min-w-full px-0.5">
           {[
-            { id: 'office', label: '🏢 Office', category: 'office' as SpaceCategory },
-            { id: 'desk', label: '🪑 Desk', category: 'desk' as SpaceCategory },
-            { id: 'meeting_room', label: '🤝 Meeting Room', category: 'meeting_room' as SpaceCategory },
-            { id: 'podcast_studio', label: '🎙 Podcast Studio', category: 'podcast_studio' as SpaceCategory },
-            { id: 'creative_studio', label: '📸 Creative Studio', category: 'creative_studio' as SpaceCategory },
-            { id: 'video_studio', label: '🎥 Video Studio', category: 'video_studio' as SpaceCategory },
-            { id: 'day_pass', label: '📅 Day Pass', action: 'day_pass' },
-            { id: 'nearby', label: '📍 Nearby', action: 'nearby' },
-            { id: 'recommended', label: '⭐ Recommended', action: 'recommended' },
+            { id: 'office', label: 'Office', category: 'office' as SpaceCategory, icon: Building2 },
+            { id: 'desk', label: 'Desk', category: 'desk' as SpaceCategory, icon: Laptop },
+            { id: 'meeting_room', label: 'Meeting Room', category: 'meeting_room' as SpaceCategory, icon: Users },
+            { id: 'podcast_studio', label: 'Podcast Studio', category: 'podcast_studio' as SpaceCategory, icon: Mic2 },
+            { id: 'creative_studio', label: 'Creative Studio', category: 'creative_studio' as SpaceCategory, icon: Camera },
+            { id: 'video_studio', label: 'Video Studio', category: 'video_studio' as SpaceCategory, icon: Video },
+            { id: 'day_pass', label: 'Day Pass', action: 'day_pass', icon: Calendar },
+            { id: 'nearby', label: 'Nearby', action: 'nearby', icon: Navigation },
+            { id: 'recommended', label: 'Recommended', action: 'recommended', icon: Sparkles },
           ].map((item) => {
-            const isActive = item.category ? activeCategory === item.category : false;
+            const Icon = item.icon;
+            const isActive = item.category 
+              ? activeCategory === item.category 
+              : item.action === 'day_pass'
+              ? filters.pricingPeriod === 'day'
+              : item.action === 'nearby'
+              ? filters.sortBy === 'distance'
+              : item.action === 'recommended'
+              ? filters.sortBy === 'recommended'
+              : false;
+
             return (
               <button
                 key={item.id}
+                id={`quick-filter-${item.id}`}
                 type="button"
                 onClick={() => {
                   if (item.category) {
@@ -343,13 +360,25 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                   }
                   document.getElementById('spaces-results-section')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className={`min-h-[44px] sm:min-h-[48px] px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all duration-150 flex items-center justify-center cursor-pointer shadow-2xs select-none ${
+                className={`min-h-[44px] sm:min-h-[48px] px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all duration-150 flex items-center gap-2 cursor-pointer shadow-2xs select-none ${
                   isActive
-                    ? 'bg-[#14BEB8] text-white border border-[#14BEB8] shadow-xs scale-[1.02]'
-                    : 'bg-white dark:bg-[#0B4A50] text-[#12383B] dark:text-[#B8D1D0] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/50 hover:text-[#006B70] dark:hover:text-white active:scale-[0.98]'
+                    ? 'bg-[#006B70] text-white border border-[#FFA987]/60 ring-2 ring-[#FFA987]/40 shadow-xs scale-[1.02]'
+                    : 'bg-white dark:bg-[#0B4A50] text-[#12383B] dark:text-[#B8D1D0] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#FFA987]/50 hover:text-[#006B70] dark:hover:text-white active:scale-[0.98]'
                 }`}
+                aria-pressed={isActive}
               >
-                {item.label}
+                <Icon 
+                  className={`w-4 h-4 shrink-0 transition-colors ${
+                    isActive 
+                      ? 'text-[#FFA987]' 
+                      : item.id === 'podcast_studio' || item.id === 'creative_studio' || item.id === 'recommended' || item.id === 'meeting_room'
+                      ? 'text-[#FFA987]'
+                      : 'text-[#006B70] dark:text-[#28D2CB]'
+                  }`} 
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
+                <span>{item.label}</span>
               </button>
             );
           })}
@@ -364,7 +393,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
           {recentSearches.length > 0 ? (
             <div className="flex items-center gap-2.5">
               <div className="flex items-center space-x-1 text-[11px] font-medium text-[#5D7A7D] dark:text-[#B8D1D0] shrink-0 uppercase tracking-wider">
-                <History className="w-3 h-3 text-[#14BEB8]" />
+                <History className="w-3 h-3 text-[#FFA987]" />
                 <span>Recent:</span>
               </div>
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap">
@@ -523,13 +552,24 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
               {/* SECTION B: WORKSPACE CATEGORY */}
               <div className="space-y-2.5 pt-1 border-t border-[#E5E7EB] dark:border-[#374151]">
                 <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#14BEB8]" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#FFA987]" />
                   <span>Workspace Type</span>
                 </label>
                 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {CATEGORY_METADATA.map((cat) => {
                     const isSelected = activeCategory === cat.id;
+                    const getCategoryIcon = (iconName: string) => {
+                      switch (iconName) {
+                        case 'Laptop': return Laptop;
+                        case 'Presentation': return Presentation;
+                        case 'Building2': return Building2;
+                        case 'Users': return Users;
+                        case 'Camera': return Camera;
+                        default: return Sparkles;
+                      }
+                    };
+                    const CatIcon = getCategoryIcon(cat.icon);
                     return (
                       <button
                         key={cat.id}
@@ -544,10 +584,13 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <span className={`text-xs font-bold ${isSelected ? 'text-[#006B70] dark:text-[#28D2CB]' : 'text-[#12383B] dark:text-white'}`}>
-                            {cat.label}
-                          </span>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-[#14BEB8]" />}
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <CatIcon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-[#006B70] dark:text-[#28D2CB]' : 'text-[#FFA987]'}`} />
+                            <span className={`text-xs font-bold truncate ${isSelected ? 'text-[#006B70] dark:text-[#28D2CB]' : 'text-[#12383B] dark:text-white'}`}>
+                              {cat.label}
+                            </span>
+                          </div>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-[#FFA987] shrink-0" />}
                         </div>
                         <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] mt-0.5 line-clamp-1">{cat.description}</p>
                       </button>
@@ -562,7 +605,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
               <div className="space-y-2.5 pt-1 border-t border-[#E2ECEB] dark:border-[#166D74]">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center gap-1.5">
-                    <span className="text-[#14BEB8] font-mono font-bold text-xs">₦</span>
+                    <span className="text-[#FFA987] font-mono font-bold text-xs">₦</span>
                     <span>Budget &amp; Billing Period</span>
                   </label>
                   <span className="text-xs font-mono font-bold text-[#006B70] dark:text-[#28D2CB] bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 px-2.5 py-0.5 rounded-md border border-[#14BEB8]/30">
@@ -627,7 +670,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
               <div className="space-y-2.5 pt-1 border-t border-[#E2ECEB] dark:border-[#166D74]">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-[#14BEB8]" />
+                    <Users className="w-3.5 h-3.5 text-[#FFA987]" />
                     <span>Capacity</span>
                   </label>
                   <span className="text-xs font-mono font-bold text-[#006B70] dark:text-[#28D2CB] bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 px-2.5 py-0.5 rounded-md border border-[#14BEB8]/30">
@@ -662,7 +705,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
               <div className="space-y-2.5 pt-1 border-t border-[#E2ECEB] dark:border-[#166D74]">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center gap-1.5">
-                    <Timer className="w-3.5 h-3.5 text-[#14BEB8]" />
+                    <Timer className="w-3.5 h-3.5 text-[#FFA987]" />
                     <span>Booking Duration</span>
                   </label>
                   <span className="text-xs font-mono font-bold text-[#006B70] dark:text-[#28D2CB] bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 px-2.5 py-0.5 rounded-md border border-[#14BEB8]/30">
@@ -696,7 +739,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
               <div className="space-y-2.5 pt-1 border-t border-[#E2ECEB] dark:border-[#166D74]">
                 <div className="flex items-center justify-between">
                   <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-[#14BEB8]" />
+                    <Clock className="w-3.5 h-3.5 text-[#FFA987]" />
                     <span>Start Time</span>
                   </label>
                   <span className="text-[11px] font-mono text-[#006B70] dark:text-[#28D2CB] font-semibold">
@@ -713,7 +756,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                   aria-label="Open time picker"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-9 h-9 rounded-xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] flex items-center justify-center text-[#14BEB8] group-hover:border-[#14BEB8]/50 transition-colors shadow-2xs">
+                    <div className="w-9 h-9 rounded-xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] flex items-center justify-center text-[#FFA987] group-hover:border-[#FFA987]/50 transition-colors shadow-2xs">
                       <Clock className="w-4 h-4" />
                     </div>
                     <div>
@@ -728,7 +771,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                     <span className="text-xs font-mono font-semibold text-[#006B70] dark:text-[#28D2CB] bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 px-2.5 py-1 rounded-lg border border-[#14BEB8]/30">
                       {filters.startHour === 'any' ? 'Any Time' : formatTime(filters.startHour)}
                     </span>
-                    <ChevronDown className="w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0] group-hover:text-[#14BEB8] transition-colors" />
+                    <ChevronDown className="w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0] group-hover:text-[#FFA987] transition-colors" />
                   </div>
                 </button>
               </div>
@@ -736,7 +779,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
               {/* SECTION F: INTERNET & SPACE ESSENTIALS (SIMPLIFIED) */}
               <div className="space-y-2.5 pt-1 border-t border-[#E2ECEB] dark:border-[#166D74]">
                 <label className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center gap-1.5">
-                  <Wifi className="w-3.5 h-3.5 text-[#14BEB8]" />
+                  <Wifi className="w-3.5 h-3.5 text-[#FFA987]" />
                   <span>Internet & Space Essentials</span>
                 </label>
 
@@ -750,7 +793,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                         : 'bg-[#FFF9F4] dark:bg-[#07383D] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
                     }`}
                   >
-                    <Wifi className="w-4 h-4 shrink-0 text-[#14BEB8]" />
+                    <Wifi className="w-4 h-4 shrink-0 text-[#FFA987]" />
                     <span className="truncate">Wi-Fi / Internet</span>
                   </button>
 
@@ -763,7 +806,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                         : 'bg-[#FFF9F4] dark:bg-[#07383D] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
                     }`}
                   >
-                    <Cable className="w-4 h-4 shrink-0 text-[#14BEB8]" />
+                    <Cable className="w-4 h-4 shrink-0 text-[#FFA987]" />
                     <span className="truncate">Wired Internet (Ethernet/LAN)</span>
                   </button>
 
@@ -789,7 +832,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                         : 'bg-[#FFF9F4] dark:bg-[#07383D] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
                     }`}
                   >
-                    <Volume2 className="w-4 h-4 shrink-0 text-[#14BEB8]" />
+                    <Volume2 className="w-4 h-4 shrink-0 text-[#FFA987]" />
                     <span className="truncate">Quiet / Soundproof</span>
                   </button>
 
@@ -802,7 +845,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                         : 'bg-[#FFF9F4] dark:bg-[#07383D] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
                     }`}
                   >
-                    <Presentation className="w-4 h-4 shrink-0 text-[#14BEB8]" />
+                    <Presentation className="w-4 h-4 shrink-0 text-[#FFA987]" />
                     <span className="truncate">Whiteboard / Board</span>
                   </button>
 
@@ -815,7 +858,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                         : 'bg-[#FFF9F4] dark:bg-[#07383D] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
                     }`}
                   >
-                    <Tv className="w-4 h-4 shrink-0 text-[#14BEB8]" />
+                    <Tv className="w-4 h-4 shrink-0 text-[#FFA987]" />
                     <span className="truncate">Projector / Screen</span>
                   </button>
 
@@ -855,8 +898,8 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                     }`}
                   >
                     <span className="relative flex h-2 w-2 shrink-0">
-                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${filters.availableNowOnly ? 'bg-[#14BEB8]' : 'bg-[#9CA3AF]'}`} />
-                      <span className={`relative inline-flex rounded-full h-2 w-2 ${filters.availableNowOnly ? 'bg-[#14BEB8]' : 'bg-[#9CA3AF]'}`} />
+                      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${filters.availableNowOnly ? 'bg-[#FFA987]' : 'bg-[#9CA3AF]'}`} />
+                      <span className={`relative inline-flex rounded-full h-2 w-2 ${filters.availableNowOnly ? 'bg-[#FFA987]' : 'bg-[#9CA3AF]'}`} />
                     </span>
                     <span className="truncate">Available Now Only</span>
                   </button>

@@ -144,7 +144,7 @@ export const BookingDetailsModal: React.FC = () => {
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div className="p-3 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-1">
             <span className="text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center gap-1">
-              <Clock className="w-3 h-3 text-[#14BEB8]" />
+              <Clock className="w-3 h-3 text-[#FFA987]" />
               <span>Schedule</span>
             </span>
             <div className="font-bold text-[#12383B] dark:text-white">{b.date}</div>

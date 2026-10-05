@@ -32,7 +32,7 @@ export const SavedComparisonsSection: React.FC<SavedComparisonsSectionProps> = (
     return (
       <div className="p-6 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-center space-y-2">
         <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#07383D] border border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center justify-center mx-auto">
-          <Layers className="w-5 h-5 text-[#14BEB8]" />
+          <Layers className="w-5 h-5 text-[#FFA987]" />
         </div>
         <p className="text-xs font-semibold text-[#12383B] dark:text-white">No Saved Comparisons Yet</p>
         <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] max-w-xs mx-auto leading-relaxed">
@@ -54,7 +54,7 @@ export const SavedComparisonsSection: React.FC<SavedComparisonsSectionProps> = (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#5D7A7D] dark:text-[#B8D1D0] flex items-center space-x-1.5">
-          <Layers className="w-3.5 h-3.5 text-[#006B70] dark:text-[#28D2CB]" />
+          <Layers className="w-3.5 h-3.5 text-[#FFA987]" />
           <span>Saved Comparisons ({savedComparisons.length})</span>
         </h4>
       </div>

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { DiagnosticItem } from '../types';
-import { getSupabaseClient, checkSupabaseConnection, isSupabaseConfigured } from '../services/supabaseClient';
+import { checkSupabaseConnection } from '../services/supabaseClient';
 
 export const DiagnosticsModal: React.FC = () => {
   const { 
@@ -42,43 +42,31 @@ export const DiagnosticsModal: React.FC = () => {
     setDiagnosticsList([]);
 
     const results: DiagnosticItem[] = [];
-    const client = getSupabaseClient();
-    const isConfigured = isSupabaseConfigured();
 
-    // 1. Supabase Database & Table Health Check
+    // 1. Supabase PostgreSQL & Auth Health Check
     const startDb = performance.now();
-    const conn = await checkSupabaseConnection();
+    const supabaseHealth = await checkSupabaseConnection();
     const dbLatency = Math.round(performance.now() - startDb);
     setProgress(45);
 
-    if (conn.status === 'ready') {
+    if (supabaseHealth.connected) {
       results.push({
         id: 'diag-db-live',
-        component: 'Supabase PostgreSQL Cloud Database',
+        component: 'Supabase PostgreSQL & Auth',
         category: 'storage',
         status: 'healthy',
-        title: 'Supabase Database Connected & Operational',
-        detail: `Connected to Supabase endpoint (${conn.url}). Tables (spaces, bookings, profiles, reviews, favorites) verified with live sync.`,
-        latencyMs: dbLatency,
-      });
-    } else if (conn.status === 'tables_missing') {
-      results.push({
-        id: 'diag-db-tables',
-        component: 'Supabase PostgreSQL Cloud Database',
-        category: 'storage',
-        status: 'warning',
-        title: 'Connected to Supabase (Schema Migration Pending)',
-        detail: 'Connected to Supabase instance. Run the provided /supabase/schema.sql in Supabase SQL editor to create all tables.',
-        latencyMs: dbLatency,
+        title: 'Supabase Connected & Operational',
+        detail: supabaseHealth.message || 'Connected to PostgreSQL database on Supabase. Tables active.',
+        latencyMs: Math.max(1, dbLatency),
       });
     } else {
       results.push({
         id: 'diag-db-offline',
-        component: 'Supabase PostgreSQL Cloud Database',
+        component: 'Supabase PostgreSQL & Auth',
         category: 'storage',
         status: 'healthy',
         title: 'Local Hybrid Storage & Offline Resiliency Active',
-        detail: 'App running in resilient offline/local caching mode. Automatically upgrades to live Supabase once VITE_SUPABASE_URL is populated.',
+        detail: supabaseHealth.message || 'App running in resilient offline/local caching mode. Automatically syncs when Supabase credentials are configured.',
         latencyMs: Math.max(2, dbLatency),
       });
     }
@@ -235,7 +223,7 @@ export const DiagnosticsModal: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2.5">
                   {item.status === 'healthy' ? (
-                    <CheckCircle2 className="w-4 h-4 text-[#14BEB8] shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-[#FFA987] shrink-0" />
                   ) : item.status === 'warning' ? (
                     <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                   ) : (
@@ -257,7 +245,7 @@ export const DiagnosticsModal: React.FC = () => {
         {/* Footer */}
         <div className="pt-2 flex items-center justify-between border-t border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
           <span className="flex items-center space-x-1.5">
-            <ShieldCheck className="w-4 h-4 text-[#14BEB8]" />
+            <ShieldCheck className="w-4 h-4 text-[#FFA987]" />
             <span>OFIS 2.0 Production Ready Build</span>
           </span>
           <button

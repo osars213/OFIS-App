@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "OFIS — Nigeria's Physical Space Network",
+  "short_name": "OFIS",
+  "description": "Find and book physical workspaces, podcast studios, meeting rooms, and event spaces across Nigeria.",
+  "start_url": "/?view=mobile",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#07383D",
+  "theme_color": "#07383D",
+  "categories": ["business", "productivity", "travel"],
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/ofis-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/ofis-symbol.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

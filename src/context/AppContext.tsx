@@ -12,7 +12,7 @@ import { storage } from '../services/storageService';
 import { formatTimeDisplay } from '../utils/timeFormat';
 import { currencyService, SupportedCurrency, IpDetectionResult, CURRENCY_RATES } from '../services/currencyService';
 import { availabilityAlertsService, AvailabilityAlert } from '../services/availabilityAlertsService';
-import { getSupabaseClient, checkSupabaseConnection, isSupabaseConfigured, mapDbBookingToBooking, mapDbSpaceToSpace } from '../services/supabaseClient';
+import { checkSupabaseConnection, getSupabaseClient } from '../services/supabaseClient';
 
 export type AppView = 'explore' | 'map' | 'details' | 'bookings' | 'host_dashboard' | 'saved';
 
@@ -68,7 +68,7 @@ interface AppContextType {
   cancelBookingWithReason: (id: string, reason: string) => { success: boolean; message: string; booking?: Booking };
   checkInGuest: (bookingIdOrCode: string) => { success: boolean; message: string; booking?: Booking };
   requestEarlyAccess: (bookingId: string) => { success: boolean; message: string; booking?: Booking };
-  extendBooking: (bookingId: string, options: { additionalHours?: number; additionalDays?: number } | number, paymentMethod?: 'paystack' | 'flutterwave' | 'wallet' | 'card') => { success: boolean; message: string; booking?: Booking };
+  extendBooking: (bookingId: string, options: { additionalHours?: number; additionalDays?: number } | number, paymentMethod?: 'sznd' | 'wallet' | 'card') => { success: boolean; message: string; booking?: Booking };
   checkOutBooking: (bookingId: string) => { success: boolean; message: string; booking?: Booking };
   submitPostVisitReview: (bookingId: string, data: { rating: number; hostRating?: number; powerRating: number; internetRating: number; noiseRating: number; comment: string; verifiedAmenities?: string[]; photos?: string[] }) => void;
   toggleBookingReminder: (bookingId: string) => boolean;
@@ -173,6 +173,9 @@ interface AppContextType {
   isAiModalOpen: boolean;
   setIsAiModalOpen: (open: boolean) => void;
 
+  isInstallAppModalOpen: boolean;
+  setIsInstallAppModalOpen: (open: boolean) => void;
+
   isSettingsOpen: boolean;
   setIsSettingsOpen: (open: boolean) => void;
 
@@ -227,10 +230,14 @@ interface AppContextType {
   compareToast: { message: string; type: 'success' | 'info' | 'warning' } | null;
   setCompareToast: (t: { message: string; type: 'success' | 'info' | 'warning' } | null) => void;
 
-  // Supabase Status
+  // Firebase & Database Status
+  firebaseStatus: 'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error';
+  firebaseMessage: string;
   supabaseStatus: 'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error';
   supabaseMessage: string;
+  checkFirebaseHealth: () => Promise<void>;
   checkSupabaseHealth: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
 
   // Theme & Appearance
   theme: AppTheme;
@@ -465,6 +472,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
   const [supabaseStatus, setSupabaseStatus] = useState<'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error'>('unconfigured');
   const [supabaseMessage, setSupabaseMessage] = useState('Initializing Supabase connection...');
+  const [firebaseStatus, setFirebaseStatus] = useState<'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error'>('ready');
+  const [firebaseMessage, setFirebaseMessage] = useState('Supabase active');
+
+  const checkFirebaseHealth = async () => {
+    await checkSupabaseHealth();
+  };
+
+  const signInWithGoogleHandler = async () => {
+    try {
+      const res = await authService.loginWithGoogle();
+      if (res.success && res.user) {
+        setCurrentUser(res.user);
+        addNotification({
+          title: 'Google Sign-in Successful',
+          message: `Welcome back, ${res.user.name}!`,
+          type: 'system',
+          read: false,
+        });
+      }
+    } catch (err: any) {
+      console.warn('Google sign-in error:', err);
+    }
+  };
 
   const [hostPayouts, setHostPayouts] = useState<HostPayout[]>(() => storage.get<HostPayout[]>('ofis_host_payouts', [
     {
@@ -580,6 +610,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [adminReviewSpace, setAdminReviewSpace] = useState<Space | null>(null);
 
   // Email Verification Gating State
+  const [isInstallAppModalOpen, setIsInstallAppModalOpen] = useState(false);
   const [isEmailVerificationModalOpen, setIsEmailVerificationModalOpen] = useState(false);
   const [emailVerificationReason, setEmailVerificationReason] = useState<'listing' | 'payment' | 'general' | null>(null);
 
@@ -815,21 +846,41 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       await checkSupabaseHealth();
       if (!isMounted) return;
 
+      const client = getSupabaseClient();
+      let activeUserId = currentUser.id;
+
+      // 0. Prioritize restoring real Supabase Auth session over stale localStorage state
+      if (client) {
+        try {
+          const { data: sessionData } = await client.auth.getSession();
+          if (sessionData?.session?.user) {
+            const realUser = sessionData.session.user;
+            const profile = await authService.fetchProfileAsync(realUser.id);
+            if (profile && isMounted) {
+              activeUserId = profile.id;
+              setCurrentUser(profile);
+              setSavedSpaceIds(profile.savedSpaceIds || []);
+            }
+          }
+        } catch (authErr) {
+          console.warn('[AppContext] Supabase getSession check notice:', authErr);
+        }
+      }
+
       // 1. Fetch spaces from Supabase
       refreshSpaces();
 
-      // 2. Fetch bookings for current user
+      // 2. Fetch bookings for current authenticated user
       refreshBookings();
 
       // 3. Fetch saved favorites
-      if (currentUser.id && !currentUser.id.startsWith('guest')) {
-        favoritesService.fetchFavoritesAsync(currentUser.id).then(ids => {
+      if (activeUserId && !activeUserId.startsWith('guest') && !activeUserId.startsWith('user-')) {
+        favoritesService.fetchFavoritesAsync(activeUserId).then(ids => {
           if (isMounted) setSavedSpaceIds(ids);
         });
       }
 
       // 4. Listen to Supabase Auth State Changes if client is active
-      const client = getSupabaseClient();
       if (client) {
         try {
           const { data: authListener } = client.auth.onAuthStateChange(async (event, session) => {
@@ -840,6 +891,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 setCurrentUser(profile);
                 setSavedSpaceIds(profile.savedSpaceIds || []);
               }
+              refreshBookings();
+              favoritesService.fetchFavoritesAsync(session.user.id).then(ids => {
+                if (isMounted) setSavedSpaceIds(ids);
+              });
             } else if (event === 'SIGNED_OUT') {
               // Sign out handled gracefully
             }
@@ -1027,7 +1082,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const extendBooking = (
     bookingId: string,
     options: { additionalHours?: number; additionalDays?: number } | number,
-    paymentMethod: 'paystack' | 'flutterwave' | 'wallet' | 'card' = 'wallet'
+    paymentMethod: 'sznd' | 'wallet' | 'card' = 'wallet'
   ): { success: boolean; message: string; booking?: Booking } => {
     const target = bookings.find(b => b.id === bookingId);
     const space = allSpaces.find(s => s.id === target?.spaceId);
@@ -1596,6 +1651,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         openInfoModal,
         isAiModalOpen,
         setIsAiModalOpen,
+        isInstallAppModalOpen,
+        setIsInstallAppModalOpen,
         isSettingsOpen,
         setIsSettingsOpen,
         isDrawerOpen,
@@ -1643,6 +1700,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         supabaseStatus,
         supabaseMessage,
         checkSupabaseHealth,
+        firebaseStatus,
+        firebaseMessage,
+        checkFirebaseHealth,
+        signInWithGoogle: signInWithGoogleHandler,
         theme,
         setTheme,
         resolvedTheme,
@@ -1666,4 +1727,8 @@ export const useApp = () => {
     throw new Error('useApp must be used within an AppProvider');
   }
   return context;
+};
+
+export const useSafeApp = () => {
+  return useContext(AppContext);
 };

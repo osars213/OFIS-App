@@ -58,7 +58,7 @@ export const AppSplashScreen: React.FC<AppSplashScreenProps> = ({
 
   return (
     <div 
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#071521] text-[#F8FAFC] transition-all duration-500 select-none overflow-hidden ${
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#07383D] text-[#F8FAFC] transition-all duration-500 select-none overflow-hidden ${
         isFadingOut ? 'opacity-0 pointer-events-none scale-105 filter blur-xs' : 'opacity-100'
       }`}
     >
@@ -100,11 +100,17 @@ export const AppSplashScreen: React.FC<AppSplashScreenProps> = ({
 
         {/* Tagline */}
         <div className="flex flex-col items-center text-center space-y-1 mb-7">
-          <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#CBD5E1]">
+          <div className="flex items-center space-x-2 text-[11px] sm:text-xs font-bold uppercase tracking-[0.24em] text-[#14BEB8]">
+            <span>WORK</span>
+            <span className="text-[#FFA987]">•</span>
+            <span>MEET</span>
+            <span className="text-[#FFA987]">•</span>
+            <span>CREATE</span>
+            <span className="text-[#FFA987]">•</span>
+            <span>RECORD</span>
+          </div>
+          <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-[#94A3B8]">
             NIGERIA'S PHYSICAL SPACE NETWORK
-          </span>
-          <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-[#14B8A6]">
-            FIND THE RIGHT SPACE. BOOK IT WHEN YOU NEED IT.
           </span>
         </div>
 

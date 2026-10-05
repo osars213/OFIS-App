@@ -1,40 +1,33 @@
 import { storage } from './storageService';
-import { getSupabaseClient, isSupabaseConfigured } from './supabaseClient';
+import { getSupabaseClient } from './supabaseClient';
 
 const SAVED_SPACES_KEY = 'saved_space_ids';
 
 export const favoritesService = {
   getSavedIds: (): string[] => {
-    const defaultFavorites = isSupabaseConfigured() ? [] : ['space-vi-hive', 'space-ikoyi-boardroom'];
-    return storage.get<string[]>(SAVED_SPACES_KEY, defaultFavorites);
+    return storage.get<string[]>(SAVED_SPACES_KEY, ['space-vi-hive', 'space-ikoyi-boardroom']);
   },
 
   fetchFavoritesAsync: async (userId?: string): Promise<string[]> => {
     const client = getSupabaseClient();
-    if (client && userId && !userId.startsWith('guest')) {
+    if (client) {
       try {
-        const { data: profile } = await client
-          .from('profiles')
-          .select('saved_space_ids')
-          .eq('id', userId)
-          .single();
+        const { data: sessionData } = await client.auth.getSession();
+        const activeUserId = sessionData?.session?.user?.id || (userId && !userId.startsWith('user-') && !userId.startsWith('guest') ? userId : undefined);
 
-        if (profile && Array.isArray(profile.saved_space_ids)) {
-          storage.set(SAVED_SPACES_KEY, profile.saved_space_ids);
-          return profile.saved_space_ids;
+        if (activeUserId) {
+          const { data, error } = await client
+            .from('profiles')
+            .select('saved_space_ids')
+            .eq('id', activeUserId)
+            .maybeSingle();
+
+          if (!error && data?.saved_space_ids && Array.isArray(data.saved_space_ids)) {
+            storage.set(SAVED_SPACES_KEY, data.saved_space_ids);
+            return data.saved_space_ids;
+          }
         }
-
-        const { data: favs, error } = await client
-          .from('favorites')
-          .select('space_id')
-          .eq('user_id', userId);
-
-        if (!error && favs) {
-          const ids = favs.map((f: any) => f.space_id);
-          storage.set(SAVED_SPACES_KEY, ids);
-          return ids;
-        }
-      } catch (err) {
+      } catch (err: any) {
         console.warn('[favoritesService] Error fetching favorites from Supabase:', err);
       }
     }
@@ -47,15 +40,17 @@ export const favoritesService = {
     const updated = exists ? current.filter(id => id !== spaceId) : [...current, spaceId];
     storage.set(SAVED_SPACES_KEY, updated);
 
-    // Sync to Supabase in background
+    // Sync to Supabase profile in background using authenticated session
     const client = getSupabaseClient();
-    if (client && userId && !userId.startsWith('guest')) {
-      if (exists) {
-        client.from('favorites').delete().match({ user_id: userId, space_id: spaceId }).then(() => {});
-      } else {
-        client.from('favorites').insert({ user_id: userId, space_id: spaceId }).then(() => {});
-      }
-      client.from('profiles').update({ saved_space_ids: updated }).eq('id', userId).then(() => {});
+    if (client) {
+      client.auth.getSession().then(({ data: sessionData }) => {
+        const activeUserId = sessionData?.session?.user?.id || (userId && !userId.startsWith('user-') && !userId.startsWith('guest') ? userId : undefined);
+        if (activeUserId) {
+          client.from('profiles').update({ saved_space_ids: updated }).eq('id', activeUserId).then(null, err => {
+            console.warn('[favoritesService] Note updating favorites in Supabase:', err);
+          });
+        }
+      });
     }
 
     return updated;

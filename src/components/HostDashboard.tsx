@@ -147,7 +147,7 @@ export const HostDashboard: React.FC = () => {
               onClick={handleSwitchToGuestMode}
               className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] text-xs font-semibold text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white flex items-center space-x-1.5 cursor-pointer whitespace-nowrap transition-colors shadow-xs"
             >
-              <Repeat className="w-3.5 h-3.5 text-[#14BEB8]" />
+              <Repeat className="w-3.5 h-3.5 text-[#FFA987]" />
               <span>Switch to Guest View</span>
             </button>
 
@@ -156,7 +156,7 @@ export const HostDashboard: React.FC = () => {
               onClick={() => setIsDiagnosticsModalOpen(true)}
               className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] text-xs font-semibold text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white flex items-center space-x-1.5 cursor-pointer whitespace-nowrap shadow-xs"
             >
-              <Activity className="w-3.5 h-3.5 text-[#14BEB8]" />
+              <Activity className="w-3.5 h-3.5 text-[#FFA987]" />
               <span>Health</span>
             </button>
 
@@ -165,7 +165,7 @@ export const HostDashboard: React.FC = () => {
               onClick={() => setIsHostPayoutModalOpen(true)}
               className="px-3 py-1.5 rounded-xl bg-[#FFA987]/20 hover:bg-[#FFA987]/30 border border-[#FFA987]/40 text-xs font-bold text-[#12383B] dark:text-white flex items-center space-x-1.5 cursor-pointer whitespace-nowrap shadow-xs"
             >
-              <Wallet className="w-3.5 h-3.5 text-[#006B70] dark:text-[#28D2CB]" />
+              <Wallet className="w-3.5 h-3.5 text-[#FFA987]" />
               <span>Withdraw ₦</span>
             </button>
 
@@ -321,13 +321,13 @@ export const HostDashboard: React.FC = () => {
               <div className="p-5 rounded-3xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2 shadow-xs">
                 <div className="flex items-center justify-between text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
                   <span>Generator Load</span>
-                  <Zap className="w-4 h-4 text-[#14BEB8]" />
+                  <Zap className="w-4 h-4 text-[#FFA987]" />
                 </div>
                 <div className="text-2xl font-extrabold text-[#12383B] dark:text-white font-mono">
                   145 kVA
                 </div>
                 <div className="w-full bg-[#E2ECEB] dark:bg-[#166D74] h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-[#14BEB8] h-full w-[58%]" />
+                  <div className="bg-[#FFA987] h-full w-[58%]" />
                 </div>
                 <p className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0]">58% of 250 kVA Perkins Genset</p>
               </div>
@@ -335,7 +335,7 @@ export const HostDashboard: React.FC = () => {
               <div className="p-5 rounded-3xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2 shadow-xs">
                 <div className="flex items-center justify-between text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
                   <span>Solar Battery SoC</span>
-                  <BatteryCharging className="w-4 h-4 text-[#14BEB8]" />
+                  <BatteryCharging className="w-4 h-4 text-[#FFA987]" />
                 </div>
                 <div className="text-2xl font-extrabold text-[#006B70] dark:text-[#28D2CB] font-mono">
                   94% Full
@@ -363,7 +363,7 @@ export const HostDashboard: React.FC = () => {
               <div className="p-5 rounded-3xl bg-white dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] space-y-2 shadow-xs">
                 <div className="flex items-center justify-between text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">
                   <span>Dual Fiber &amp; Starlink Ping</span>
-                  <Wifi className="w-4 h-4 text-[#14BEB8]" />
+                  <Wifi className="w-4 h-4 text-[#FFA987]" />
                 </div>
                 <div className="text-2xl font-extrabold text-[#006B70] dark:text-[#28D2CB] font-mono">
                   6 ms

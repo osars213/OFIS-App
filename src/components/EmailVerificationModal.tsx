@@ -186,8 +186,8 @@ export const EmailVerificationModal: React.FC = () => {
           <>
             {/* Header with Icon */}
             <div className="flex items-start space-x-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border border-[#14BEB8]/30 flex items-center justify-center text-[#006B70] dark:text-[#28D2CB] shrink-0">
-                <Mail className="w-6 h-6 text-[#14BEB8]" />
+              <div className="w-12 h-12 rounded-2xl bg-[#FFA987]/15 dark:bg-[#FFA987]/20 border border-[#FFA987]/30 flex items-center justify-center text-[#006B70] dark:text-[#FFA987] shrink-0">
+                <Mail className="w-6 h-6 text-[#FFA987]" />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -263,7 +263,7 @@ export const EmailVerificationModal: React.FC = () => {
                     ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border border-[#14BEB8]/40 text-[#006B70] dark:text-[#28D2CB]'
                     : 'bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-[#12383B] dark:text-white'
                 }`}>
-                  <ShieldCheck className="w-4 h-4 shrink-0 text-[#14BEB8]" />
+                  <ShieldCheck className="w-4 h-4 shrink-0 text-[#FFA987]" />
                   <span>{statusMsg.text}</span>
                 </div>
               )}

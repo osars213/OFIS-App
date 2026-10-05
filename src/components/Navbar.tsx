@@ -17,7 +17,9 @@ import {
   RefreshCw, 
   Building2, 
   Activity, 
-  UserPlus
+  UserPlus,
+  Smartphone,
+  Download
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { OFISWordmark } from './OFISWordmark';
@@ -41,6 +43,7 @@ export const Navbar: React.FC = () => {
     signOut,
     isGuest,
     switchUserRole,
+    setIsInstallAppModalOpen,
   } = useApp();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -92,11 +95,11 @@ export const Navbar: React.FC = () => {
             onClick={() => setCurrentView('explore')}
             className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               currentView === 'explore' 
-                ? 'bg-[#14BEB8]/10 dark:bg-[#28D2CB]/15 text-[#006B70] dark:text-[#28D2CB] border border-[#14BEB8]/30 font-bold shadow-2xs' 
+                ? 'bg-[#FFD0BD]/20 dark:bg-[#FFA987]/15 text-[#006B70] dark:text-[#FFA987] border border-[#FFA987]/40 font-bold shadow-2xs' 
                 : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#0B4A50]'
             }`}
           >
-            <Compass className="w-4 h-4 text-[#14BEB8]" />
+            <Compass className="w-4 h-4 text-[#FFA987]" />
             <span>Marketplace</span>
           </button>
 
@@ -106,11 +109,11 @@ export const Navbar: React.FC = () => {
             onClick={() => setCurrentView('map')}
             className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               currentView === 'map' 
-                ? 'bg-[#14BEB8]/10 dark:bg-[#28D2CB]/15 text-[#006B70] dark:text-[#28D2CB] border border-[#14BEB8]/30 font-bold shadow-2xs' 
+                ? 'bg-[#FFD0BD]/20 dark:bg-[#FFA987]/15 text-[#006B70] dark:text-[#FFA987] border border-[#FFA987]/40 font-bold shadow-2xs' 
                 : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#0B4A50]'
             }`}
           >
-            <MapPin className="w-4 h-4 text-[#14BEB8]" />
+            <MapPin className="w-4 h-4 text-[#FFA987]" />
             <span>Around Me</span>
           </button>
 
@@ -120,11 +123,11 @@ export const Navbar: React.FC = () => {
             onClick={() => setCurrentView('bookings')}
             className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               currentView === 'bookings' 
-                ? 'bg-[#14BEB8]/10 dark:bg-[#28D2CB]/15 text-[#006B70] dark:text-[#28D2CB] border border-[#14BEB8]/30 font-bold shadow-2xs' 
+                ? 'bg-[#FFD0BD]/20 dark:bg-[#FFA987]/15 text-[#006B70] dark:text-[#FFA987] border border-[#FFA987]/40 font-bold shadow-2xs' 
                 : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#0B4A50]'
             }`}
           >
-            <CalendarCheck className="w-4 h-4 text-[#14BEB8]" />
+            <CalendarCheck className="w-4 h-4 text-[#FFA987]" />
             <span>My Bookings</span>
           </button>
 
@@ -134,11 +137,11 @@ export const Navbar: React.FC = () => {
             onClick={() => setCurrentView('saved')}
             className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1.5 cursor-pointer ${
               currentView === 'saved' 
-                ? 'bg-[#14BEB8]/10 dark:bg-[#28D2CB]/15 text-[#006B70] dark:text-[#28D2CB] border border-[#14BEB8]/30 font-bold shadow-2xs' 
+                ? 'bg-[#FFD0BD]/20 dark:bg-[#FFA987]/15 text-[#006B70] dark:text-[#FFA987] border border-[#FFA987]/40 font-bold shadow-2xs' 
                 : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#0B4A50]'
             }`}
           >
-            <Bookmark className="w-4 h-4 text-[#14BEB8]" />
+            <Bookmark className="w-4 h-4 text-[#FFA987]" />
             <span>Saved</span>
             {savedSpaceIds.length > 0 && (
               <span className="w-4 h-4 rounded-full bg-[#FFA987] text-[#12383B] font-bold text-[10px] flex items-center justify-center shadow-xs">
@@ -161,6 +164,23 @@ export const Navbar: React.FC = () => {
 
         {/* Right Side: List Space CTA, Notifications, Account Button */}
         <div className="flex items-center space-x-2.5 sm:space-x-3 shrink-0">
+
+          {/* Mobile View Simulator Button */}
+          <button
+            type="button"
+            id="navbar-mobile-view-btn"
+            onClick={() => {
+              const url = new URL(window.location.href);
+              url.searchParams.set('view', 'mobile');
+              window.history.pushState({}, '', url.toString());
+              window.dispatchEvent(new Event('popstate'));
+            }}
+            className="hidden md:flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#006B70] dark:text-[#28D2CB] bg-[#14BEB8]/10 hover:bg-[#14BEB8]/20 border border-[#14BEB8]/30 transition-all cursor-pointer shadow-2xs active:scale-95"
+            title="Switch to Mobile View"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-[#14BEB8]" />
+            <span>Mobile View</span>
+          </button>
 
           {/* List Space CTA - Primary Teal Button */}
           <button
@@ -216,7 +236,7 @@ export const Navbar: React.FC = () => {
               <span className="hidden sm:inline max-w-[90px] truncate">
                 {isGuest ? 'Sign In' : currentUser.name.split(' ')[0]}
               </span>
-              <ChevronDown className={`w-3.5 h-3.5 text-[#5D7A7D] dark:text-[#B8D1D0] transition-transform ${isUserMenuOpen ? 'rotate-180 text-[#14BEB8]' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-[#5D7A7D] dark:text-[#B8D1D0] transition-transform ${isUserMenuOpen ? 'rotate-180 text-[#FFA987]' : ''}`} />
             </button>
 
             {/* Profile Dropdown Popover */}
@@ -244,7 +264,7 @@ export const Navbar: React.FC = () => {
                   }}
                   className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs text-[#12383B] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] transition-colors text-left cursor-pointer"
                 >
-                  <RefreshCw className="w-4 h-4 text-[#14BEB8]" />
+                  <RefreshCw className="w-4 h-4 text-[#FFA987]" />
                   <span>Switch to {currentUser.role === 'user' ? 'Host Mode' : 'Guest Mode'}</span>
                 </button>
 
@@ -259,7 +279,7 @@ export const Navbar: React.FC = () => {
                     }}
                     className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs text-[#12383B] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] transition-colors text-left cursor-pointer"
                   >
-                    <Building2 className="w-4 h-4 text-[#14BEB8]" />
+                    <Building2 className="w-4 h-4 text-[#FFA987]" />
                     <span>Host Dashboard</span>
                   </button>
                 )}
@@ -275,7 +295,7 @@ export const Navbar: React.FC = () => {
                   className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-[#12383B] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] transition-colors text-left cursor-pointer"
                 >
                   <div className="flex items-center space-x-2.5">
-                    <ShieldCheck className="w-4 h-4 text-[#14BEB8]" />
+                    <ShieldCheck className="w-4 h-4 text-[#FFA987]" />
                     <span>Admin Review Portal</span>
                   </div>
                   {pendingSpacesCount > 0 && (
@@ -296,7 +316,7 @@ export const Navbar: React.FC = () => {
                     }}
                     className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs text-[#12383B] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] transition-colors text-left cursor-pointer"
                   >
-                    <Activity className="w-4 h-4 text-[#14BEB8]" />
+                    <Activity className="w-4 h-4 text-[#FFA987]" />
                     <span>System Diagnostics</span>
                   </button>
                 )}
@@ -311,8 +331,22 @@ export const Navbar: React.FC = () => {
                   }}
                   className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs text-[#12383B] dark:text-[#B8D1D0] hover:text-[#006B70] dark:hover:text-white hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] transition-colors text-left cursor-pointer"
                 >
-                  <User className="w-4 h-4 text-[#14BEB8]" />
+                  <User className="w-4 h-4 text-[#FFA987]" />
                   <span>Profile & Account</span>
+                </button>
+
+                {/* Install Mobile App Trigger */}
+                <button
+                  type="button"
+                  id="menu-install-app-btn"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    setIsInstallAppModalOpen(true);
+                  }}
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs text-[#006B70] dark:text-[#28D2CB] bg-[#14BEB8]/10 hover:bg-[#14BEB8]/20 transition-colors text-left cursor-pointer font-semibold"
+                >
+                  <Download className="w-4 h-4 text-[#14BEB8]" />
+                  <span>Download / Install App</span>
                 </button>
 
                 {/* Platform Preferences Trigger */}
@@ -342,7 +376,7 @@ export const Navbar: React.FC = () => {
                         }}
                         className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-bold text-[#006B70] dark:text-[#28D2CB] hover:bg-[#14BEB8]/10 transition-colors text-left cursor-pointer"
                       >
-                        <UserPlus className="w-4 h-4 text-[#14BEB8]" />
+                        <UserPlus className="w-4 h-4 text-[#FFA987]" />
                         <span>Create Account</span>
                       </button>
                       <button
