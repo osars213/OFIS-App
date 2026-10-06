@@ -322,7 +322,7 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
         <div className="flex items-center gap-2 sm:gap-2.5 whitespace-nowrap min-w-full px-0.5">
           {[
             { id: 'office', label: 'Office', category: 'office' as SpaceCategory, icon: Building2 },
-            { id: 'desk', label: 'Desk', category: 'desk' as SpaceCategory, icon: Laptop },
+            { id: 'desk', label: 'Hot Desk', category: 'desk' as SpaceCategory, icon: Laptop },
             { id: 'meeting_room', label: 'Meeting Room', category: 'meeting_room' as SpaceCategory, icon: Users },
             { id: 'podcast_studio', label: 'Podcast Studio', category: 'podcast_studio' as SpaceCategory, icon: Mic2 },
             { id: 'creative_studio', label: 'Creative Studio', category: 'creative_studio' as SpaceCategory, icon: Camera },
@@ -360,18 +360,26 @@ export const SmartSearchDrawer: React.FC<SmartSearchDrawerProps> = ({ onApply })
                   }
                   document.getElementById('spaces-results-section')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className={`min-h-[44px] sm:min-h-[48px] px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-[13px] font-semibold transition-all duration-150 flex items-center gap-2 cursor-pointer shadow-2xs select-none ${
+                className={`min-h-[44px] sm:min-h-[48px] px-3 sm:px-3.5 py-1.5 rounded-xl text-xs sm:text-[13px] font-semibold transition-all duration-150 flex items-center gap-2 cursor-pointer shadow-2xs select-none ${
                   isActive
-                    ? 'bg-[#006B70] text-white border border-[#FFA987]/60 ring-2 ring-[#FFA987]/40 shadow-xs scale-[1.02]'
-                    : 'bg-white dark:bg-[#0B4A50] text-[#12383B] dark:text-[#B8D1D0] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#FFA987]/50 hover:text-[#006B70] dark:hover:text-white active:scale-[0.98]'
+                    ? 'bg-[#006B70] text-white border border-[#FFA987] ring-2 ring-[#FFA987]/50 shadow-xs scale-[1.02]'
+                    : 'bg-white dark:bg-[#0B4A50] text-[#12383B] dark:text-[#B8D1D0] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#FFA987]/60 hover:text-[#006B70] dark:hover:text-white active:scale-[0.98]'
                 }`}
                 aria-pressed={isActive}
               >
-                <Icon 
-                  className="w-4 h-4 shrink-0 transition-colors text-[#FFA987]" 
-                  strokeWidth={2}
-                  aria-hidden="true"
-                />
+                {/* Peach Icon Container - Every icon on this line is peach */}
+                <div className={`p-1.5 rounded-lg transition-colors shrink-0 flex items-center justify-center ${
+                  isActive 
+                    ? 'bg-[#FFA987] text-[#07383D] shadow-xs' 
+                    : 'bg-[#FFD0BD]/35 dark:bg-[#FFA987]/20 text-[#FFA987] border border-[#FFA987]/40 group-hover:border-[#FFA987]'
+                }`}>
+                  <Icon 
+                    className="w-3.5 h-3.5 shrink-0 text-[#FFA987] dark:text-[#FFA987]" 
+                    style={{ color: isActive ? '#07383D' : '#FFA987' }}
+                    strokeWidth={2.2}
+                    aria-hidden="true"
+                  />
+                </div>
                 <span>{item.label}</span>
               </button>
             );

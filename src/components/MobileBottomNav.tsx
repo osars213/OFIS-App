@@ -4,18 +4,19 @@ import {
   MapPin, 
   CalendarCheck, 
   Bookmark, 
-  Sparkles,
-  Building2,
-  Wallet,
-  Activity
+  Building2, 
+  Wallet, 
+  Activity 
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { OfisAssistantIcon } from './OfisAssistantIcon';
 
 export const MobileBottomNav: React.FC = () => {
   const { 
     currentView, 
     setCurrentView, 
     savedSpaceIds, 
+    isAiModalOpen,
     setIsAiModalOpen,
     setIsDiagnosticsModalOpen,
     setIsHostPayoutModalOpen,
@@ -42,6 +43,20 @@ export const MobileBottomNav: React.FC = () => {
         >
           <Wallet className="w-5 h-5" />
           <span className="text-[11px] font-medium whitespace-nowrap">Payouts</span>
+        </button>
+
+        {/* Center Ofis Assistant Trigger in Host Mode */}
+        <button
+          type="button"
+          id="mobile-bottom-host-assistant-btn"
+          onClick={() => setIsAiModalOpen(true)}
+          className="flex flex-col items-center justify-center space-y-1 p-1 text-[#006B70] dark:text-[#FFA987] cursor-pointer transition-all active:scale-95"
+          title="Ofis Assistant"
+        >
+          <div className="w-8 h-8 rounded-full bg-[#FFD0BD]/35 dark:bg-[#FFA987]/25 border border-[#FFA987]/60 flex items-center justify-center -mt-1 shadow-xs">
+            <OfisAssistantIcon size="xs" />
+          </div>
+          <span className="text-[10px] font-bold text-[#006B70] dark:text-[#FFA987] whitespace-nowrap">Ofis Assistant</span>
         </button>
 
         <button
@@ -96,16 +111,22 @@ export const MobileBottomNav: React.FC = () => {
         <span className="text-[10px] whitespace-nowrap font-medium">Around Me</span>
       </button>
 
+      {/* Prominent Center Ofis Assistant Trigger in User Mode */}
       <button
         type="button"
+        id="mobile-bottom-assistant-btn"
         onClick={() => setIsAiModalOpen(true)}
         className="flex flex-col items-center justify-center space-y-1 p-1 text-[#006B70] dark:text-[#FFA987] cursor-pointer transition-all active:scale-95"
         title="Ofis Assistant"
       >
-        <div className="w-7 h-7 rounded-full bg-[#FFD0BD]/25 dark:bg-[#FFA987]/20 border border-[#FFA987]/40 flex items-center justify-center -mt-1 shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-[#FFA987]" />
+        <div className={`w-8 h-8 rounded-full border flex items-center justify-center -mt-1 shadow-xs transition-all ${
+          isAiModalOpen 
+            ? 'bg-[#FFA987] border-[#FFA987] scale-110' 
+            : 'bg-[#FFD0BD]/35 dark:bg-[#FFA987]/25 border-[#FFA987]/60'
+        }`}>
+          <OfisAssistantIcon size="xs" />
         </div>
-        <span className="text-[10px] font-semibold whitespace-nowrap">Assistant</span>
+        <span className="text-[10px] font-bold text-[#006B70] dark:text-[#FFA987] whitespace-nowrap">Ofis Assistant</span>
       </button>
 
       <button

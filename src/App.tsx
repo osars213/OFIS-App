@@ -27,7 +27,6 @@ import { EmailVerificationModal } from './components/EmailVerificationModal';
 import { InfoModal } from './components/InfoModal';
 import { CompareFloatingBar } from './components/compare/CompareFloatingBar';
 import { WorkspaceCompareModal } from './components/compare/WorkspaceCompareModal';
-import { AppSplashScreen } from './components/AppSplashScreen';
 import { Footer } from './components/Footer';
 import { MobileDeviceSimulator } from './components/MobileDeviceSimulator';
 
@@ -177,9 +176,6 @@ export const App: React.FC = () => {
         isOpen={isInstallAppModalOpen} 
         onClose={() => setIsInstallAppModalOpen(false)} 
       />
-
-      {/* App Load-Up Splash Screen with Minimal Teal Accent */}
-      <AppSplashScreen />
     </div>
   );
 };

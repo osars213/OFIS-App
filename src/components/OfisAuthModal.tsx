@@ -7,23 +7,17 @@ import {
   Phone, 
   Building2, 
   ShieldCheck, 
-  Check, 
   LogOut, 
-  LogIn, 
   UserPlus, 
-  Sparkles, 
   Briefcase, 
   Eye, 
   EyeOff, 
   CheckCircle2, 
-  Wallet, 
-  ArrowRight,
   AlertCircle,
   AlertTriangle
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { authService } from '../services/authService';
-
+import { OFISWordmark } from './OFISWordmark';
 import { SavedComparisonsSection } from './compare/SavedComparisonsSection';
 
 export const OfisAuthModal: React.FC = () => {
@@ -36,12 +30,14 @@ export const OfisAuthModal: React.FC = () => {
     updateCurrentUser, 
     registerUser, 
     loginUser, 
+    signInWithGoogle,
     switchUserRole, 
     signOut, 
     isGuest,
     openEmailVerificationModal,
-    verifyUserEmail,
     toggleUserEmailVerification,
+    setCurrentView,
+    setSelectedSpaceId,
   } = useApp();
 
   const [authMode, setAuthMode] = useState<'signup' | 'login' | 'profile'>('signup');
@@ -89,6 +85,21 @@ export const OfisAuthModal: React.FC = () => {
 
   if (!isAuthModalOpen) return null;
 
+  const handleGoogleAuth = async () => {
+    try {
+      setIsSubmitting(true);
+      await signInWithGoogle();
+      setIsSubmitting(false);
+      setStatusMessage({ text: 'Signed in with Google successfully.', type: 'success' });
+      setTimeout(() => {
+        setIsAuthModalOpen(false);
+      }, 900);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setStatusMessage({ text: err?.message || 'Google authentication error', type: 'error' });
+    }
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatusMessage(null);
@@ -124,7 +135,6 @@ export const OfisAuthModal: React.FC = () => {
 
       if (res.success) {
         setStatusMessage({ text: res.message, type: 'success' });
-        // Clear sign up fields
         setSignupName('');
         setSignupEmail('');
         setSignupPassword('');
@@ -203,25 +213,32 @@ export const OfisAuthModal: React.FC = () => {
   return (
     <div 
       id="ofis-auth-modal-backdrop"
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 overflow-y-auto bg-black/60 dark:bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 select-none"
     >
       <div 
         id="ofis-auth-modal-dialog"
-        className="relative w-full max-w-lg bg-white dark:bg-[#07383D] rounded-3xl border border-[#E2ECEB] dark:border-[#166D74] shadow-2xl p-6 sm:p-7 space-y-5"
+        className="relative w-full max-w-lg bg-white dark:bg-[#07383D] rounded-3xl border border-[#E2ECEB] dark:border-[#166D74] shadow-2xl p-6 sm:p-7 space-y-5 text-[#12383B] dark:text-white transition-colors duration-150"
       >
         
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-[#E2ECEB] dark:border-[#166D74] pb-4">
-          <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-[#FFA987]/15 text-[#006B70] dark:text-[#FFA987] flex items-center justify-center font-bold">
-              <ShieldCheck className="w-5 h-5 text-[#FFA987]" />
+          <div className="flex items-center space-x-3">
+            <div 
+              onClick={() => {
+                setIsAuthModalOpen(false);
+                setCurrentView('explore');
+                setSelectedSpaceId(null);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="cursor-pointer transition-transform hover:opacity-90 flex items-center"
+              title="Return to Home / Explore"
+            >
+              <OFISWordmark size="sm" />
             </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-[#12383B] dark:text-white">
-                {authMode === 'signup' ? 'Create OFIS Account' : authMode === 'login' ? 'Sign In to OFIS' : 'Account & Pass Credentials'}
-              </h3>
-              <p className="text-xs text-[#5D7A7D] dark:text-[#B8D1D0]">Work Meet Create Record — On-Demand Workspaces & Studios Across Nigeria</p>
-            </div>
+            <div className="hidden sm:block h-4 w-px bg-[#E2ECEB] dark:bg-[#166D74]" />
+            <span className="text-xs font-semibold text-[#5D7A7D] dark:text-[#B8D1D0]">
+              {authMode === 'signup' ? 'Create Account' : authMode === 'login' ? 'Welcome Back' : 'Account Profile'}
+            </span>
           </div>
           <button
             id="auth-modal-close-btn"
@@ -233,19 +250,19 @@ export const OfisAuthModal: React.FC = () => {
           </button>
         </div>
 
-        {/* Tab Switcher */}
+        {/* Tab Switcher with Uniform Brand Styling */}
         <div className={`grid ${isGuest ? 'grid-cols-2' : 'grid-cols-3'} p-1 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs font-semibold`}>
           <button
             id="auth-tab-signup-btn"
             type="button"
             onClick={() => switchTab('signup')}
-            className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+            className={`py-2.5 rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
               authMode === 'signup' 
                 ? 'bg-[#14BEB8] text-white font-bold shadow-xs' 
                 : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
             }`}
           >
-            <UserPlus className="w-3.5 h-3.5" />
+            <UserPlus className="w-3.5 h-3.5 text-[#FFA987]" />
             <span>Sign Up</span>
           </button>
 
@@ -253,13 +270,12 @@ export const OfisAuthModal: React.FC = () => {
             id="auth-tab-login-btn"
             type="button"
             onClick={() => switchTab('login')}
-            className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+            className={`py-2.5 rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
               authMode === 'login' 
                 ? 'bg-[#14BEB8] text-white font-bold shadow-xs' 
                 : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
             }`}
           >
-            <LogIn className="w-3.5 h-3.5" />
             <span>Sign In</span>
           </button>
 
@@ -268,7 +284,7 @@ export const OfisAuthModal: React.FC = () => {
               id="auth-tab-profile-btn"
               type="button"
               onClick={() => switchTab('profile')}
-              className={`py-2 rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
+              className={`py-2.5 rounded-xl transition-all flex items-center justify-center space-x-1.5 cursor-pointer ${
                 authMode === 'profile' 
                   ? 'bg-[#14BEB8] text-white font-bold shadow-xs' 
                   : 'text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white'
@@ -296,246 +312,298 @@ export const OfisAuthModal: React.FC = () => {
         )}
 
         {/* ========================================================================= */}
-        {/* 1. SIGN UP (NEW USER REGISTRATION)                                        */}
+        {/* 1. SIGN UP (MODERNIZED NEW USER REGISTRATION)                             */}
         {/* ========================================================================= */}
         {authMode === 'signup' && (
-          <form id="signup-form" onSubmit={handleSignUp} className="space-y-4">
+          <div className="space-y-4">
             
-            {/* Role Selection */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Account Type & Purpose</label>
-              <div className="grid grid-cols-2 gap-2.5">
-                <button
-                  id="signup-role-member-btn"
-                  type="button"
-                  onClick={() => setSignupRole('user')}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                    signupRole === 'user'
-                      ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border-[#14BEB8] text-[#12383B] dark:text-white'
-                      : 'bg-white dark:bg-[#0B4A50] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:border-[#14BEB8]/40'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <Briefcase className={`w-4 h-4 ${signupRole === 'user' ? 'text-[#14BEB8]' : 'text-[#5D7A7D] dark:text-[#B8D1D0]'}`} />
-                    <span className="text-xs font-bold">Workspace Member</span>
-                  </div>
-                  <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] mt-1">Book desks, meeting rooms & receive ₦25,000 credit</p>
-                </button>
-
-                <button
-                  id="signup-role-host-btn"
-                  type="button"
-                  onClick={() => setSignupRole('host')}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                    signupRole === 'host'
-                      ? 'bg-[#14BEB8]/15 dark:bg-[#14BEB8]/20 border-[#14BEB8] text-[#12383B] dark:text-white'
-                      : 'bg-white dark:bg-[#0B4A50] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:border-[#14BEB8]/40'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <Building2 className={`w-4 h-4 ${signupRole === 'host' ? 'text-[#14BEB8]' : 'text-[#5D7A7D] dark:text-[#B8D1D0]'}`} />
-                    <span className="text-xs font-bold">Hub Operator / Host</span>
-                  </div>
-                  <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] mt-1">List spaces, check in guests & receive Naira payouts</p>
-                </button>
-              </div>
-            </div>
-
-            {/* Full Name */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Full Name *</label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
-                <input
-                  id="signup-name-input"
-                  type="text"
-                  placeholder="e.g. Oluwaseun Adeleke"
-                  value={signupName}
-                  onChange={(e) => setSignupName(e.target.value)}
-                  required
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
-                />
-              </div>
-            </div>
-
-            {/* Email Address */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Email Address *</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
-                <input
-                  id="signup-email-input"
-                  type="email"
-                  placeholder="name@company.com"
-                  value={signupEmail}
-                  onChange={(e) => setSignupEmail(e.target.value)}
-                  required
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
-                />
-              </div>
-            </div>
-
-            {/* Phone & Company */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Phone Number</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
-                  <input
-                    id="signup-phone-input"
-                    type="tel"
-                    placeholder="+234 802 000 0000"
-                    value={signupPhone}
-                    onChange={(e) => setSignupPhone(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Company / Organization</label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
-                  <input
-                    id="signup-company-input"
-                    type="text"
-                    placeholder="e.g. Paystack, Remote, Studio"
-                    value={signupCompany}
-                    onChange={(e) => setSignupCompany(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
-                <input
-                  id="signup-password-input"
-                  type={showSignupPassword ? 'text' : 'password'}
-                  placeholder="At least 6 characters"
-                  value={signupPassword}
-                  onChange={(e) => setSignupPassword(e.target.value)}
-                  className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowSignupPassword(!showSignupPassword)}
-                  className="absolute right-3 top-2.5 text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white cursor-pointer"
-                >
-                  {showSignupPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
+            {/* Quick 1-Tap Google Sign-In */}
             <button
-              id="signup-submit-btn"
-              type="submit"
+              type="button"
+              id="signup-google-btn"
+              onClick={handleGoogleAuth}
               disabled={isSubmitting}
-              className="w-full py-3 rounded-2xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer disabled:opacity-50 mt-2"
+              className="w-full py-2.5 px-4 rounded-2xl bg-white dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#FFA987]/60 text-xs font-bold text-[#12383B] dark:text-white transition-all flex items-center justify-center space-x-2.5 cursor-pointer shadow-2xs active:scale-98"
             >
-              <Sparkles className="w-4 h-4 text-[#FFA987]" />
-              <span>
-                {isSubmitting 
-                  ? 'Registering Account...' 
-                  : signupRole === 'host' 
-                    ? 'Create Host Account & Setup Listings' 
-                    : 'Create Account & Claim ₦25,000 Welcome Credit'}
-              </span>
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+              </svg>
+              <span>Continue with Google</span>
             </button>
-          </form>
+
+            <div className="flex items-center space-x-3">
+              <div className="flex-1 h-px bg-[#E2ECEB] dark:bg-[#166D74]" />
+              <span className="text-[11px] font-medium text-[#5D7A7D] dark:text-[#B8D1D0]">or register with email</span>
+              <div className="flex-1 h-px bg-[#E2ECEB] dark:bg-[#166D74]" />
+            </div>
+
+            <form id="signup-form" onSubmit={handleSignUp} className="space-y-3.5">
+              
+              {/* Account Role Selector */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Account Type</label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    id="signup-role-member-btn"
+                    type="button"
+                    onClick={() => setSignupRole('user')}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                      signupRole === 'user'
+                        ? 'bg-[#FFD0BD]/25 dark:bg-[#FFA987]/15 border-[#FFA987] ring-1 ring-[#FFA987]/40 text-[#12383B] dark:text-white shadow-2xs'
+                        : 'bg-white dark:bg-[#0B4A50] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:border-[#FFA987]/40'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Briefcase className={`w-4 h-4 ${signupRole === 'user' ? 'text-[#FFA987]' : 'text-[#5D7A7D] dark:text-[#B8D1D0]'}`} />
+                      <span className="text-xs font-bold">Workspace Member</span>
+                    </div>
+                    <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] mt-1">Book desks, meeting pods & studios</p>
+                  </button>
+
+                  <button
+                    id="signup-role-host-btn"
+                    type="button"
+                    onClick={() => setSignupRole('host')}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                      signupRole === 'host'
+                        ? 'bg-[#FFD0BD]/25 dark:bg-[#FFA987]/15 border-[#FFA987] ring-1 ring-[#FFA987]/40 text-[#12383B] dark:text-white shadow-2xs'
+                        : 'bg-white dark:bg-[#0B4A50] border-[#E2ECEB] dark:border-[#166D74] text-[#5D7A7D] dark:text-[#B8D1D0] hover:border-[#FFA987]/40'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Building2 className={`w-4 h-4 ${signupRole === 'host' ? 'text-[#FFA987]' : 'text-[#5D7A7D] dark:text-[#B8D1D0]'}`} />
+                      <span className="text-xs font-bold">Space Host</span>
+                    </div>
+                    <p className="text-[10px] text-[#5D7A7D] dark:text-[#B8D1D0] mt-1">List spaces & receive payouts</p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Full Name */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Full Name *</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 w-4 h-4 text-[#FFA987]" />
+                  <input
+                    id="signup-name-input"
+                    type="text"
+                    placeholder="e.g. Oluwaseun Adeleke"
+                    value={signupName}
+                    onChange={(e) => setSignupName(e.target.value)}
+                    required
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#FFA987] focus:ring-1 focus:ring-[#FFA987]/30"
+                  />
+                </div>
+              </div>
+
+              {/* Email Address */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Email Address *</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 w-4 h-4 text-[#FFA987]" />
+                  <input
+                    id="signup-email-input"
+                    type="email"
+                    placeholder="name@company.com"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    required
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#FFA987] focus:ring-1 focus:ring-[#FFA987]/30"
+                  />
+                </div>
+              </div>
+
+              {/* Phone & Company */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-[#12383B] dark:text-white">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 w-4 h-4 text-[#FFA987]" />
+                    <input
+                      id="signup-phone-input"
+                      type="tel"
+                      placeholder="+234 802 000 0000"
+                      value={signupPhone}
+                      onChange={(e) => setSignupPhone(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#FFA987] focus:ring-1 focus:ring-[#FFA987]/30"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-[#12383B] dark:text-white">Company (Optional)</label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-3 w-4 h-4 text-[#FFA987]" />
+                    <input
+                      id="signup-company-input"
+                      type="text"
+                      placeholder="e.g. Remote, Studio"
+                      value={signupCompany}
+                      onChange={(e) => setSignupCompany(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#FFA987] focus:ring-1 focus:ring-[#FFA987]/30"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 w-4 h-4 text-[#FFA987]" />
+                  <input
+                    id="signup-password-input"
+                    type={showSignupPassword ? 'text' : 'password'}
+                    placeholder="At least 6 characters"
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
+                    className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#FFA987] focus:ring-1 focus:ring-[#FFA987]/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSignupPassword(!showSignupPassword)}
+                    className="absolute right-3 top-2.5 text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white cursor-pointer"
+                  >
+                    {showSignupPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit CTA */}
+              <button
+                id="signup-submit-btn"
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3 rounded-2xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white font-bold text-xs shadow-md transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer disabled:opacity-50 mt-2"
+              >
+                <span>
+                  {isSubmitting 
+                    ? 'Creating Account...' 
+                    : signupRole === 'host' 
+                      ? 'Register Host Account' 
+                      : 'Create Account'}
+                </span>
+              </button>
+            </form>
+          </div>
         )}
 
         {/* ========================================================================= */}
-        {/* 2. LOG IN                                                                 */}
+        {/* 2. SIGN IN (CLEAN & NON-REDUNDANT)                                         */}
         {/* ========================================================================= */}
         {authMode === 'login' && (
-          <form id="login-form" onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Email Address or Phone Number</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
-                <input
-                  id="login-email-input"
-                  type="text"
-                  placeholder="e.g. tunde.adeyemi@paystack.com or +234 802 345 6789"
-                  value={loginEmailOrPhone}
-                  onChange={(e) => setLoginEmailOrPhone(e.target.value)}
-                  required
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#12383B] dark:text-white">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 w-4 h-4 text-[#5D7A7D] dark:text-[#B8D1D0]" />
-                <input
-                  id="login-password-input"
-                  type={showLoginPassword ? 'text' : 'password'}
-                  placeholder="••••••••••••"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#14BEB8]"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowLoginPassword(!showLoginPassword)}
-                  className="absolute right-3 top-2.5 text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white cursor-pointer"
-                >
-                  {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
+          <div className="space-y-4">
+            
+            {/* Quick 1-Tap Google Sign-In */}
             <button
-              id="login-submit-btn"
-              type="submit"
+              type="button"
+              id="login-google-btn"
+              onClick={handleGoogleAuth}
               disabled={isSubmitting}
-              className="w-full py-3 rounded-2xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer disabled:opacity-50"
+              className="w-full py-2.5 px-4 rounded-2xl bg-white dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#FFA987]/60 text-xs font-bold text-[#12383B] dark:text-white transition-all flex items-center justify-center space-x-2.5 cursor-pointer shadow-2xs active:scale-98"
             >
-              <LogIn className="w-4 h-4" />
-              <span>{isSubmitting ? 'Authenticating...' : 'Sign In to OFIS'}</span>
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+              </svg>
+              <span>Continue with Google</span>
             </button>
 
-            {/* Fast Demo Switches */}
-            <div className="pt-3 border-t border-[#E2ECEB] dark:border-[#166D74] space-y-2">
-              <div className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-medium">Quick 1-Tap Demo Logins:</div>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  id="quick-demo-user-btn"
-                  type="button"
-                  onClick={async () => {
-                    await loginUser('tunde.adeyemi@paystack.com', 'Password123!');
-                    setStatusMessage({ text: 'Authenticated as Babatunde Adeyemi via Supabase Auth', type: 'success' });
-                    setTimeout(() => setIsAuthModalOpen(false), 800);
-                  }}
-                  className="p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/50 text-left transition-all cursor-pointer"
-                >
-                  <div className="text-xs font-bold text-[#12383B] dark:text-white">Babatunde (User)</div>
-                  <div className="text-[10px] text-[#006B70] dark:text-[#28D2CB]">Paystack Engineer • ₦45,000</div>
-                </button>
-
-                <button
-                  id="quick-demo-host-btn"
-                  type="button"
-                  onClick={async () => {
-                    await loginUser('funke@creativespace.ng', 'Password123!');
-                    setStatusMessage({ text: 'Authenticated as Funke Akindele-Cole via Supabase Auth', type: 'success' });
-                    setTimeout(() => setIsAuthModalOpen(false), 800);
-                  }}
-                  className="p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#14BEB8]/50 text-left transition-all cursor-pointer"
-                >
-                  <div className="text-xs font-bold text-[#12383B] dark:text-white">Funke (Host)</div>
-                  <div className="text-[10px] text-[#006B70] dark:text-[#28D2CB]">VI Hub Operator • ₦380,000</div>
-                </button>
-              </div>
+            <div className="flex items-center space-x-3">
+              <div className="flex-1 h-px bg-[#E2ECEB] dark:bg-[#166D74]" />
+              <span className="text-[11px] font-medium text-[#5D7A7D] dark:text-[#B8D1D0]">or sign in with email/phone</span>
+              <div className="flex-1 h-px bg-[#E2ECEB] dark:bg-[#166D74]" />
             </div>
-          </form>
+
+            <form id="login-form" onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Email Address or Phone Number</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 w-4 h-4 text-[#FFA987]" />
+                  <input
+                    id="login-email-input"
+                    type="text"
+                    placeholder="e.g. tunde.adeyemi@paystack.com or +234 802 345 6789"
+                    value={loginEmailOrPhone}
+                    onChange={(e) => setLoginEmailOrPhone(e.target.value)}
+                    required
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#FFA987] focus:ring-1 focus:ring-[#FFA987]/30"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#12383B] dark:text-white">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 w-4 h-4 text-[#FFA987]" />
+                  <input
+                    id="login-password-input"
+                    type={showLoginPassword ? 'text' : 'password'}
+                    placeholder="••••••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white placeholder-[#8DA3A2] focus:outline-none focus:border-[#FFA987] focus:ring-1 focus:ring-[#FFA987]/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute right-3 top-2.5 text-[#5D7A7D] dark:text-[#B8D1D0] hover:text-[#12383B] dark:hover:text-white cursor-pointer"
+                  >
+                    {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit CTA - Clean, No Repeated Icon */}
+              <button
+                id="login-submit-btn"
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3 rounded-2xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white font-bold text-xs shadow-md transition-all flex items-center justify-center space-x-2 active:scale-98 cursor-pointer disabled:opacity-50"
+              >
+                <span>{isSubmitting ? 'Authenticating...' : 'Sign In to OFIS'}</span>
+              </button>
+
+              {/* Fast Demo Switches */}
+              <div className="pt-3 border-t border-[#E2ECEB] dark:border-[#166D74] space-y-2">
+                <div className="text-[11px] text-[#5D7A7D] dark:text-[#B8D1D0] font-medium">Quick 1-Tap Demo Logins:</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    id="quick-demo-user-btn"
+                    type="button"
+                    onClick={async () => {
+                      await loginUser('tunde.adeyemi@paystack.com', 'Password123!');
+                      setStatusMessage({ text: 'Authenticated as Babatunde Adeyemi', type: 'success' });
+                      setTimeout(() => setIsAuthModalOpen(false), 800);
+                    }}
+                    className="p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#FFA987]/60 text-left transition-all cursor-pointer shadow-2xs"
+                  >
+                    <div className="text-xs font-bold text-[#12383B] dark:text-white">Babatunde (Member)</div>
+                    <div className="text-[10px] text-[#006B70] dark:text-[#FFA987] font-semibold">Paystack Engineer</div>
+                  </button>
+
+                  <button
+                    id="quick-demo-host-btn"
+                    type="button"
+                    onClick={async () => {
+                      await loginUser('funke@creativespace.ng', 'Password123!');
+                      setStatusMessage({ text: 'Authenticated as Funke Akindele-Cole', type: 'success' });
+                      setTimeout(() => setIsAuthModalOpen(false), 800);
+                    }}
+                    className="p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] hover:bg-[#F3F6F5] dark:hover:bg-[#105A60] border border-[#E2ECEB] dark:border-[#166D74] hover:border-[#FFA987]/60 text-left transition-all cursor-pointer shadow-2xs"
+                  >
+                    <div className="text-xs font-bold text-[#12383B] dark:text-white">Funke (Host)</div>
+                    <div className="text-[10px] text-[#006B70] dark:text-[#FFA987] font-semibold">VI Hub Operator</div>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         )}
 
         {/* ========================================================================= */}
@@ -545,7 +613,7 @@ export const OfisAuthModal: React.FC = () => {
           <form id="profile-form" onSubmit={handleProfileSave} className="space-y-4">
             <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74]">
               <div className="flex items-center space-x-3">
-                <div className="w-11 h-11 rounded-2xl bg-[#FFA987]/15 border border-[#FFA987]/40 text-[#006B70] dark:text-[#FFA987] flex items-center justify-center">
+                <div className="w-11 h-11 rounded-2xl bg-[#FFA987]/20 border border-[#FFA987]/40 text-[#006B70] dark:text-[#FFA987] flex items-center justify-center">
                   <User className="w-5 h-5 text-[#FFA987]" />
                 </div>
                 <div>
@@ -592,7 +660,7 @@ export const OfisAuthModal: React.FC = () => {
                 value={profileName}
                 onChange={(e) => setProfileName(e.target.value)}
                 required
-                className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8]"
+                className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#FFA987]"
               />
             </div>
 
@@ -602,12 +670,12 @@ export const OfisAuthModal: React.FC = () => {
                 {currentUser?.isEmailVerified ? (
                   <span className="text-[10px] text-[#006B70] dark:text-[#FFA987] font-bold flex items-center space-x-1">
                     <CheckCircle2 className="w-3 h-3 text-[#FFA987]" />
-                    <span>Verified (List & Pay Active)</span>
+                    <span>Verified</span>
                   </span>
                 ) : (
                   <span className="text-[10px] text-[#C05621] dark:text-[#FFA987] font-bold flex items-center space-x-1">
                     <AlertCircle className="w-3 h-3" />
-                    <span>Unverified (Gated)</span>
+                    <span>Unverified</span>
                   </span>
                 )}
               </div>
@@ -622,11 +690,7 @@ export const OfisAuthModal: React.FC = () => {
             </div>
 
             {/* Email Verification Status Card */}
-            <div className={`p-3 rounded-2xl border text-xs space-y-2 ${
-              currentUser?.isEmailVerified 
-                ? 'bg-[#FFA987]/15 dark:bg-[#FFA987]/15 border-[#FFA987]/40 text-[#12383B] dark:text-white' 
-                : 'bg-[#FFA987]/15 dark:bg-[#FFA987]/10 border-[#FFA987]/30 text-[#12383B] dark:text-white'
-            }`}>
+            <div className="p-3 rounded-2xl border text-xs space-y-2 bg-[#FFA987]/15 dark:bg-[#FFA987]/10 border-[#FFA987]/30 text-[#12383B] dark:text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   {currentUser?.isEmailVerified ? (
@@ -683,7 +747,7 @@ export const OfisAuthModal: React.FC = () => {
                   type="tel"
                   value={profilePhone}
                   onChange={(e) => setProfilePhone(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8]"
+                  className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#FFA987]"
                 />
               </div>
 
@@ -694,7 +758,7 @@ export const OfisAuthModal: React.FC = () => {
                   type="text"
                   value={profileCompany}
                   onChange={(e) => setProfileCompany(e.target.value)}
-                  className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#14BEB8]"
+                  className="w-full p-2.5 rounded-xl bg-[#FFF9F4] dark:bg-[#0B4A50] border border-[#E2ECEB] dark:border-[#166D74] text-xs text-[#12383B] dark:text-white focus:outline-none focus:border-[#FFA987]"
                 />
               </div>
             </div>
@@ -722,7 +786,7 @@ export const OfisAuthModal: React.FC = () => {
               <button
                 id="profile-save-btn"
                 type="submit"
-                className="px-5 py-2.5 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white font-bold text-xs shadow-md cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white font-bold text-xs shadow-md cursor-pointer active:scale-95"
               >
                 Save Changes
               </button>
@@ -734,4 +798,3 @@ export const OfisAuthModal: React.FC = () => {
     </div>
   );
 };
-

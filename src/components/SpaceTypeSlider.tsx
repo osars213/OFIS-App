@@ -81,16 +81,16 @@ const SPACE_TYPES: SpaceTypeItem[] = [
 
 const PILLAR_STYLES = {
   WORK: {
-    badgeBg: 'bg-[#006B70]/90 text-white border border-[#14BEB8]/40',
-    border: 'hover:border-[#FFA987]/50',
-    accentText: 'text-[#28D2CB]',
-    selectedBorder: 'border-[#14BEB8] ring-2 ring-[#FFA987]/50 shadow-lg shadow-[#14BEB8]/20'
+    badgeBg: 'bg-[#FFA987] text-[#07383D] font-extrabold shadow-xs',
+    border: 'hover:border-[#FFA987]/80',
+    accentText: 'text-[#FFD0BD]',
+    selectedBorder: 'border-[#FFA987] ring-2 ring-[#FFA987]/60 shadow-lg shadow-[#FFA987]/25'
   },
   CREATE: {
-    badgeBg: 'bg-[#0E7490]/90 text-white border border-[#FFA987]/40',
-    border: 'hover:border-[#FFA987]/50',
-    accentText: 'text-[#38BDF8]',
-    selectedBorder: 'border-[#0EA5E9] ring-2 ring-[#FFA987]/50 shadow-lg shadow-[#0EA5E9]/20'
+    badgeBg: 'bg-[#FFA987] text-[#07383D] font-extrabold shadow-xs',
+    border: 'hover:border-[#FFA987]/80',
+    accentText: 'text-[#FFD0BD]',
+    selectedBorder: 'border-[#FFA987] ring-2 ring-[#FFA987]/60 shadow-lg shadow-[#FFA987]/25'
   },
   MEET: {
     badgeBg: 'bg-[#FFA987] text-[#07383D] font-extrabold shadow-xs',

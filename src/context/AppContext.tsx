@@ -230,12 +230,9 @@ interface AppContextType {
   compareToast: { message: string; type: 'success' | 'info' | 'warning' } | null;
   setCompareToast: (t: { message: string; type: 'success' | 'info' | 'warning' } | null) => void;
 
-  // Firebase & Database Status
-  firebaseStatus: 'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error';
-  firebaseMessage: string;
+  // Database & Infrastructure Status
   supabaseStatus: 'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error';
   supabaseMessage: string;
-  checkFirebaseHealth: () => Promise<void>;
   checkSupabaseHealth: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
 
@@ -472,12 +469,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
   const [supabaseStatus, setSupabaseStatus] = useState<'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error'>('unconfigured');
   const [supabaseMessage, setSupabaseMessage] = useState('Initializing Supabase connection...');
-  const [firebaseStatus, setFirebaseStatus] = useState<'ready' | 'connected' | 'unconfigured' | 'tables_missing' | 'error'>('ready');
-  const [firebaseMessage, setFirebaseMessage] = useState('Supabase active');
-
-  const checkFirebaseHealth = async () => {
-    await checkSupabaseHealth();
-  };
 
   const signInWithGoogleHandler = async () => {
     try {
@@ -1700,9 +1691,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         supabaseStatus,
         supabaseMessage,
         checkSupabaseHealth,
-        firebaseStatus,
-        firebaseMessage,
-        checkFirebaseHealth,
         signInWithGoogle: signInWithGoogleHandler,
         theme,
         setTheme,

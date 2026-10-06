@@ -24,6 +24,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { OFISWordmark } from './OFISWordmark';
 import { NotificationCenterDropdown } from './NotificationCenterDropdown';
+import { OfisAssistantIcon } from './OfisAssistantIcon';
 
 export const Navbar: React.FC = () => {
   const {
@@ -44,6 +45,7 @@ export const Navbar: React.FC = () => {
     isGuest,
     switchUserRole,
     setIsInstallAppModalOpen,
+    setSelectedSpaceId,
   } = useApp();
 
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -80,8 +82,14 @@ export const Navbar: React.FC = () => {
           </button>
 
           <div 
+            id="navbar-brand-logo-btn"
             className="flex items-center cursor-pointer transition-transform hover:opacity-95" 
-            onClick={() => setCurrentView('explore')}
+            onClick={() => {
+              setCurrentView('explore');
+              setSelectedSpaceId(null);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            title="Return to Home / Explore"
           >
             <OFISWordmark size="md" />
           </div>
@@ -157,7 +165,7 @@ export const Navbar: React.FC = () => {
             onClick={() => setIsAiModalOpen(true)}
             className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#006B70] dark:text-[#FFA987] bg-[#FFD0BD]/25 hover:bg-[#FFD0BD]/40 dark:bg-[#FFA987]/15 dark:hover:bg-[#FFA987]/25 border border-[#FFA987]/40 transition-all flex items-center space-x-1.5 cursor-pointer shadow-2xs"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#FFA987]" />
+            <OfisAssistantIcon size="xs" />
             <span>Ofis Assistant</span>
           </button>
         </nav>
@@ -224,24 +232,15 @@ export const Navbar: React.FC = () => {
 
           {/* Extreme Right: Unified User Account / Sign In Control */}
           {isGuest ? (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center">
               <button
                 type="button"
                 id="navbar-sign-in-direct-btn"
                 onClick={() => openAuthModal('login')}
-                className="flex items-center space-x-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
+                className="flex items-center px-3.5 sm:px-4 py-2 rounded-xl bg-[#14BEB8] hover:bg-[#0EA8A2] text-white text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95 shrink-0"
                 title="Sign in to your OFIS account"
               >
-                <LogIn className="w-3.5 h-3.5 text-white" />
                 <span>Sign In</span>
-              </button>
-              <button
-                type="button"
-                id="navbar-sign-up-direct-btn"
-                onClick={() => openAuthModal('signup')}
-                className="hidden sm:flex items-center space-x-1.5 px-3 py-2 rounded-xl border border-[#FFA987]/50 hover:bg-[#FFA987]/15 text-[#006B70] dark:text-[#FFA987] text-xs font-bold transition-all cursor-pointer active:scale-95 shrink-0"
-              >
-                <span>Sign Up</span>
               </button>
             </div>
           ) : (
